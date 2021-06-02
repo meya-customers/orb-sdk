@@ -14,7 +14,7 @@ This repo contains two folders, namely:
   native app. The `orb_sdk` depends on the `orb` Flutter package.
 
 
-## Getting Started
+## Getting started
 
 ### Install Android Studio
 Follow the Android Studio installation instructions for your development
@@ -65,7 +65,7 @@ plugin in Android Studio will do a couple of things:
 - Index all the Dart source code.
 - Detect any running Android/iOS/Web devices
 
-### Run the `orb_sdk
+### Run the `orb_sdk`
 A Flutter module is not intended to be run on it's own, it's primary purpose is to integrate
 the Flutter module into an existing native app. However, it is still possible to run a Flutter
 module.
@@ -155,7 +155,7 @@ In your terminal:
           url projectDir.absolutePath + '/some/relative/path/orb_sdk/build/host/outputs/repo'
       }
       maven {
-          url '$storageUrl/download.flutter.io'
+          url "$storageUrl/download.flutter.io"
       }
   }
   ```
