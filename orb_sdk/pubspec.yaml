@@ -1,0 +1,28 @@
+name: orb_sdk
+description: Orb Mobile SDK for Android and iOS
+version: 2.6.5
+
+# Don't publish to pub.dev using `pub publish`.
+publish_to: none
+
+
+environment:
+  sdk: '>=2.7.0 <3.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+  orb:
+    path: ../orb
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  module:
+    androidX: true
+    androidPackage: ai.meya.orb_sdk
+    iosBundleIdentifier: ai.meya.orbSdk
