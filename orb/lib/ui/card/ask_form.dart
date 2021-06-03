@@ -304,7 +304,7 @@ class _OrbInputFieldState extends State<OrbInputField> {
         color: color,
         border: OrbTheme.of(context).innerBorder.thick(borderColor),
         borderRadius: BorderRadius.only(
-          // TODO: Find a better way to adjust the in border radius to the outer
+          // TODO: Find a better way to adjust the inner border radius to the outer
           topRight:
               OrbTheme.of(context).borderRadius.small - Radius.circular(2.1),
           bottomRight:
@@ -361,7 +361,7 @@ class _OrbInputFieldState extends State<OrbInputField> {
       // Event not relevant
       return;
     } else if (processedEvents[event.id] == true) {
-      // Event alread processed
+      // Event already processed
       return;
     } else if ((event.data['composer'] ?? {})['focus'] != 'blur') {
       // Not blurring composer focus, so don't take it

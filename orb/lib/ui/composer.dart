@@ -193,7 +193,7 @@ class ExtraMode extends StatelessWidget {
             icon: OrbIcon(OrbIcons.left),
             onPressed: () => toggleMode(Mode.text),
           ),
-          // Todo: remove this when image_picker bug is fixed for iOS
+          // Todo: remove this when file_picker bug is fixed for iOS
           if (Platform.isAndroid)
             OrbComposerButton(
               eventStream: eventStream,

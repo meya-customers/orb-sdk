@@ -1,6 +1,7 @@
 import 'package:meta/meta.dart';
 
 import 'package:orb/event.dart';
+import 'package:orb/ui/avatar.dart';
 import 'package:orb/ui/card/event_map.dart';
 
 class OrbEventStream {
@@ -257,47 +258,16 @@ class OrbUserData {
   }
 }
 
-enum OrbAvatarCrop { circle, square }
-
-extension OrbAvatarCropExtension on OrbAvatarCrop {
-  static OrbAvatarCrop fromString(String crop) =>
-      {
-        'circle': OrbAvatarCrop.circle,
-        'square': OrbAvatarCrop.square,
-      }[crop] ??
-      OrbAvatarCrop.circle;
-}
-
-class OrbAvatar {
-  final String image;
-  final OrbAvatarCrop crop;
-  final String monogram;
-
-  OrbAvatar({
-    @required this.image,
-    @required this.crop,
-    @required this.monogram,
-  });
-
-  factory OrbAvatar.fromMap(Map<dynamic, dynamic> map) {
-    if (map == null) return null;
-    return OrbAvatar(
-      image: map['image'],
-      crop: OrbAvatarCropExtension.fromString(map['crop']),
-      monogram: map['monogram'],
-    );
-  }
-}
-
 class OrbFormView {
   OrbEvent askEvent;
   OrbEvent submitEvent;
   OrbEvent errorEvent;
   OrbEvent okEvent;
 
-  OrbFormView(
-      {@required this.askEvent,
-      this.submitEvent,
-      this.errorEvent,
-      this.okEvent});
+  OrbFormView({
+    @required this.askEvent,
+    this.submitEvent,
+    this.errorEvent,
+    this.okEvent,
+  });
 }

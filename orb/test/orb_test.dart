@@ -2,7 +2,7 @@ import 'package:flutter/services.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:orb/orb.dart';
+import 'package:orb/plugin.dart';
 
 void main() {
   const MethodChannel channel = MethodChannel('orb');
@@ -20,6 +20,6 @@ void main() {
   });
 
   test('getPlatformVersion', () async {
-    expect(await Orb.platformVersion, '42');
+    expect(await OrbPlugin.platformVersion, '42');
   });
 }

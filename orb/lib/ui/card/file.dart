@@ -83,6 +83,7 @@ abstract class OrbFile extends StatelessWidget {
           margin: EdgeInsets.only(right: OrbTheme.of(context).lengths.small),
           child: buildIcon(context),
         ),
+        // TODO: Download file
         Expanded(
           child: Text(
             filename,

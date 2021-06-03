@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import 'package:orb/event_stream.dart';
+import 'package:orb/ui/avatar.dart';
 import 'package:orb/ui/design.dart';
 import 'package:orb/ui/presence/user_name.dart';
 

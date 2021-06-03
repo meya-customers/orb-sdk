@@ -23,25 +23,26 @@ class OrbQuickReplies extends StatelessWidget {
       return Container(
         child: Wrap(
           alignment: WrapAlignment.end,
-          children: quickReplies
-              .map((quickReply) => QuickReply(
-                    text: quickReply["text"],
-                    onTap: () {
-                      if (quickReply["button_id"] != null) {
-                        connection.publishEvent(OrbEvent.createButtonClickEvent(
-                          quickReply["button_id"],
-                          text: quickReply["text"],
-                          context: quickReply["context"],
-                        ));
-                      } else {
-                        connection.publishEvent(OrbEvent.createSayEvent(
-                          quickReply["text"],
-                          context: quickReply["context"],
-                        ));
-                      }
-                    },
-                  ))
-              .toList(),
+          children: [
+            for (final quickReply in quickReplies)
+              QuickReply(
+                text: quickReply["text"],
+                onTap: () {
+                  if (quickReply["button_id"] != null) {
+                    connection.publishEvent(OrbEvent.createButtonClickEvent(
+                      quickReply["button_id"],
+                      text: quickReply["text"],
+                      context: quickReply["context"],
+                    ));
+                  } else {
+                    connection.publishEvent(OrbEvent.createSayEvent(
+                      quickReply["text"],
+                      context: quickReply["context"],
+                    ));
+                  }
+                },
+              )
+          ],
         ),
       );
     }

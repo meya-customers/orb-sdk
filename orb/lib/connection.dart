@@ -172,9 +172,6 @@ class OrbConnection extends ChangeNotifier {
             ),
           );
           notifyListeners();
-          // print("New ${_eventStream.events}");
-        } else {
-          // print(payload);
         }
       },
       onDone: () {
@@ -192,7 +189,6 @@ class OrbConnection extends ChangeNotifier {
   }
 
   void publishEvent(OrbEvent event) {
-    // print("ADD $event");
     final eventMap = {
       "type": event.type,
       "data": event.data,

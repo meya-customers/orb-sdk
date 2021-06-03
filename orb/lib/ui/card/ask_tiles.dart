@@ -59,11 +59,12 @@ class OrbAskTiles extends StatelessWidget {
   Widget buildColumn(BuildContext context) {
     final tiles = event.data['tiles'];
     return Column(
-      children: tiles.map((tile) {
-        return Container(
-          child: Text(tile['title'] ?? 'Tile'),
-        );
-      }),
+      children: [
+        for (final tile in tiles)
+          Container(
+            child: Text(tile['title'] ?? 'Tile'),
+          )
+      ],
     );
   }
 

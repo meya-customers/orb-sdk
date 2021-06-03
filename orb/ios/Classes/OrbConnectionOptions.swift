@@ -1,4 +1,4 @@
-public class OrbConnectionOptions {
+@objc public class OrbConnectionOptions: NSObject {
     public var gridUrl: String
     public var appId: String
     public var integrationId: String

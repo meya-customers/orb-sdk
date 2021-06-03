@@ -65,26 +65,27 @@ class OrbAskButtons extends StatelessWidget {
     bool disabled,
     List<dynamic> buttons,
   ) {
-    return buttons
-        .map((button) => Button(
-              text: button["text"],
-              onTap: () {
-                if (button["button_id"] != null) {
-                  connection.publishEvent(OrbEvent.createButtonClickEvent(
-                    button["button_id"],
-                    text: button["text"],
-                    context: button["context"],
-                  ));
-                } else {
-                  connection.publishEvent(OrbEvent.createSayEvent(
-                    button["text"],
-                    context: button["context"],
-                  ));
-                }
-              },
-              disabled: disabled,
-            ))
-        .toList();
+    return [
+      for (final button in buttons)
+        Button(
+          text: button["text"],
+          onTap: () {
+            if (button["button_id"] != null) {
+              connection.publishEvent(OrbEvent.createButtonClickEvent(
+                button["button_id"],
+                text: button["text"],
+                context: button["context"],
+              ));
+            } else {
+              connection.publishEvent(OrbEvent.createSayEvent(
+                button["text"],
+                context: button["context"],
+              ));
+            }
+          },
+          disabled: disabled,
+        )
+    ];
   }
 }
 
