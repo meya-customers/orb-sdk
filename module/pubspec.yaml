@@ -1,5 +1,7 @@
-name: orb_sdk
-description: Orb Mobile SDK for Android and iOS
+name: orb_module
+description: |
+  A Flutter module to integrate the Orb Mobile SDK into an existing Android or
+  iOS app.
 version: 2.6.5
 
 # Don't publish to pub.dev using `pub publish`.
@@ -24,5 +26,5 @@ flutter:
   uses-material-design: true
   module:
     androidX: true
-    androidPackage: ai.meya.orb_sdk
-    iosBundleIdentifier: ai.meya.orbSdk
+    androidPackage: ai.meya.orb_module
+    iosBundleIdentifier: ai.meya.orbModule

@@ -63,7 +63,9 @@ abstract class OrbImage extends StatelessWidget {
 
   Widget buildImage(BuildContext context) {
     return ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: 340),
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.of(context).size.width * 0.80,
+      ),
       child: ClipRRect(
         borderRadius: BorderRadius.all(OrbTheme.of(context).borderRadius.small),
         child: Image.network(

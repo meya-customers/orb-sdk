@@ -4,10 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:orb/connection.dart';
 import 'package:orb/event.dart';
 import 'package:orb/event_stream.dart';
-import 'package:orb/orb.dart';
+import 'package:orb/plugin.dart';
 import 'package:orb/ui/chat.dart';
 import 'package:orb/ui/design.dart';
-
 
 class OrbApp extends StatefulWidget {
   @override
@@ -24,18 +23,18 @@ class _OrbAppState extends State<OrbApp> {
   @override
   void initState() {
     super.initState();
-    Orb.init();
+    OrbPlugin.init();
     initPlatformState();
-    Orb.ready();
-    Orb.connect = connect;
-    Orb.disconnect = disconnect;
-    Orb.publishEvent = publishEvent;
+    OrbPlugin.ready();
+    OrbPlugin.connect = connect;
+    OrbPlugin.disconnect = disconnect;
+    OrbPlugin.publishEvent = publishEvent;
   }
 
   Future<void> initPlatformState() async {
     String version;
     try {
-      version = await Orb.platformVersion;
+      version = await OrbPlugin.platformVersion;
     } on PlatformException {
       version = 'Failed to get platform version.';
     }
@@ -77,38 +76,38 @@ class _OrbAppState extends State<OrbApp> {
   }
 
   void onConnected(Map<String, dynamic> arguments) {
-    Orb.connected();
+    OrbPlugin.connected();
   }
 
   void onFirstConnect(Map<String, dynamic> arguments) {
-    if (!Orb.isSubscribed('firstConnect')) return null;
+    if (!OrbPlugin.isSubscribed('firstConnect')) return null;
     final OrbEventStream eventStream = arguments['eventStream'];
-    Orb.firstConnect(eventStream.rawEvents);
+    OrbPlugin.firstConnect(eventStream.rawEvents);
   }
 
   void onReconnect(Map<String, dynamic> arguments) {
-    if (!Orb.isSubscribed('reconnect')) return null;
+    if (!OrbPlugin.isSubscribed('reconnect')) return null;
     final OrbEventStream eventStream = arguments['eventStream'];
-    Orb.reconnect(eventStream.rawEvents);
+    OrbPlugin.reconnect(eventStream.rawEvents);
   }
 
   void onEvent(Map<String, dynamic> arguments) {
-    if (!Orb.isSubscribed('event')) return null;
+    if (!OrbPlugin.isSubscribed('event')) return null;
     final OrbEvent event = arguments['event'];
     final OrbEventStream eventStream = arguments['eventStream'];
-    Orb.event(event.toEventMap(), eventStream.rawEvents);
+    OrbPlugin.event(event.toEventMap(), eventStream.rawEvents);
   }
 
   void onEventStream(Map<String, dynamic> arguments) {
-    if (!Orb.isSubscribed('eventStream')) return null;
+    if (!OrbPlugin.isSubscribed('eventStream')) return null;
     final OrbEventStream eventStream = arguments['eventStream'];
-    Orb.eventStream(eventStream.rawEvents);
+    OrbPlugin.eventStream(eventStream.rawEvents);
   }
 
   void disconnect() {
     setState(() {
       connection = null;
-      Orb.disconnected();
+      OrbPlugin.disconnected();
     });
   }
 

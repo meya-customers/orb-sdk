@@ -69,10 +69,9 @@ class _OrbComposerState extends State<OrbComposer> {
   void toggleMode(Mode mode) => setState(() => (this.mode = mode));
 }
 
-class TextMode extends StatelessWidget {
+class TextMode extends StatefulWidget {
   final OrbEventStream eventStream;
   final OrbConnection connection;
-  final TextEditingController textEditingController = TextEditingController();
   final Function toggleMode;
 
   TextMode({
@@ -83,9 +82,31 @@ class TextMode extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  _TextModeState createState() => _TextModeState(
+        eventStream: this.eventStream,
+        connection: this.connection,
+        toggleMode: this.toggleMode,
+      );
+}
+
+class _TextModeState extends State<TextMode> {
+  final OrbEventStream eventStream;
+  final OrbConnection connection;
+  final Function toggleMode;
+
+  FocusNode composerFocusNode = FocusNode();
+  TextEditingController textEditingController = TextEditingController();
+
+  _TextModeState({
+    @required this.eventStream,
+    @required this.connection,
+    @required this.toggleMode,
+  });
+
+  @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(bottom: 20),
+      margin: EdgeInsets.only(bottom: 10),
       child: Row(
         children: <Widget>[
           OrbComposerIconButton(
@@ -103,6 +124,13 @@ class TextMode extends StatelessWidget {
                   fontSize: OrbTheme.of(context).text.size.medium.fontSize,
                 ),
                 controller: textEditingController,
+                focusNode: composerFocusNode,
+                onSubmitted: (text) {
+                  connection.publishEvent(
+                      OrbEvent.createSayEvent(textEditingController.text));
+                  textEditingController.clear();
+                  composerFocusNode.requestFocus();
+                },
                 decoration: InputDecoration.collapsed(
                   hintText: 'Type a message',
                   hintStyle: OrbTheme.of(context)
@@ -165,13 +193,15 @@ class ExtraMode extends StatelessWidget {
             icon: OrbIcon(OrbIcons.left),
             onPressed: () => toggleMode(Mode.text),
           ),
-          OrbComposerButton(
-            eventStream: eventStream,
-            connection: connection,
-            icon: OrbIcon(OrbIcons.sendFile),
-            text: "File",
-            onTap: () => getFile(context),
-          ),
+          // Todo: remove this when image_picker bug is fixed for iOS
+          if (Platform.isAndroid)
+            OrbComposerButton(
+              eventStream: eventStream,
+              connection: connection,
+              icon: OrbIcon(OrbIcons.sendFile),
+              text: "File",
+              onTap: () => getFile(context),
+            ),
           OrbComposerButton(
             eventStream: eventStream,
             connection: connection,

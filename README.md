@@ -10,8 +10,8 @@ the Orb SDK only supports the Android and iOS platforms.
 This repo contains two folders, namely:
 - `orb`: This is a **Flutter plugin** package and contains all the Dart code and platform 
   specific integration code for the core Orb SDK.
-- `orb_sdk`: This is a **Flutter module** that allows you to integrate the Orb SDK into your
-  native app. The `orb_sdk` depends on the `orb` Flutter package.
+- `module`: This is a **Flutter module** that allows you to integrate the Orb SDK into your
+  native app. The `module` Flutter module depends on the `orb` Flutter package.
 
 
 ## Getting started
@@ -51,13 +51,13 @@ Follow the Flutter editor setup instructions for your development environment:
 
 - [Windows/macOs/Linux](https://flutter.dev/docs/get-started/editor?tab=androidstudio)
 
-### Open `orb_sdk` in Android Studio
+### Open `module` in Android Studio
 - Open Android Studio
 - Select `Open an Existing Project`
-- Navigate to the `orb_sdk` folder and select the `orb_sdk` folder
+- Navigate to the `orb-sdk` repo folder and select the `module` folder
 - Click `Open`
 
-This will open the `orb_sdk` Flutter project in Android Studio. The Flutter 
+This will open the `module` Flutter project in Android Studio. The Flutter 
 plugin in Android Studio will do a couple of things:
 - Detect that it is a Flutter project and not an Android project.
 - Run `flutter pub get`: this will read the `pubspec.yaml` file and download
@@ -65,7 +65,7 @@ plugin in Android Studio will do a couple of things:
 - Index all the Dart source code.
 - Detect any running Android/iOS/Web devices
 
-### Run the `orb_sdk`
+### Run the `module`
 A Flutter module is not intended to be run on it's own, it's primary purpose is to integrate
 the Flutter module into an existing native app. However, it is still possible to run a Flutter
 module.
@@ -101,6 +101,7 @@ The Flutter plugin in Android Studio will now do a couple of things:
 - It will launch the app on the AVD and connect the Flutter debugger
 
 **Min SDK version build error**
+
 If the Gradle build fails with the following error:
 
 ```text
@@ -142,8 +143,8 @@ You should see a screen saying `Ready to connect`.
 ## Add to an Android app
 ### Project setup
 In your terminal:
-- Go to the `orb_sdk` folder:
-  `cd some/path/orb_sdk`
+- Go to the `module` folder:
+  `cd some/path/module`
 - Run: `flutter build aar`
 - This will build various AAR packages and create a local Gradle repository.
 - Open your app's `app/build.gradle` file
@@ -152,7 +153,7 @@ In your terminal:
   String storageUrl = System.env.FLUTTER_STORAGE_BASE_URL ?: "https://storage.googleapis.com"
   repositories {
       maven {
-          url projectDir.absolutePath + '/some/relative/path/orb_sdk/build/host/outputs/repo'
+          url projectDir.absolutePath + '/some/relative/path/module/build/host/outputs/repo'
       }
       maven {
           url "$storageUrl/download.flutter.io"
@@ -162,9 +163,9 @@ In your terminal:
 - Make the app depend on the Flutter module
   ```
   dependencies {
-      debugImplementation 'ai.meya.orb_sdk:flutter_debug:1.0'
-      profileImplementation 'ai.meya.orb_sdk:flutter_profile:1.0'
-      releaseImplementation 'ai.meya.orb_sdk:flutter_release:1.0'
+      debugImplementation 'ai.meya.orb_module:flutter_debug:1.0'
+      profileImplementation 'ai.meya.orb_module:flutter_profile:1.0'
+      releaseImplementation 'ai.meya.orb_module:flutter_release:1.0'
   }
   ```
 - Add the `profile` build type to your `android.buildTypes` e.g.:
@@ -280,11 +281,11 @@ to add a `Podfile` to your project.
 
 1. Add the following to your `Podfile`:
 ```ruby
-orb_sdk_path = 'some/relative/path/orb_sdk'
+orb_sdk_path = 'some/relative/path/module'
 load File.join(orb_sdk_path, '.ios', 'Flutter', 'podhelper.rb')
 ```
 
-2. For each Podfile target that needs to embed the `orb_sdk`, call `install_all_flutter_pods(orb_sdk_path)` e.g.
+2. For each Podfile target that needs to embed the Orb SDK, call `install_all_flutter_pods(orb_sdk_path)` e.g.
 ```ruby
 target `MyApp` do
     install_all_flutter_pods(orb_sdk_path)
@@ -293,10 +294,10 @@ end
 
 3. Run `pod install`
 
-**Note**, when you update the version of the `orb_sdk` and/or `orb`, run `flutter pub get` in the `orb_sdk` folder
+**Note**, when you update the version of the `module` and/or `orb`, run `flutter pub get` in the `module` folder
 to refresh the list of dependencies read by `podhelper.rb`. Then, run `pod install` again for your application.
 
-The `podhelper.rb` script embeds the `orb_sdk` framework, `Flutter.framework` and any transitive Flutter plugin 
+The `podhelper.rb` script embeds the `module` framework, `Flutter.framework` and any transitive Flutter plugin 
 dependencies into your project.
 
 Open your apps `.xcworkspace` file in Xcode and build using `Cmd+B`.
