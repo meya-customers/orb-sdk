@@ -35,17 +35,17 @@ public class OrbPlugin implements FlutterPlugin, MethodCallHandler {
 
     @Override
     public void success(Object result) {
-      Log.d("OrbLauncher", result.toString());
+      Log.d("OrbPlugin", result.toString());
     }
 
     @Override
     public void error(String errorCode, String errorMessage, Object errorDetails) {
-      Log.e("OrbLauncher", errorCode + ": " + errorMessage);
+      Log.e("OrbPlugin", errorCode + ": " + errorMessage);
     }
 
     @Override
     public void notImplemented() {
-      Log.e("OrbLauncher", "'" + method + "' method not implemented");
+      Log.e("OrbPlugin", "'" + method + "' method not implemented");
     }
   }
 
@@ -106,26 +106,26 @@ public class OrbPlugin implements FlutterPlugin, MethodCallHandler {
   }
 
   public void subscribe(String name) {
-    Log.d("OrbLauncher", "Subscribing to '" + name + "'");
+    Log.d("OrbPlugin", "Subscribing to '" + name + "'");
     Map<String, String> arguments = new HashMap<>();
     arguments.put("name", name);
     channel.invokeMethod("subscribe", arguments, new GenericResult("subscribe"));
   }
 
   public void unsubscribe(String name) {
-    Log.d("OrbLauncher", "Un-subscribing to '" + name + "'");
+    Log.d("OrbPlugin", "Un-subscribing to '" + name + "'");
     Map<String, String> arguments = new HashMap<>();
     arguments.put("name", name);
     channel.invokeMethod("unsubscribe", arguments, new GenericResult("unsubscribe"));
   }
 
   public void connect(OrbConnectionOptions options) {
-    Log.d("OrbLauncher", "Connecting to '" + options.gridUrl + "'");
+    Log.d("OrbPlugin", "Connecting to '" + options.gridUrl + "'");
     channel.invokeMethod("connect", options.toMap(), new GenericResult("connect"));
   }
 
   public void disconnect() {
-    Log.d("OrbLauncher", "Disconnect");
+    Log.d("OrbPlugin", "Disconnect");
     channel.invokeMethod("disconnect", null, new GenericResult("disconnect"));
   }
 
@@ -136,7 +136,7 @@ public class OrbPlugin implements FlutterPlugin, MethodCallHandler {
     channel.invokeMethod("publishEvent", arguments, new GenericResult("publishEvent"));
   }
 
-  public List<Map<String, Object>> extractEventStream(Map<String, Object> arguments) {
+  private List<Map<String, Object>> extractEventStream(Map<String, Object> arguments) {
     List<Map<String, Object>> eventStream = (List<Map<String, Object>>) arguments.get("eventStream");
     if (eventStream != null) {
       return eventStream;
@@ -145,7 +145,7 @@ public class OrbPlugin implements FlutterPlugin, MethodCallHandler {
     }
   }
 
-  public Map<String, Object> extractEvent(Map<String, Object> arguments) {
+  private Map<String, Object> extractEvent(Map<String, Object> arguments) {
     Map<String, Object> event = (Map<String, Object>) arguments.get("event");
     if (event != null) {
       return event;

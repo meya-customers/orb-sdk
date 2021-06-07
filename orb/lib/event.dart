@@ -12,14 +12,24 @@ class OrbEvent implements Comparable<OrbEvent> {
 
   @override
   int compareTo(OrbEvent other) {
-    final _id = int.parse(id.replaceFirst('-', ''));
-    final _otherId = int.parse(other.id.replaceFirst('-', ''));
-    if (_id < _otherId) {
+    final _id = id.split('-');
+    final _seq = int.parse(_id[0]);
+    final _ts = int.parse(_id[1]);
+    final _otherId = other.id.split('-');
+    final _otherSeq = int.parse(_otherId[0]);
+    final _otherTs = int.parse(_otherId[1]);
+    if (_ts < _otherTs) {
       return -1;
-    } else if (_id > _otherId) {
+    } else if (_ts > _otherTs) {
       return 1;
     } else {
-      return 0;
+      if (_seq < _otherSeq) {
+        return -1;
+      } else if (_seq > _otherSeq) {
+        return 1;
+      } else {
+        return 0;
+      }
     }
   }
 

@@ -127,7 +127,7 @@ public class Orb {
         OrbPlugin plugin = (OrbPlugin) registry.get(OrbPlugin.class);
 
         if (plugin == null) {
-            Log.e("OrbLauncher", "Could not get OrbLauncherPlugin.");
+            Log.e("OrbPlugin", "Could not get OrbPlugin.");
             return null;
         } else {
             return plugin;
@@ -136,7 +136,7 @@ public class Orb {
 
     private boolean checkEngine() {
         if (engine == null) {
-            Log.e("OrbLauncher", "Orb not initialized yet.");
+            Log.e("OrbPlugin", "Orb not initialized yet.");
             return false;
         } else {
             return true;

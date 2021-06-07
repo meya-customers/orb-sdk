@@ -44,7 +44,7 @@ which flutter
 flutter doctor
 ```
 
-### Setup Flutter Editor/IDE
+### Install Android Studio Flutter plugin
 We recommend using Android Studio to view and edit any Flutter app/package/plugin/module.
 
 Follow the Flutter editor setup instructions for your development environment:

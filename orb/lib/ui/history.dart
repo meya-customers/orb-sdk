@@ -69,6 +69,7 @@ class OrbHistory extends StatelessWidget {
     @required OrbEvent event,
     OrbUserAvatar userAvatar,
   }) {
+    // TODO: Consolidate this with EventMap class
     switch (event.type) {
       case 'meya.button.event.ask':
         return buildAskButtons(event, userAvatar);

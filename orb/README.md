@@ -1,64 +1,37 @@
 # Meya Orb Mobile SDK 
+This project is structured as a Flutter plugin which contains all the Dart code
+for the Orb widgets as well as the native Android & iOS Orb APIs to start the 
+Orb and send/receive events.
 
-Orb Mobile SDK for Android and iOS
+## Development
+A Flutter plugin is not meant to be run on it's own because it contains no 
+`main.dart` entry point. So for development you need to create a separate 
+Flutter app and include this `orb` Flutter plugin as a dependency.
 
-## Getting Started
+For convenience, we've created an `example` Flutter app nested under the plugin
+that you can use for development.
 
-For help getting started with Flutter, view our online
-[documentation](https://flutter.dev/).
+The `example` Flutter app serves two purposes:
+1. Setup a Flutter development environment allowing to Flutter debugging, hot reload etc.
+2. Use the Orb native APIs to start the Orb this includes:
+  - Starting the Flutter Engine
+  - Passing in Orb connection options 
+  - Connecting into the Orb lifecycle events
 
-1. Install [Dart](https://dart.dev/get-dart)
-2. Install [Flutter](https://flutter.dev/docs/get-started/install/macos)
-3. Run `flutter doctor`
-4. Open orb/flutter in Android Studio
-5. Set Dart SDK path in Android Studio
-6. Set Flutter SDK path in Android Studio
-7. Run main.dart using a selected device
+### Run the `example` app
+- Open Android Studio
+- Select `Open an Existing Project`
+- Navigate to the `orb` directory and select the `example` directory
+- Click `Open`
 
-### Run on iOS Simulator
-- `sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer`
-- `sudo xcodebuild -license`
-- `open -a Simulator`
-- Select an iOS version to start from `File > Open Simulator > iOS 14.4`
-- Go to Android Studio and select `iPhone ...` from the devices list and click the run icon to 
-  compile and run the app on the iOS simulator.
+This will open the `example` Flutter project in Android Studio. The Flutter 
+plugin in Android Studio will do a couple of things:
+- Detect that it is a Flutter project and not an Android project.
+- Run `flutter pub get`: this will read the `pubspec.yaml` file and download
+  all the Flutter dependencies.
+- Index all the Dart source code.
+- Detect any running Android/iOS/Web devices
 
-## Formatting
-
-`dartfmt --fix -w lib test`
-
-`flutter pub run import_sorter:main --no-comments`
-
-## Icons
-
-### svgcleaner
-SVG icons must be clean i.e. all styles need to be inlined using `svgcleaner`
-
-Install `svgcleaner`:
-- `brew install --cask svgcleaner`
-
-Download your SVG files to your local machine.
-
-Run `svgcleaner` on your files:
-
-
-### SVGO
-Install:
-- `npm -g install svgo`
-
-### Clean file script
-```shell script
-#!/bin/sh
-
-SOURCE_DIR=$1
-DEST_DIR=$2
-
-for SOURCE_FILE in $(find . -type f -iname "*.svg"); do
-  FILE=$(echo "$SOURCE_FILE" | cut -c 3-)
-  DEST_FILE=$(echo "$DEST_DIR/$FILE")
-  echo "$DEST_FILE"
-  # scour -i $SOURCE_FILE -o $DEST_FILE
-  # svgo --config svgo-config.js $SOURCE_FILE -o $DEST_FILE
-  svgcleaner $SOURCE_FILE $DEST_FILE
-done
-```
+### Code Formatting
+- Format Dart code: `flutter format .`
+- Sort Dart imports: `flutter pub run import_sorter:main --no-comments`
