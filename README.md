@@ -206,11 +206,12 @@ import java.util.Map;
 
 
 public class ChatActivity extends OrbActivity {
+    private static final String TAG = "ChatActivity";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Log.d("Orb", "================================");
         String platformVersion = "Android " + android.os.Build.VERSION.RELEASE;
 
         Map<String, Object> pageContext = new HashMap<>();
@@ -222,16 +223,30 @@ public class ChatActivity extends OrbActivity {
         data.put("key2", 12345.9);
         data.put("bool", true);
         pageContext.put("data", data);
+        
+        OrbConnectionOptions connectionOptions = new OrbConnectionOptions(
+                "https://grid.meya.ai",
+                "YOUR MEYA APP ID",
+                "integration.orb.mobile",
+                pageContext
+        );
 
-        orb.setOnReadyListener(new Orb.ReadyListener() {
-            public void onReady() {
-                Log.d("Orb", "Orb runtime ready");
-                orb.connect(new OrbConnectionOptions(
-                        "https://grid.meya.ai",
-                        "YOUR MEYA APP ID,
-                        "integration.orb",
-                        pageContext
-                ));
+        if (!orb.ready) {
+            orb.setOnReadyListener(new Orb.ReadyListener() {
+                public void onReady() {
+                    Log.d(TAG, "Orb runtime ready");
+                    orb.connect(connectionOptions);
+                }
+            });
+        } else {
+            orb.connect(connectionOptions);
+        }
+
+        orb.setOnCloseUiListener(new Orb.CloseUiListener() {
+            @Override
+            public void onCloseUi() {
+                Log.d(TAG, "Close Orb");
+                finish();
             }
         });
     }
@@ -254,6 +269,18 @@ arbitrary map that you can use to send context data to your bot when the Orb con
 ```
 
 **Note**, make sure the `android:name` has the correct class path to where you created the `ChatActivity` file.
+
+Also add the following permissions to allow Orb to take access the photo gallery and
+to take pictures:
+
+```xml
+<uses-permission android:name="android.permission.CAMERA" />
+<queries>
+    <intent>
+        <action android:name="android.media.action.IMAGE_CAPTURE" />
+    </intent>
+</queries>
+```
 
 3. Start `ChatActivity`
 
@@ -345,6 +372,8 @@ extension Orb {
         if let registrar = engine.registrar(forPlugin: "FLTURLLauncherPlugin") {
             FLTURLLauncherPlugin.register(with: registrar)
         }
+        
+        self.initCallbacks()
     }
 }
 ```
@@ -429,3 +458,340 @@ For help getting started with Flutter, view the online
 
 For instructions integrating Flutter modules to your existing applications,
 see the [add-to-app documentation](https://flutter.dev/docs/development/add-to-app).
+
+
+## Push Notifications
+The Orb Mobile integration & Orb SDK supports sending and handling push notifications 
+when the Orb chat is not active. This is especially useful when a bot escalates 
+to a human agent and the agent takes a while to respond.
+
+To fully setup push notifications you will need to configure three components:
+
+1. Android Firebase Cloud Messaging (FCM)
+2. Apple Push Notification service (APNs)
+3. Orb Mobile integration in your Meya app
+
+
+### Android Setup
+1. Setup Firebase Cloud Messaging (FCM) on Android
+
+Follow these instructions to add FCM to your app:
+[Set up a Firebase Cloud Messaging client app on Android](https://firebase.google.com/docs/cloud-messaging/android/client)
+
+
+2. Get your Firebase Service Account Key
+
+- Open your [Firebase Console](https://console.firebase.google.com/)
+- Select the project you're using for FCM
+- Click gear icon next to **Project Overview**
+- Go to **Project settings**
+- Click on **Generate new private key**
+- This will download a `.json` file to your computer
+
+
+3. Add the Service Account Key to your app's vault
+
+- Copy the JSON from the `.json` private key file you downloaded from the Firebase
+  Console.
+- Open your app's vault in the Meya Console
+- Add the vault key named `orb.mobile.service_account_key`
+- Paste the JSON you copied
+- Click the ✓ button
+- Click **Save**
+
+
+4. Add the Orb Mobile integration to your app
+
+Add the following BFML to you app, we recommend you save this file in the 
+`integration/orb/mobile/` folder, but you can save this anywhere.
+
+```yaml
+id: integration.orb.mobile
+type: meya.orb.mobile.integration
+android:
+  service_account_key: (@ vault.orb.mobile.service_account_key )
+  # This is the name of the activity you would like to launch that contains the
+  # Orb SDK
+  click_action: ChatActivity
+```
+
+**Note**, the integration's ID is explicitly set in this example. If you do not explicitly
+set the ID then Meya will use the folder path as the integration's ID.
+
+
+5. Push your Meya app
+
+If you're in the Meya Console then clicking **Save** will save the BFML and push
+the changes to the app.
+
+If you're using the Meya CLI then you'll need to do an explicit push
+```shell
+meya push
+```
+
+
+6. Provide the FCM device token to the Orb SDK
+
+You need to capture and pass the FCM device token to the `Orb` class before you
+connect the Orb to the grid. Here is an example of a `ChatActivity` that will
+first read the device token before setting up Orb.
+
+```java
+package ai.meya.orb_demo;
+
+import ai.meya.orb.Orb;
+import ai.meya.orb.OrbActivity;
+
+import android.os.Bundle;
+import android.util.Log;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.messaging.FirebaseMessaging;
+
+import ai.meya.orb.OrbConnectionOptions;
+import androidx.annotation.NonNull;
+
+import java.util.HashMap;
+import java.util.Map;
+
+
+public class ChatActivity extends OrbActivity {
+    private static final String TAG = "ChatActivity";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(new OnCompleteListener<String>() {
+            @Override
+            public void onComplete(@NonNull Task<String> task) {
+                if (!task.isSuccessful()) {
+                    Log.w(TAG, "Fetching FCM registration token failed", task.getException());
+                    return;
+                }
+                orb.deviceToken = task.getResult();
+                orbConnect();
+            }
+        });
+    }
+
+    private void orbConnect() {
+        String platformVersion = "Android " + android.os.Build.VERSION.RELEASE;
+        
+        Map<String, Object> pageContext = new HashMap<>();
+        pageContext.put("platform_version", platformVersion);
+        pageContext.put("key1", 1235);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("key1", "value1");
+        data.put("key2", 12345.9);
+        data.put("bool", true);
+        pageContext.put("data", data);
+
+        OrbConnectionOptions connectionOptions = new OrbConnectionOptions(
+                "https://grid.meya.ai",
+                "YOUR MEYA APP ID",
+                "integration.orb.mobile",
+                pageContext
+        );
+
+        if (!orb.ready) {
+            orb.setOnReadyListener(new Orb.ReadyListener() {
+                public void onReady() {
+                    Log.d(TAG, "Orb runtime ready");
+                    orb.connect(connectionOptions);
+                }
+            });
+        } else {
+            orb.connect(connectionOptions);
+        }
+
+        orb.setOnCloseUiListener(new Orb.CloseUiListener() {
+            @Override
+            public void onCloseUi() {
+                Log.d(TAG, "Close Orb");
+                finish();
+            }
+        });
+    }
+}
+```
+
+Make sure that your `ChatActivity` is registered in your app's `AndroidManifest.xml`
+file:
+
+```xml
+        <activity
+            android:name=".ChatActivity"
+            android:theme="@style/Theme.OrbDemo"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize"
+        >
+            <intent-filter>
+                <action android:name="ChatActivity" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+```
+
+This activity can then be launched from the push notification when the Orb Mobile 
+integration's `android.click_action` settings is set to `ChatActivity`
+
+
+7. Test your push notifications
+
+The best way to test push notifications is to:
+
+- Trigger a flow via a webhook while the app is closed, or
+- Escalate to an agent (e.g. Zendesk/Front), close the chat activity and send an
+  agent response.
+
+
+### iOS Setup
+1. Add APNs notifications to your app
+   
+- First [enable the Push Notifications Capability](https://developer.apple.com/documentation/usernotifications/registering_your_app_with_apns#overview) in your app
+- You'll need to implement the various `application` hooks to register the app for
+  push notifications and receive the APNs device token. Below is an example 
+  `AppDelegate` that initializes the Orb and stores the device token:
+  
+```swift
+import UIKit
+import orb
+import UserNotifications
+
+@main
+class AppDelegate: UIResponder, UIApplicationDelegate {
+    lazy var orb = Orb()
+    var deviceToken: String?
+    
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        orb.initialize()
+        registerForPushNotifications()
+        return true
+    }
+
+    func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
+        return UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
+    }
+    
+    func application(
+        _ application: UIApplication,
+        didReceiveRemoteNotification userInfo: [AnyHashable: Any],
+        fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
+    ) {
+        guard let _ = userInfo["aps"] as? [String: AnyObject] else {
+            completionHandler(.failed)
+            return
+        }
+        // Launch your Orb view from here
+    }
+    
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        let tokenParts = deviceToken.map { data in String(format: "%02.2hhx", data)}
+        let token = tokenParts.joined()
+        self.deviceToken = token
+        orb.deviceToken = token
+    }
+    
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        print("Failed to register: \(error)")
+    }
+    
+    func registerForPushNotifications() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { [weak self] granted, _ in
+            print("Permission granted: \(granted)")
+            guard granted else { return }
+            self?.getNotificationSettings()
+        }
+    }
+    
+    func getNotificationSettings() {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            print("Notification settings: \(settings)")
+            guard settings.authorizationStatus == .authorized else { return }
+            DispatchQueue.main.async {
+                UIApplication.shared.registerForRemoteNotifications()
+            }
+        }
+    }
+}
+```
+
+**Note**, currently the Orb does **not** use [method swizzling](https://abhimuralidharan.medium.com/method-swizzling-in-ios-swift-1f38edaf984f)
+to autoconfigure these hooks for you (this might be added in a future release), so
+if you're using the Firebase SDK for iOS you'll need to disable Firebase's method 
+swizzling and implement these methods manually.
+
+2. Create your APNs auth key
+
+- Open the [Apple Developer Member Center](https://developer.apple.com/account/)
+- Go to **Certificates Identifiers & Profiles**
+- Go to **Keys** in the menu to the left
+- Click `+` icon next to the **Keys** title
+- Give your new key a name
+- Select **Apple Push Notifications service (APNs)**
+- Click **Continue**
+- Click **Register**
+- Click **Download** to download the file
+- Note the **Key ID**, you'll need this for the Orb Mobile integration config
+
+
+3. Add the auth APNs credentials to your app's vault
+
+- Copy the private key from the auth key file that you downloaded. 
+- Open your app's vault in the Meya Console
+- Add the vault key named `orb.mobile.auth_key`
+- Paste the auth key you copied
+- Click the ✓ button
+- Copy the **Key ID** from the key you created, [Apple Developer Member Center / Keys](https://developer.apple.com/account/resources/authkeys/)
+- Add the vault key named `orb.mobile.auth_key_id`
+- Paste the auth key id you copied 
+- Click the ✓ button
+- Copy you Apple **Team ID**, this is at the top right of the page, under your 
+  login name
+- Add the vault key named `orb.mobile.team_id`
+- Paste the team id you copied
+- Click the ✓ button
+- Click **Save**
+
+
+4. Add the Orb Mobile integration to your app
+
+Add the following BFML to you app, we recommend you save this file in the
+`integration/orb/mobile/` folder, but you can save this anywhere.
+
+```yaml
+id: integration.orb.mobile
+type: meya.orb.mobile.integration
+ios:
+  auth_key: (@ vault.orb.mobile.auth_key )
+  auth_key_id: (@ vault.orb.mobile.auth_key_id )
+  team_id: (@ vault.orb.mobile.team_id )
+  topic: YOUR APP BUNDLE ID
+```
+
+**Note**, the integration's ID is explicitly set in this example. If you do not explicitly
+set the ID then Meya will use the folder path as the integration's ID.
+
+
+5. Push your Meya app
+
+If you're in the Meya Console then clicking **Save** will save the BFML and push
+the changes to the app.
+
+If you're using the Meya CLI then you'll need to do an explicit push
+```shell
+meya push
+```
+
+
+6. Test your push notifications
+
+The best way to test push notifications is to:
+
+- Trigger a flow via a webhook while the app is closed, or
+- Escalate to an agent (e.g. Zendesk/Front), close the chat activity and send an
+  agent response.

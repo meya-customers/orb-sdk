@@ -143,6 +143,8 @@ class OrbEventStream {
         'meya.session.event.page.open',
         'meya.orb.event.screen.continue',
         'meya.orb.event.screen.end',
+        'meya.orb.event.device',
+        'meya.orb.event.device.heartbeat',
         'meya.analytics.event.track',
         'meya.directly.event.webhook',
         'meya.presence.event.typing.on',

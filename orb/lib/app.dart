@@ -60,12 +60,16 @@ class _OrbAppState extends State<OrbApp> {
         magicLinkId: options.magicLinkId,
         url: options.url,
         referrer: options.referrer,
+        deviceId: options.deviceId,
+        deviceToken: options.deviceToken,
+        enableCloseButton: options.enableCloseButton,
       );
       connection.addOrbListener('connected', onConnected);
       connection.addOrbListener('firstConnect', onFirstConnect);
       connection.addOrbListener('reconnect', onReconnect);
       connection.addOrbListener('event', onEvent);
       connection.addOrbListener('eventStream', onEventStream);
+      connection.addOrbListener('closeUi', onCloseUi);
       connection.addListener(
         () => setState(() {
           // New event stream ready for building
@@ -73,6 +77,21 @@ class _OrbAppState extends State<OrbApp> {
       );
       connection.connect();
     });
+  }
+
+  void disconnect(bool logOut) {
+    connection.disconnect(logOut: logOut);
+    setState(() {
+      connection = null;
+    });
+    OrbPlugin.disconnected();
+  }
+
+  void publishEvent(Map<dynamic, dynamic> event) {
+    if (connection == null) throw Exception('Orb is not connected.');
+    if (connection != null) {
+      connection.publishEvent(OrbEvent.fromEventMap(event));
+    }
   }
 
   void onConnected(Map<String, dynamic> arguments) {
@@ -104,18 +123,8 @@ class _OrbAppState extends State<OrbApp> {
     OrbPlugin.eventStream(eventStream.rawEvents);
   }
 
-  void disconnect() {
-    setState(() {
-      connection = null;
-      OrbPlugin.disconnected();
-    });
-  }
-
-  void publishEvent(Map<dynamic, dynamic> event) {
-    if (connection == null) throw Exception('Orb is not connected.');
-    if (connection != null) {
-      connection.publishEvent(OrbEvent.fromEventMap(event));
-    }
+  void onCloseUi(Map<String, dynamic> arguments) {
+    OrbPlugin.closeUi();
   }
 
   @override

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:meta/meta.dart';
 
 class OrbEvent implements Comparable<OrbEvent> {
@@ -53,6 +55,32 @@ class OrbEvent implements Comparable<OrbEvent> {
       id: eventMap['id'],
       type: eventMap['type'],
       data: eventMap['data'],
+    );
+  }
+
+  factory OrbEvent.createDeviceEvent({String deviceId, String deviceToken}) {
+    String platform = 'unsupported';
+    if (Platform.isAndroid) {
+      platform = 'android';
+    } else if (Platform.isIOS) {
+      platform = 'ios';
+    }
+    return OrbEvent(
+      type: 'meya.orb.event.device',
+      data: {
+        'device_id': deviceId,
+        'device_token': deviceToken,
+        'platform': platform,
+      },
+    );
+  }
+
+  factory OrbEvent.createHeartbeatEvent(String deviceId) {
+    return OrbEvent(
+      type: 'meya.orb.event.device.heartbeat',
+      data: {
+        'device_id': deviceId,
+      },
     );
   }
 

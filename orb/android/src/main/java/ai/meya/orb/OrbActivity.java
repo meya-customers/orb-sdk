@@ -23,7 +23,7 @@ public class OrbActivity extends FlutterActivity {
         super.onCreate(savedInstanceState);
 
         if (getFlutterEngine() != null) {
-            orb = new Orb(getFlutterEngine());
+            orb = new Orb(getContext(), getFlutterEngine());
         } else {
             orb = new Orb(getContext());
         }

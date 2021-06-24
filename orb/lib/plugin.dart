@@ -16,6 +16,9 @@ class ConnectionOptions {
   final String magicLinkId;
   final String url;
   final String referrer;
+  final String deviceId;
+  final String deviceToken;
+  final bool enableCloseButton;
 
   ConnectionOptions({
     @required this.gridUrl,
@@ -29,13 +32,16 @@ class ConnectionOptions {
     this.magicLinkId,
     this.url,
     this.referrer,
+    this.deviceId,
+    this.deviceToken,
+    this.enableCloseButton,
   });
 }
 
 class OrbPlugin {
   static const MethodChannel channel = const MethodChannel('orb');
   static void Function(ConnectionOptions) connect;
-  static void Function() disconnect;
+  static void Function(bool logOut) disconnect;
   static void Function(Map<dynamic, dynamic>) publishEvent;
   static Set<String> subscriptions = {};
 
@@ -58,10 +64,13 @@ class OrbPlugin {
             magicLinkId: call.arguments['magicLinkId'],
             url: call.arguments['url'],
             referrer: call.arguments['referrer'],
+            deviceId: call.arguments['deviceId'],
+            deviceToken: call.arguments['deviceToken'],
+            enableCloseButton: call.arguments['enableCloseButton'] ?? true,
           ));
-        return 'Called connected';
+        return 'Connect called';
       case 'disconnect':
-        if (disconnect != null) disconnect();
+        if (disconnect != null) disconnect(call.arguments['logOut'] ?? false);
         return 'Disconnect called';
       case 'publishEvent':
         if (publishEvent != null) publishEvent(call.arguments['event']);
@@ -130,5 +139,9 @@ class OrbPlugin {
         'eventStream': eventStream,
       },
     );
+  }
+
+  static Future<String> closeUi() async {
+    return await channel.invokeMethod('closeUi');
   }
 }

@@ -30,17 +30,22 @@ class OrbConnection extends ChangeNotifier {
   String magicLinkId;
   String url;
   String referrer;
+  String deviceId;
+  String deviceToken;
+  bool enableCloseButton;
   Function(Map<dynamic, dynamic>, Function) onFirstConnect;
 
-  Timer _timer;
+  bool firstConnect = true;
+  bool reconnect = false;
   int retries = 0;
 
-  EventEmitter _eventEmitter = EventEmitter();
-  WebSocketChannel _channel;
+  Timer _heartbeatTimer;
+  Timer _timer;
   bool _connected = false;
+  WebSocketChannel _channel;
+  EventEmitter _eventEmitter = EventEmitter();
   OrbEventStream _eventStream = OrbEventStream();
   FlutterSecureStorage _storage = FlutterSecureStorage();
-  bool firstConnect = true;
 
   OrbConnection({
     @required this.gridUrl,
@@ -54,7 +59,10 @@ class OrbConnection extends ChangeNotifier {
     this.magicLinkId,
     this.url,
     this.referrer,
+    this.deviceId,
+    this.deviceToken,
     this.onFirstConnect,
+    this.enableCloseButton,
   }) {
     blobUrl = '$gridUrl/gateway/v2/blob/$appId/blob';
   }
@@ -97,6 +105,7 @@ class OrbConnection extends ChangeNotifier {
 
     _channel = IOWebSocketChannel.connect(url.toString());
     _connected = false;
+    reconnect = true;
 
     final timeoutInterval = _getTimeoutInterval();
     _timer = Timer(timeoutInterval, () {
@@ -150,6 +159,17 @@ class OrbConnection extends ChangeNotifier {
               {'eventStream': _eventStream},
             ),
           );
+          if (deviceToken != null) {
+            publishEvent(OrbEvent.createDeviceEvent(
+              deviceId: deviceId,
+              deviceToken: deviceToken,
+            ));
+            final heartbeatInterval = _getHeartbeatInterval();
+            _heartbeatTimer = Timer.periodic(heartbeatInterval, (timer) {
+              print('HEARTBEAT $deviceId');
+              publishEvent(OrbEvent.createHeartbeatEvent(deviceId));
+            });
+          }
 
           notifyListeners();
         } else if (payload["type"] == "meya.orb.entry.ws.publish_request") {
@@ -176,6 +196,7 @@ class OrbConnection extends ChangeNotifier {
       onDone: () {
         print("DONE");
         _timer?.cancel();
+        _heartbeatTimer?.cancel();
         _connected = false;
         _reconnect();
         notifyListeners();
@@ -183,8 +204,27 @@ class OrbConnection extends ChangeNotifier {
       onError: (error, stackTrace) {
         print('ERROR $error');
         _timer?.cancel();
+        _heartbeatTimer?.cancel();
       },
     );
+  }
+
+  void disconnect({bool logOut = false}) {
+    if (logOut) {
+      gridUserId = null;
+      userId = null;
+      sessionToken = null;
+      magicLinkId = null;
+      _storage.deleteAll();
+      firstConnect = true;
+      _eventStream = OrbEventStream();
+      _eventEmitter.emit('eventStream', {'eventStream': _eventStream});
+    }
+    reconnect = false;
+    retries = 0;
+    _timer?.cancel();
+    _heartbeatTimer?.cancel();
+    _channel?.sink?.close();
   }
 
   void publishEvent(OrbEvent event) {
@@ -216,6 +256,8 @@ class OrbConnection extends ChangeNotifier {
   }
 
   void _reconnect() async {
+    if (!reconnect) return;
+
     final retryInterval = _getRetryTimeoutInterval();
     print('RETRYING $retries $retryInterval');
     await Future.delayed(retryInterval);
@@ -226,6 +268,12 @@ class OrbConnection extends ChangeNotifier {
   Duration _getTimeoutInterval() {
     return Duration(
       milliseconds: 3000,
+    );
+  }
+
+  Duration _getHeartbeatInterval() {
+    return Duration(
+      milliseconds: 5000,
     );
   }
 
@@ -285,4 +333,6 @@ class OrbConnection extends ChangeNotifier {
     }
     publishEvent(event);
   }
+
+  void closeUi() => _eventEmitter.emit('closeUi', {});
 }

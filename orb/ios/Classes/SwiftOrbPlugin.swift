@@ -12,6 +12,7 @@ public class SwiftOrbPlugin: NSObject, FlutterPlugin {
     public var reconnect: (([Dictionary<String, Any?>]) -> Void)? = nil
     public var event: ((Dictionary<String, Any?>, [Dictionary<String, Any?>]) -> Void)? = nil
     public var eventStream: (([Dictionary<String, Any?>]) -> Void)? = nil
+    public var closeUi: (() -> Void)? = nil
 
     init(channel: FlutterMethodChannel) {
         self.channel = channel
@@ -65,6 +66,10 @@ public class SwiftOrbPlugin: NSObject, FlutterPlugin {
                 let eventStream = extractEventStream(arguments)
                 _eventStream(eventStream)
             }
+        case "closeUi":
+            if let _closeUi = closeUi {
+                _closeUi()
+            }
         default:
             result(FlutterMethodNotImplemented)
         }
@@ -92,8 +97,8 @@ public class SwiftOrbPlugin: NSObject, FlutterPlugin {
         }
     }
 
-    public func disconnect(result: FlutterResult?) {
-        channel.invokeMethod("disconnect", arguments: nil, result: result)
+    public func disconnect(logOut: Bool, result: FlutterResult?) {
+        channel.invokeMethod("disconnect", arguments: ["logOut": logOut], result: result)
     }
 
     public func publishEvent(event: Dictionary<String, Any?>, result: FlutterResult?) {

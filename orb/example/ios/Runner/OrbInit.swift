@@ -34,5 +34,7 @@ extension Orb {
         if let registrar = engine.registrar(forPlugin: "FLTURLLauncherPlugin") {
             FLTURLLauncherPlugin.register(with: registrar)
         }
+        
+        self.initCallbacks()
     }
 }
