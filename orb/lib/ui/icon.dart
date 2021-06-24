@@ -170,4 +170,7 @@ class OrbIcons {
 
   static OrbIconSpec link = OrbIconSpec.buildIconSpec(
       'streamline-regular/01-interface essential/52-expand:retract/expand-6.svg');
+
+  static OrbIconSpec close = OrbIconSpec.buildIconSpec(
+      'streamline-regular/01-interface essential/43-remove:add/remove.svg');
 }

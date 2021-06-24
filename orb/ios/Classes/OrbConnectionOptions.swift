@@ -10,6 +10,9 @@
     public var magicLinkId: String?
     public var url: String?
     public var referrer: String?
+    public var deviceId: String?
+    public var deviceToken: String?
+    public var enableCloseButton: Bool?
         
     public init(
         gridUrl: String,
@@ -22,7 +25,10 @@
         sessionToken: String? = nil,
         magicLinkId: String? = nil,
         url: String? = nil,
-        referrer: String? = nil
+        referrer: String? = nil,
+        deviceId: String? = nil,
+        deviceToken: String? = nil,
+        enableCloseButton: Bool? = true
     ) {
         self.gridUrl = gridUrl
         self.appId = appId
@@ -35,6 +41,9 @@
         self.magicLinkId = magicLinkId
         self.url = url
         self.referrer = referrer
+        self.deviceId = deviceId
+        self.deviceToken = deviceToken
+        self.enableCloseButton = enableCloseButton
     }
     
     public func toDict() -> Dictionary<String, Any?> {
@@ -50,6 +59,9 @@
             "magicLinkId": magicLinkId,
             "url": url,
             "referrer": referrer,
+            "deviceId": deviceId,
+            "deviceToken": deviceToken,
+            "enableCloseButton": enableCloseButton,
         ]
     }
 }

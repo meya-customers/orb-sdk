@@ -16,6 +16,8 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 
 public class OrbPlugin implements FlutterPlugin, MethodCallHandler {
+  private static final String TAG = "OrbPlugin";
+
   public Orb.ReadyListener readyListener;
   public Orb.ConnectedListener connectedListener;
   public Orb.DisconnectedListener disconnectedListener;
@@ -23,6 +25,7 @@ public class OrbPlugin implements FlutterPlugin, MethodCallHandler {
   public Orb.ReconnectListener reconnectListener;
   public Orb.EventListener eventListener;
   public Orb.EventStreamListener eventStreamListener;
+  public Orb.CloseUiListener closeUiListener;
   private MethodChannel channel;
 
 
@@ -35,17 +38,17 @@ public class OrbPlugin implements FlutterPlugin, MethodCallHandler {
 
     @Override
     public void success(Object result) {
-      Log.d("OrbPlugin", result.toString());
+      Log.d(TAG, result.toString());
     }
 
     @Override
     public void error(String errorCode, String errorMessage, Object errorDetails) {
-      Log.e("OrbPlugin", errorCode + ": " + errorMessage);
+      Log.e(TAG, errorCode + ": " + errorMessage);
     }
 
     @Override
     public void notImplemented() {
-      Log.e("OrbPlugin", "'" + method + "' method not implemented");
+      Log.e(TAG, "'" + method + "' method not implemented");
     }
   }
 
@@ -94,6 +97,9 @@ public class OrbPlugin implements FlutterPlugin, MethodCallHandler {
           eventStreamListener.onEventStream(extractEventStream(arguments));
         }
         break;
+      case "closeUi":
+        if (closeUiListener != null) closeUiListener.onCloseUi();
+        break;
       default:
         result.notImplemented();
         break;
@@ -106,31 +112,33 @@ public class OrbPlugin implements FlutterPlugin, MethodCallHandler {
   }
 
   public void subscribe(String name) {
-    Log.d("OrbPlugin", "Subscribing to '" + name + "'");
-    Map<String, String> arguments = new HashMap<>();
+    Log.d(TAG, "Subscribing to '" + name + "'");
+    Map<String, Object> arguments = new HashMap<>();
     arguments.put("name", name);
     channel.invokeMethod("subscribe", arguments, new GenericResult("subscribe"));
   }
 
   public void unsubscribe(String name) {
-    Log.d("OrbPlugin", "Un-subscribing to '" + name + "'");
-    Map<String, String> arguments = new HashMap<>();
+    Log.d(TAG, "Un-subscribing to '" + name + "'");
+    Map<String, Object> arguments = new HashMap<>();
     arguments.put("name", name);
     channel.invokeMethod("unsubscribe", arguments, new GenericResult("unsubscribe"));
   }
 
   public void connect(OrbConnectionOptions options) {
-    Log.d("OrbPlugin", "Connecting to '" + options.gridUrl + "'");
+    Log.d(TAG, "Connecting to '" + options.gridUrl + "'");
     channel.invokeMethod("connect", options.toMap(), new GenericResult("connect"));
   }
 
-  public void disconnect() {
-    Log.d("OrbPlugin", "Disconnect");
-    channel.invokeMethod("disconnect", null, new GenericResult("disconnect"));
+  public void disconnect(boolean logOut) {
+    Log.d(TAG, "Disconnect");
+    Map<String, Object> arguments = new HashMap<>();
+    arguments.put("logOut", logOut);
+    channel.invokeMethod("disconnect", arguments, new GenericResult("disconnect"));
   }
 
   public void publishEvent(Map<String, Object> event) {
-    Log.d("OrbLancher", "Publish event");
+    Log.d(TAG, "Publish event");
     Map<String, Object> arguments = new HashMap<>();
     arguments.put("event", event);
     channel.invokeMethod("publishEvent", arguments, new GenericResult("publishEvent"));

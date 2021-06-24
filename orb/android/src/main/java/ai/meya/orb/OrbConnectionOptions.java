@@ -15,6 +15,9 @@ public class OrbConnectionOptions {
     public String magicLinkId;
     public String url;
     public String referrer;
+    public String deviceId;
+    public String deviceToken;
+    public boolean enableCloseButton = true;
 
     public OrbConnectionOptions(String gridUrl, String appId, String integrationId) {
         this.gridUrl = gridUrl;
@@ -44,6 +47,9 @@ public class OrbConnectionOptions {
         options.put("magicLinkId", magicLinkId);
         options.put("url", url);
         options.put("referrer", referrer);
+        options.put("deviceId", deviceId);
+        options.put("deviceToken", deviceToken);
+        options.put("enableCloseButton", enableCloseButton);
         return options;
     }
 }

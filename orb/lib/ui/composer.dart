@@ -106,8 +106,8 @@ class _TextModeState extends State<TextMode> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(bottom: 10),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: <Widget>[
           OrbComposerIconButton(
             icon: OrbIcon(OrbIcons.extraInput),
@@ -117,11 +117,15 @@ class _TextModeState extends State<TextMode> {
           // Edit text
           Flexible(
             child: Container(
+              margin: EdgeInsets.only(bottom: 14, top: 13),
               padding: EdgeInsets.only(right: 10.0),
               child: TextField(
+                keyboardType: TextInputType.multiline,
+                minLines: 1,
+                maxLines: 8,
                 style: TextStyle(
                   color: OrbTheme.of(context).palette.normal,
-                  fontSize: OrbTheme.of(context).text.size.medium.fontSize,
+                  fontSize: 18,
                 ),
                 controller: textEditingController,
                 focusNode: composerFocusNode,
@@ -157,7 +161,6 @@ class _TextModeState extends State<TextMode> {
           ),
         ],
       ),
-      height: 50.0,
       decoration: BoxDecoration(
         border: Border(
           top: BorderSide(
@@ -186,14 +189,13 @@ class ExtraMode extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(bottom: 20),
       child: Row(
         children: <Widget>[
           OrbComposerIconButton(
             icon: OrbIcon(OrbIcons.left),
             onPressed: () => toggleMode(Mode.text),
           ),
-          // Todo: remove this when file_picker bug is fixed for iOS
+          // TODO: remove this when file_picker bug is fixed for iOS
           if (Platform.isAndroid)
             OrbComposerButton(
               eventStream: eventStream,
@@ -313,7 +315,6 @@ class ImageMode extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(bottom: 20),
       child: Row(
         children: <Widget>[
           OrbComposerIconButton(
