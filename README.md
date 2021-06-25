@@ -1,17 +1,20 @@
 # Orb SDK
-Welcome to the Orb SDK! This guide will help you integrate the Orb SDK into your existing Android or
-iOS application and allow you to connect to your Meya app.
+Welcome to the Orb SDK! This guide will help you integrate the Orb SDK into 
+your existing Android or iOS application and allow you to connect to your 
+Meya app.
 
-First a bit of context about the Orb SDK. The Orb SDK is implemented using the cross platform 
-Flutter framework and the Dart language. Flutter allows you to build high fidelity, fast apps
-targeting multiple platforms including Android, iOS, Web, Linux, Windows and macOS. Currently 
-the Orb SDK only supports the Android and iOS platforms.
+First a bit of context about the Orb SDK. The Orb SDK is implemented using the 
+cross platform Flutter framework and the Dart language. Flutter allows you to 
+build high fidelity, fast apps targeting multiple platforms including Android,
+iOS, Web, Linux, Windows and macOS. Currently the Orb SDK only supports the 
+Android and iOS platforms.
 
 This repo contains two folders, namely:
-- `orb`: This is a **Flutter plugin** package and contains all the Dart code and platform 
-  specific integration code for the core Orb SDK.
-- `module`: This is a **Flutter module** that allows you to integrate the Orb SDK into your
-  native app. The `module` Flutter module depends on the `orb` Flutter package.
+- `orb`: This is a **Flutter plugin** package and contains all the Dart code 
+  and platform specific integration code for the core Orb SDK.
+- `module`: This is a **Flutter module** that allows you to integrate the 
+  Orb SDK into your native app. The `module` Flutter module depends on the 
+  `orb` Flutter package.
 
 
 ## Getting started
@@ -106,11 +109,11 @@ If the Gradle build fails with the following error:
 
 ```text
 AndroidManifest.xml Error:
-	uses-sdk:minSdkVersion 16 cannot be smaller than version 18 declared in library [:orb] 
+  uses-sdk:minSdkVersion 16 cannot be smaller than version 18 declared in library [:orb] 
 ...
-	Suggestion: use a compatible library with a minSdk of at most 16,
-		or increase this project's minSdk version to at least 18,
-		or use tools:overrideLibrary="ai.meya.orb" to force usage (may lead to runtime failures)
+  Suggestion: use a compatible library with a minSdk of at most 16,
+    or increase this project's minSdk version to at least 18,
+    or use tools:overrideLibrary="ai.meya.orb" to force usage (may lead to runtime failures)
 ```
 
 Then manually edit the generated Gradle build file:
@@ -185,117 +188,42 @@ For extra information on adding Flutter modules to Android, view the
 
 ### Add and launch the ChatActivity
 
-1. Create the `ChatActivity`
+- Create a `ChatActivity` class in your app.
+- [Example Orb Demo `ChatActivity`](https://github.com/meya-customers/orb-demo-android/blob/main/app/src/main/java/ai/meya/orb_demo/ChatActivity.java)
+- The Orb SDK provides an `OrbActivity` class to initialize, connect and 
+  display the Orb in a full screen view.
+- Make sure to set your **Meya App ID** in the `OrbConnectionOptions`. 
+  Note, the `pageContext` is an arbitrary `Map<String, Object>` object that 
+  you can use to send custom context data to your bot when the Orb connects.
+- Add the `ChatActivity` to your `AndroidManifest.xml` file, see the 
+  [example Orb Demo `AndroidManifest.xml` file](https://github.com/meya-customers/orb-demo-android/blob/main/app/src/main/AndroidManifest.xml#L24) 
 
-The Orb SDK provides an `OrbActivity` class to initialize, connect and display the Orb in
-a full screen page. First you create your own `ChatActivity` and add it to your 
-`AndroidManifest.xml` file under your application tag.
+  **Note**, make sure the `android:name` has the correct class path to where you 
+  created the `ChatActivity` file.
 
-Create a new class named `ChatActivity` and copy/paste this following code:
-```java
-import ai.meya.orb.Orb;
-import ai.meya.orb.OrbActivity;
+  Also add the following permissions to allow Orb access to the photo gallery and
+  camera:
 
-import android.os.Bundle;
-import android.util.Log;
+  ```xml
+  <uses-permission android:name="android.permission.CAMERA" />
+  <queries>
+      <intent>
+          <action android:name="android.media.action.IMAGE_CAPTURE" />
+      </intent>
+  </queries>
+  ```
 
-import ai.meya.orb.OrbConnectionOptions;
-
-import java.util.HashMap;
-import java.util.Map;
-
-
-public class ChatActivity extends OrbActivity {
-    private static final String TAG = "ChatActivity";
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        String platformVersion = "Android " + android.os.Build.VERSION.RELEASE;
-
-        Map<String, Object> pageContext = new HashMap<>();
-        pageContext.put("platform_version", platformVersion);
-        pageContext.put("key1", 1235);
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("key1", "value1");
-        data.put("key2", 12345.9);
-        data.put("bool", true);
-        pageContext.put("data", data);
-        
-        OrbConnectionOptions connectionOptions = new OrbConnectionOptions(
-                "https://grid.meya.ai",
-                "YOUR MEYA APP ID",
-                "integration.orb.mobile",
-                pageContext
-        );
-
-        if (!orb.ready) {
-            orb.setOnReadyListener(new Orb.ReadyListener() {
-                public void onReady() {
-                    Log.d(TAG, "Orb runtime ready");
-                    orb.connect(connectionOptions);
-                }
-            });
-        } else {
-            orb.connect(connectionOptions);
-        }
-
-        orb.setOnCloseUiListener(new Orb.CloseUiListener() {
-            @Override
-            public void onCloseUi() {
-                Log.d(TAG, "Close Orb");
-                finish();
-            }
-        });
-    }
-}
-```
-
-Set your **Meya App ID** in the `OrbConnectionOptions`. Note, the `pageContext` is and
-arbitrary map that you can use to send context data to your bot when the Orb connects.
-
-2. Add the `ChatActivity` to your `AndroidManifest.xml` file
-
-```xml
-<activity
-    android:name=".ChatActivity"
-    android:theme="@style/Theme.OrbDemo"
-    android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
-    android:hardwareAccelerated="true"
-    android:windowSoftInputMode="adjustResize"
-/>
-```
-
-**Note**, make sure the `android:name` has the correct class path to where you created the `ChatActivity` file.
-
-Also add the following permissions to allow Orb to take access the photo gallery and
-to take pictures:
-
-```xml
-<uses-permission android:name="android.permission.CAMERA" />
-<queries>
-    <intent>
-        <action android:name="android.media.action.IMAGE_CAPTURE" />
-    </intent>
-</queries>
-```
-
-3. Start `ChatActivity`
-
-Add the following code to a button in your app:
-
-```java
-myChatButton.setOnClickListener(new View.OnClickListener() {
-    @Override
-    public void onClick(View view) {
-        startActivity(
-            ChatActivity.createDefaultIntent(getBaseContext(), ChatActivity.class)
-        );
-    }
-});
-```
+- Start `ChatActivity`: 
+  ```java
+  myChatButton.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+          startActivity(
+              ChatActivity.createDefaultIntent(getBaseContext(), ChatActivity.class)
+          );
+      }
+  });
+  ```
 
 
 ## Add to an iOS app
@@ -303,153 +231,52 @@ myChatButton.setOnClickListener(new View.OnClickListener() {
 Requirements:
 - [CocoaPods](https://cocoapods.org/) v1.10 or later.
 
-If your existing iOS app doesn't already have a Podfile, follow the [CocoaPods getting started guide](https://guides.cocoapods.org/using/using-cocoapods.html)
+If your existing iOS app doesn't already have a Podfile, follow the 
+[CocoaPods getting started guide](https://guides.cocoapods.org/using/using-cocoapods.html)
 to add a `Podfile` to your project.
 
-1. Add the following to your `Podfile`:
-```ruby
-orb_sdk_path = 'some/relative/path/module'
-load File.join(orb_sdk_path, '.ios', 'Flutter', 'podhelper.rb')
-```
+- Add the following to your `Podfile`:
+  ```ruby
+  orb_sdk_path = 'some/relative/path/module'
+  load File.join(orb_sdk_path, '.ios', 'Flutter', 'podhelper.rb')
+  ```
 
-2. For each Podfile target that needs to embed the Orb SDK, call `install_all_flutter_pods(orb_sdk_path)` e.g.
-```ruby
-target `MyApp` do
-    install_all_flutter_pods(orb_sdk_path)
-end
-```
+- For each Podfile target that needs to embed the Orb SDK, call 
+  `install_all_flutter_pods(orb_sdk_path)` e.g.:
+  ```ruby
+  target `MyApp` do
+      install_all_flutter_pods(orb_sdk_path)
+  end
+  ```
 
-3. Run `pod install`
+- Run `pod install`
 
-**Note**, when you update the version of the `module` and/or `orb`, run `flutter pub get` in the `module` folder
-to refresh the list of dependencies read by `podhelper.rb`. Then, run `pod install` again for your application.
+**Note**, when you update the version of the `module` and/or `orb`, run 
+`flutter pub get` in the `module` folder to refresh the list of dependencies 
+read by `podhelper.rb`. Then, run `pod install` again for your application.
 
-The `podhelper.rb` script embeds the `module` framework, `Flutter.framework` and any transitive Flutter plugin 
-dependencies into your project.
+The `podhelper.rb` script embeds the `module` framework, `Flutter.framework` 
+and any transitive Flutter plugin dependencies into your project.
 
 Open your apps `.xcworkspace` file in Xcode and build using `Cmd+B`.
 
 ### Add and launch the Orb
 
-1. Add the `OrbInit.swift` file.
+- Create the `OrbInit.swift` file in your app's code folder.
+- [Example Orb Demo `OrbInit.swift` file](https://github.com/meya-customers/orb-demo-ios/blob/main/OrbDemo/OrbInit.swift)
+- This code extends the `Orb` class to initialize the Flutter engine with the
+  correct plugins and initializes internal callbacks between the `Orb` class
+  and the `OrbPlugin` class.
 
-Create a new Swift file called `OrbInit.swift` in your app's code folder. Copy/past the following code:
+The Orb SDK gives you a lot of flexibility in how to initialize and show the
+Orb chat, but the simplest method is to simply create a new instance of `Orb`
+and display it's `ViewController` in **fullscreen** mode.
 
-```swift
-import file_picker
-import flutter_secure_storage
-import image_picker
-import orb
-import package_info_plus
-import path_provider
-import url_launcher
-
-
-extension Orb {
-    public func initialize() {
-        // Start the Flutter engine
-        engine.run()
-        
-        // Register all required Flutter plugins
-        if let registrar = engine.registrar(forPlugin: "OrbPlugin") {
-            OrbPlugin.register(with: registrar)
-        }
-        if let registrar = engine.registrar(forPlugin: "FilePickerPlugin") {
-            FilePickerPlugin.register(with: registrar)
-        }
-        if let registrar = engine.registrar(forPlugin: "FlutterSecureStoragePlugin") {
-            FlutterSecureStoragePlugin.register(with: registrar)
-        }
-        if let registrar = engine.registrar(forPlugin: "FLTImagePickerPlugin") {
-            FLTImagePickerPlugin.register(with: registrar)
-        }
-        if let registrar = engine.registrar(forPlugin: "FLTPackageInfoPlusPlugin") {
-            FLTPackageInfoPlusPlugin.register(with: registrar)
-        }
-        if let registrar = engine.registrar(forPlugin: "FLTPathProviderPlugin") {
-            FLTPathProviderPlugin.register(with: registrar)
-        }
-        if let registrar = engine.registrar(forPlugin: "FLTURLLauncherPlugin") {
-            FLTURLLauncherPlugin.register(with: registrar)
-        }
-        
-        self.initCallbacks()
-    }
-}
-```
-
-This code extends the `Orb` class to initialize the Flutter engine with the correct plugins.
-
-2. Add `Orb` to your main `AppDelegate` e.g.:
-```swift
-import UIKit
-import orb
-
-@main
-class AppDelegate: UIResponder, UIApplicationDelegate {
-    lazy var orb = Orb()
-    
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        orb.initialize()
-        return true
-    }
-}
-```
-
-This will create the main `Orb` object which creates a Flutter engine. Then calling `orb.initialize()` will 
-start the Flutter engine and register all the plugins.
-
-3. Start and connect the `Orb`.
-
-In either an existing or new ViewController start the orb as follows:
-
-```swift
-import UIKit
-import Flutter
-import orb
-
-class ViewController: UIViewController {
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        
-        let button = UIButton(type: UIButton.ButtonType.custom)
-        button.addTarget(self, action: #selector(showOrb), for: .touchUpInside)
-        button.setTitle("Show Orb", for: UIControl.State.normal)
-        button.frame = CGRect(x: 80.0, y: 210.0, width: 160.0, height: 40.0)
-        button.backgroundColor = UIColor.blue
-        self.view.addSubview(button)
-        
-    }
-    
-    @IBAction func showOrb(sender: UIButton) {
-        let orb = (UIApplication.shared.delegate as! AppDelegate).orb
-        let platformVersion = "iOS " + UIDevice.current.systemVersion
-        orb.connect(
-            options: OrbConnectionOptions(
-                gridUrl: "https://grid.meya.ai",
-                appId: "YOUR MEYA APP ID",
-                integrationId: "integration.orb",
-                pageContext: [
-                    "platform_version": platformVersion,
-                    "a": 1234,
-                    "data": [
-                        "key1": "value1",
-                        "key2": 123123.3,
-                        "bool": true
-                    ]
-                ] as [String: Any?]
-            ),
-            result: { result in
-                print("Connect result: \(String(describing: result))")
-            })
-        let viewController = orb.viewController()
-        present(viewController, animated: true, completion: nil)
-    }
-}
-```
-
-Set your **Meya App ID** in the `OrbConnectionOptions`. Note, the `pageContext` is and
-arbitrary dictionary that you can use to send context data to your bot when the Orb connects.
+- Create a button and an `@IBAction` handler
+- [Example Orb Demo `@IBAction` handler](https://github.com/meya-customers/orb-demo-ios/blob/main/OrbDemo/LaunchViewController.swift#L63)
+- Set your **Meya App ID** in the `OrbConnectionOptions`. Note, the 
+  `pageContext` is an arbitrary dictionary that you can use to send custom
+  context data to your bot when the Orb connects.
 
 
 ### Flutter specific help
@@ -460,26 +287,33 @@ For instructions integrating Flutter modules to your existing applications,
 see the [add-to-app documentation](https://flutter.dev/docs/development/add-to-app).
 
 
-## Push Notifications
-The Orb Mobile integration & Orb SDK supports sending and handling push notifications 
-when the Orb chat is not active. This is especially useful when a bot escalates 
-to a human agent and the agent takes a while to respond.
+# Push Notifications
+The  Orb SDK supports handling push notifications when the Orb chat is not 
+active. This is especially useful when a bot escalates the conversation to a 
+human agent, but the agent takes a while to respond.
 
-To fully setup push notifications you will need to configure three components:
+To fully setup push notifications you will need to configure the following 
+three components:
 
 1. Android Firebase Cloud Messaging (FCM)
 2. Apple Push Notification service (APNs)
-3. Orb Mobile integration in your Meya app
+3. **Orb Mobile** integration in your Meya app.
+   
+   **Note**, this is **not** the same as the standard Orb integration used for 
+   the web client. The Orb Mobile integration is identified by 
+   `type: meya.orb.mobile.integration` - [here is an example configuration](https://github.com/meya-customers/demo-app/blob/master/integration/orb/mobile.yaml).
+   You can still connect the Orb SDK to the Orb integration, but it will **not**
+   handle any push notifications.
 
 
-### Android Setup
-1. Setup Firebase Cloud Messaging (FCM) on Android
+## Android Setup
+### 1. Setup Firebase Cloud Messaging (FCM) on Android
 
 Follow these instructions to add FCM to your app:
 [Set up a Firebase Cloud Messaging client app on Android](https://firebase.google.com/docs/cloud-messaging/android/client)
 
 
-2. Get your Firebase Service Account Key
+### 2. Get your Firebase Service Account Key
 
 - Open your [Firebase Console](https://console.firebase.google.com/)
 - Select the project you're using for FCM
@@ -489,7 +323,7 @@ Follow these instructions to add FCM to your app:
 - This will download a `.json` file to your computer
 
 
-3. Add the Service Account Key to your app's vault
+### 3. Add the Service Account Key to your app's vault
 
 - Copy the JSON from the `.json` private key file you downloaded from the Firebase
   Console.
@@ -500,7 +334,7 @@ Follow these instructions to add FCM to your app:
 - Click **Save**
 
 
-4. Add the Orb Mobile integration to your app
+### 4. Add the Orb Mobile integration to your app
 
 Add the following BFML to you app, we recommend you save this file in the 
 `integration/orb/mobile/` folder, but you can save this anywhere.
@@ -510,222 +344,105 @@ id: integration.orb.mobile
 type: meya.orb.mobile.integration
 android:
   service_account_key: (@ vault.orb.mobile.service_account_key )
-  # This is the name of the activity you would like to launch that contains the
-  # Orb SDK
-  click_action: ChatActivity
 ```
 
-**Note**, the integration's ID is explicitly set in this example. If you do not explicitly
-set the ID then Meya will use the folder path as the integration's ID.
+**Note**, the integration's ID is explicitly set in this example. If you do 
+not explicitly set the ID then Meya will use the folder path (using `.` 
+notation e.g. `some/folder/file.yaml` becomes `some.folder.file` ) as the 
+integration's ID.
 
 
-5. Push your Meya app
+### 5. Push your Meya app
 
-If you're in the Meya Console then clicking **Save** will save the BFML and push
-the changes to the app.
+If you're in the Meya Console then clicking **Save** will save the BFML and 
+push the changes to your app.
 
-If you're using the Meya CLI then you'll need to do an explicit push
+If you're using the Meya CLI then you'll need to do an explicit push:
 ```shell
 meya push
 ```
 
 
-6. Provide the FCM device token to the Orb SDK
+### 6. Provide the FCM device token to the Orb SDK
 
-You need to capture and pass the FCM device token to the `Orb` class before you
-connect the Orb to the grid. Here is an example of a `ChatActivity` that will
-first read the device token before setting up Orb.
-
-```java
-package ai.meya.orb_demo;
-
-import ai.meya.orb.Orb;
-import ai.meya.orb.OrbActivity;
-
-import android.os.Bundle;
-import android.util.Log;
-
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.messaging.FirebaseMessaging;
-
-import ai.meya.orb.OrbConnectionOptions;
-import androidx.annotation.NonNull;
-
-import java.util.HashMap;
-import java.util.Map;
+- You need to capture and pass the FCM device token to the `Orb` class before you
+  call `orb.connect()`. 
+- [Example Orb Demo `ChatActivity`](https://github.com/meya-customers/orb-demo-android/blob/main/app/src/main/java/ai/meya/orb_demo/ChatActivity.java)
+- Also make sure that your `ChatActivity` is registered in your app's 
+  `AndroidManifest.xml` - [example Orb Demo manifest](https://github.com/meya-customers/orb-demo-android/blob/main/app/src/main/AndroidManifest.xml#L23)
 
 
-public class ChatActivity extends OrbActivity {
-    private static final String TAG = "ChatActivity";
+Any activity can then be launched from the push notification when the Orb 
+Mobile integration's `android.click_action` setting is set, here is an 
+example BFML configuration for the Orb Demo app:
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(new OnCompleteListener<String>() {
-            @Override
-            public void onComplete(@NonNull Task<String> task) {
-                if (!task.isSuccessful()) {
-                    Log.w(TAG, "Fetching FCM registration token failed", task.getException());
-                    return;
-                }
-                orb.deviceToken = task.getResult();
-                orbConnect();
-            }
-        });
-    }
-
-    private void orbConnect() {
-        String platformVersion = "Android " + android.os.Build.VERSION.RELEASE;
-        
-        Map<String, Object> pageContext = new HashMap<>();
-        pageContext.put("platform_version", platformVersion);
-        pageContext.put("key1", 1235);
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("key1", "value1");
-        data.put("key2", 12345.9);
-        data.put("bool", true);
-        pageContext.put("data", data);
-
-        OrbConnectionOptions connectionOptions = new OrbConnectionOptions(
-                "https://grid.meya.ai",
-                "YOUR MEYA APP ID",
-                "integration.orb.mobile",
-                pageContext
-        );
-
-        if (!orb.ready) {
-            orb.setOnReadyListener(new Orb.ReadyListener() {
-                public void onReady() {
-                    Log.d(TAG, "Orb runtime ready");
-                    orb.connect(connectionOptions);
-                }
-            });
-        } else {
-            orb.connect(connectionOptions);
-        }
-
-        orb.setOnCloseUiListener(new Orb.CloseUiListener() {
-            @Override
-            public void onCloseUi() {
-                Log.d(TAG, "Close Orb");
-                finish();
-            }
-        });
-    }
-}
+```yaml
+id: integration.orb.mobile
+type: meya.orb.mobile.integration
+collect:
+  location: user
+identity_verification: (@ vault.orb.identity_verification )
+android:
+  service_account_key: (@ vault.orb.mobile.service_account_key )
+  # This is the name of the activity you would like to launch that contains the
+  # Orb SDK
+  click_action: .ChatActivity
 ```
 
-Make sure that your `ChatActivity` is registered in your app's `AndroidManifest.xml`
-file:
 
-```xml
-        <activity
-            android:name=".ChatActivity"
-            android:theme="@style/Theme.OrbDemo"
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
-            android:hardwareAccelerated="true"
-            android:windowSoftInputMode="adjustResize"
-        >
-            <intent-filter>
-                <action android:name="ChatActivity" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
-```
-
-This activity can then be launched from the push notification when the Orb Mobile 
-integration's `android.click_action` settings is set to `ChatActivity`
-
-
-7. Test your push notifications
+### 7. Test your push notifications
 
 The best way to test push notifications is to:
 
-- Trigger a flow via a webhook while the app is closed, or
-- Escalate to an agent (e.g. Zendesk/Front), close the chat activity and send an
-  agent response.
+- Escalate to an agent (e.g. Zendesk/Front), close the chat activity and send
+  an agent message, or
+- Send a message via a webhook while the app is closed, see how to set up 
+  a [Webhook integration](https://docs.meya.ai/docs/making-api-calls).
 
 
-### iOS Setup
-1. Add APNs notifications to your app
+### 8. Consider in-app notifications
+
+The Orb Mobile integration will only send a push notification when it detects 
+that the Orb is no longer active (it uses an internal heartbeat to detect 
+inactivity). However, your app could be in a running state which means the 
+push notification will **not** appear, and you'll need to handle
+the incoming notification **explicitly** in a `FirebaseMessagingService` class.
+
+The Orb Demo app has an example implementation of a `FirebaseMessagingService`
+class [here](https://github.com/meya-customers/orb-demo-android/blob/main/app/src/main/java/ai/meya/orb_demo/OrbMessagingService.java).
+
+The example implementation does not do anything special other than
+log the received payloads. However, it's important to note that the Orb Mobile
+integration always adds the `meya_integration_id` key to the push notification
+data payload which allows you to identify Meya notifications and handle them 
+separately from your own app notifications.
+
+If you would like to still show a notification while the app is running, you 
+can create a notification manually as shown in the FCM quick start app 
+[here](https://github.com/firebase/quickstart-android/blob/cdf2619efe945f2b3d2536c805fbb71636adc96f/messaging/app/src/main/java/com/google/firebase/quickstart/fcm/java/MyFirebaseMessagingService.java#L161)
+
+**Note**, advanced in-app push notification handling is on the Orb SDK roadmap
+which will also provide features such as quick replies, buttons etc. 
+
+## iOS Setup
+### 1. Add APNs notifications to your app
    
 - First [enable the Push Notifications Capability](https://developer.apple.com/documentation/usernotifications/registering_your_app_with_apns#overview) in your app
-- You'll need to implement the various `application` hooks to register the app for
-  push notifications and receive the APNs device token. Below is an example 
-  `AppDelegate` that initializes the Orb and stores the device token:
-  
-```swift
-import UIKit
-import orb
-import UserNotifications
-
-@main
-class AppDelegate: UIResponder, UIApplicationDelegate {
-    lazy var orb = Orb()
-    var deviceToken: String?
-    
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        orb.initialize()
-        registerForPushNotifications()
-        return true
-    }
-
-    func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
-        return UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
-    }
-    
-    func application(
-        _ application: UIApplication,
-        didReceiveRemoteNotification userInfo: [AnyHashable: Any],
-        fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
-    ) {
-        guard let _ = userInfo["aps"] as? [String: AnyObject] else {
-            completionHandler(.failed)
-            return
-        }
-        // Launch your Orb view from here
-    }
-    
-    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-        let tokenParts = deviceToken.map { data in String(format: "%02.2hhx", data)}
-        let token = tokenParts.joined()
-        self.deviceToken = token
-        orb.deviceToken = token
-    }
-    
-    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
-        print("Failed to register: \(error)")
-    }
-    
-    func registerForPushNotifications() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { [weak self] granted, _ in
-            print("Permission granted: \(granted)")
-            guard granted else { return }
-            self?.getNotificationSettings()
-        }
-    }
-    
-    func getNotificationSettings() {
-        UNUserNotificationCenter.current().getNotificationSettings { settings in
-            print("Notification settings: \(settings)")
-            guard settings.authorizationStatus == .authorized else { return }
-            DispatchQueue.main.async {
-                UIApplication.shared.registerForRemoteNotifications()
-            }
-        }
-    }
-}
-```
+- You'll need to implement the various `application` hooks to register the app 
+  for push notifications and receive the APNs device token.
+- [Example Orb Demo `AppDelegate`](https://github.com/meya-customers/orb-demo-ios/blob/main/OrbDemo/AppDelegate.swift)
+- You need to set the `orb.deviceToken` property before your call 
+  `orb.connect()`. This can be done in the `application` lifecycle hook as 
+  shown [here in the Orb Demo](https://github.com/meya-customers/orb-demo-ios/blob/main/OrbDemo/AppDelegate.swift#L52)
+  , or you can store it in your app state and use it later in your view
+  hierarchy.
 
 **Note**, currently the Orb does **not** use [method swizzling](https://abhimuralidharan.medium.com/method-swizzling-in-ios-swift-1f38edaf984f)
 to autoconfigure these hooks for you (this might be added in a future release), so
 if you're using the Firebase SDK for iOS you'll need to disable Firebase's method 
 swizzling and implement these methods manually.
 
-2. Create your APNs auth key
+### 2. Create your APNs auth key
 
 - Open the [Apple Developer Member Center](https://developer.apple.com/account/)
 - Go to **Certificates Identifiers & Profiles**
@@ -739,7 +456,7 @@ swizzling and implement these methods manually.
 - Note the **Key ID**, you'll need this for the Orb Mobile integration config
 
 
-3. Add the auth APNs credentials to your app's vault
+### 3. Add the auth APNs credentials to your app's vault
 
 - Copy the private key from the auth key file that you downloaded. 
 - Open your app's vault in the Meya Console
@@ -758,7 +475,7 @@ swizzling and implement these methods manually.
 - Click **Save**
 
 
-4. Add the Orb Mobile integration to your app
+### 4. Add the Orb Mobile integration to your app
 
 Add the following BFML to you app, we recommend you save this file in the
 `integration/orb/mobile/` folder, but you can save this anywhere.
@@ -773,14 +490,16 @@ ios:
   topic: YOUR APP BUNDLE ID
 ```
 
-**Note**, the integration's ID is explicitly set in this example. If you do not explicitly
-set the ID then Meya will use the folder path as the integration's ID.
+**Note**, the integration's ID is explicitly set in this example. If you do
+not explicitly set the ID then Meya will use the folder path (using `.`
+notation e.g. `some/folder/file.yaml` becomes `some.folder.file` ) as the
+integration's ID.
 
 
-5. Push your Meya app
+### 5. Push your Meya app
 
-If you're in the Meya Console then clicking **Save** will save the BFML and push
-the changes to the app.
+If you're in the Meya Console then clicking **Save** will save the BFML and 
+push the changes to the app.
 
 If you're using the Meya CLI then you'll need to do an explicit push
 ```shell
@@ -788,10 +507,31 @@ meya push
 ```
 
 
-6. Test your push notifications
+### 6. Test your push notifications
 
 The best way to test push notifications is to:
 
-- Trigger a flow via a webhook while the app is closed, or
-- Escalate to an agent (e.g. Zendesk/Front), close the chat activity and send an
-  agent response.
+- Escalate to an agent (e.g. Zendesk/Front), close the chat activity and send
+  an agent message, or
+- Send a message via a webhook while the app is closed, see how to set up
+  a [Webhook integration](https://docs.meya.ai/docs/making-api-calls).
+
+
+### 7. Consider in-app push notifications
+As is the case with Android, the Orb Mobile integration will only send a 
+push notification when it detects that the Orb is no longer active 
+(it uses an internal heartbeat to detect inactivity). However, your app could
+be in a running state which means the push notification will **not** appear, 
+and you'll need to handle the incoming notification **explicitly** in your 
+`application` hook with the `didReceiveNotification` parameter.
+
+The Orb Demo app has an [example implementation of this hook](https://github.com/meya-customers/orb-demo-ios/blob/main/OrbDemo/AppDelegate.swift#L20).
+
+The example implementation does not do anything special other than
+log the received payloads. However, it's important to note that the Orb Mobile
+integration always adds the `meya_integration_id` key to the push notification
+data payload which allows you to identify Meya notifications and handle them
+separately from your own app notifications.
+
+**Note**, advanced in-app push notification handling is on the Orb SDK roadmap
+which will also provide features such as quick replies, buttons etc. 
