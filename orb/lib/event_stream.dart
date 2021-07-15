@@ -146,7 +146,6 @@ class OrbEventStream {
         'meya.orb.event.device',
         'meya.orb.event.device.heartbeat',
         'meya.analytics.event.track',
-        'meya.directly.event.webhook',
         'meya.presence.event.typing.on',
         'meya.presence.event.typing.off',
       ].contains(event.type)) {

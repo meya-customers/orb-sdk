@@ -59,17 +59,10 @@ class OrbInputField extends StatefulWidget {
       {@required this.event, @required this.connection, @required this.field});
 
   @override
-  _OrbInputFieldState createState() => _OrbInputFieldState(
-        event: event,
-        connection: connection,
-        field: field,
-      );
+  _OrbInputFieldState createState() => _OrbInputFieldState();
 }
 
 class _OrbInputFieldState extends State<OrbInputField> {
-  final OrbEvent event;
-  final OrbConnection connection;
-  final Map<dynamic, dynamic> field;
   final TextEditingController textEditingController = TextEditingController();
 
   FocusNode focusNode;
@@ -79,9 +72,6 @@ class _OrbInputFieldState extends State<OrbInputField> {
   Map<String, bool> processedEvents = {};
   String inputText = '';
   String errorText = '';
-
-  _OrbInputFieldState(
-      {@required this.event, @required this.connection, @required this.field});
 
   @override
   void initState() {
@@ -112,10 +102,10 @@ class _OrbInputFieldState extends State<OrbInputField> {
   @override
   Widget build(BuildContext context) {
     nodeAttachment.reparent();
-    final eventStream = connection.getEventStream();
-    final form = eventStream.forms[event.data['form_id']];
+    final eventStream = widget.connection.getEventStream();
+    final form = eventStream.forms[widget.event.data['form_id']];
     final ok = form?.okEvent != null;
-    final disabled = !(eventStream.isActiveEvent(event) ||
+    final disabled = !(eventStream.isActiveEvent(widget.event) ||
         (form.errorEvent != null &&
             eventStream.isActiveEvent(form.errorEvent)));
     final isActiveError =
@@ -137,7 +127,7 @@ class _OrbInputFieldState extends State<OrbInputField> {
             bottom: OrbTheme.of(context).lengths.tiny,
           ),
           child: Text(
-            (field['label'] as String).toUpperCase(),
+            (widget.field['label'] as String).toUpperCase(),
             style: labelStyle(context, disabled, ok),
           ),
         ),
@@ -186,23 +176,24 @@ class _OrbInputFieldState extends State<OrbInputField> {
         ? OrbTheme.of(context).palette.disabledDark
         : OrbTheme.of(context).palette.normal;
     OrbIcon icon;
-    print(field);
-    if (field.containsKey('icon')) {
+    if (widget.field.containsKey('icon')) {
       icon = OrbIcon(
         OrbIconSpec(
-          url: field['icon']['url'],
-          color: field['icon']['color'],
+          url: widget.field['icon']['url'],
+          color: widget.field['icon']['color'],
         ),
         color: color,
       );
     } else {
-      if (field['type'] == 'email') {
+      if (widget.field['type'] == 'email') {
         icon = OrbIcon(OrbIcons.emailAddress);
-      } else if (field['type'] == 'tel') {
+      } else if (widget.field['type'] == 'tel') {
         icon = OrbIcon(OrbIcons.phone);
-      } else if ((field['autocomplete'] as String).indexOf('country') != -1) {
+      } else if ((widget.field['autocomplete'] as String).indexOf('country') !=
+          -1) {
         icon = OrbIcon(OrbIcons.flag);
-      } else if ((field['autocomplete'] as String).indexOf('name') != -1) {
+      } else if ((widget.field['autocomplete'] as String).indexOf('name') !=
+          -1) {
         icon = OrbIcon(OrbIcons.user);
       } else {
         icon = OrbIcon(OrbIcons.pencil);
@@ -230,7 +221,7 @@ class _OrbInputFieldState extends State<OrbInputField> {
               autofocus: false,
               cursorColor: OrbTheme.of(context).palette.brand,
               decoration: InputDecoration.collapsed(
-                  hintText: field['placeholder'],
+                  hintText: widget.field['placeholder'],
                   hintStyle:
                       TextStyle(color: OrbTheme.of(context).palette.support)),
             ),
@@ -357,24 +348,25 @@ class _OrbInputFieldState extends State<OrbInputField> {
   }
 
   void processAsk() {
-    if (!connection.getEventStream().isActiveEvent(event)) {
+    if (!widget.connection.getEventStream().isActiveEvent(widget.event)) {
       // Event not relevant
       return;
-    } else if (processedEvents[event.id] == true) {
+    } else if (processedEvents[widget.event.id] == true) {
       // Event already processed
       return;
-    } else if ((event.data['composer'] ?? {})['focus'] != 'blur') {
+    } else if ((widget.event.data['composer'] ?? {})['focus'] != 'blur') {
       // Not blurring composer focus, so don't take it
       return;
     }
     setState(() {
       focusNode.requestFocus();
-      processedEvents[event.id] = true;
+      processedEvents[widget.event.id] = true;
     });
   }
 
   void processSubmit() {
-    final form = connection.getEventStream().forms[event.data['form_id']];
+    final form =
+        widget.connection.getEventStream().forms[widget.event.data['form_id']];
     if (form.submitEvent == null) {
       // No event
       return;
@@ -395,8 +387,8 @@ class _OrbInputFieldState extends State<OrbInputField> {
   }
 
   void processError() {
-    final eventStream = connection.getEventStream();
-    final form = eventStream.forms[event.data['form_id']];
+    final eventStream = widget.connection.getEventStream();
+    final form = eventStream.forms[widget.event.data['form_id']];
     if (form.errorEvent == null) {
       // No event
       return;
@@ -417,8 +409,10 @@ class _OrbInputFieldState extends State<OrbInputField> {
   }
 
   void submitForm() {
-    final field = event.data['fields'][0];
-    connection.publishEvent(OrbEvent.createFormSubmitEvent(
-        event.data['form_id'], {field['name']: textEditingController.text}));
+    final field = widget.event.data['fields'][0];
+    widget.connection.publishEvent(OrbEvent.createFormSubmitEvent(
+      widget.event.data['form_id'],
+      {field['name']: textEditingController.text},
+    ));
   }
 }

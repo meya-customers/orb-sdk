@@ -42,9 +42,11 @@ class OrbAskTiles extends StatelessWidget {
                 Row(
                   children: [
                     OrbUserAvatar.avatarOrPlaceholder(context),
-                    OrbTextOther.container(
-                      event: event,
-                      text: event.data['text'],
+                    Flexible(
+                      child: OrbTextOther.container(
+                        event: event,
+                        text: event.data['text'],
+                      ),
                     ),
                   ],
                 ),

@@ -23,19 +23,11 @@ class OrbComposer extends StatefulWidget {
       : super(key: key);
 
   @override
-  _OrbComposerState createState() => _OrbComposerState(
-        eventStream: eventStream,
-        connection: connection,
-      );
+  _OrbComposerState createState() => _OrbComposerState();
 }
 
 class _OrbComposerState extends State<OrbComposer> {
-  final OrbEventStream eventStream;
-  final OrbConnection connection;
-
   Mode mode = Mode.text;
-
-  _OrbComposerState({@required this.eventStream, @required this.connection});
 
   @override
   void initState() {
@@ -47,20 +39,20 @@ class _OrbComposerState extends State<OrbComposer> {
     switch (mode) {
       case Mode.extra:
         return ExtraMode(
-          eventStream: eventStream,
-          connection: connection,
+          eventStream: widget.eventStream,
+          connection: widget.connection,
           toggleMode: toggleMode,
         );
       case Mode.image:
         return ImageMode(
-          eventStream: eventStream,
-          connection: connection,
+          eventStream: widget.eventStream,
+          connection: widget.connection,
           toggleMode: toggleMode,
         );
       default:
         return TextMode(
-          eventStream: eventStream,
-          connection: connection,
+          eventStream: widget.eventStream,
+          connection: widget.connection,
           toggleMode: toggleMode,
         );
     }
@@ -82,26 +74,12 @@ class TextMode extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _TextModeState createState() => _TextModeState(
-        eventStream: this.eventStream,
-        connection: this.connection,
-        toggleMode: this.toggleMode,
-      );
+  _TextModeState createState() => _TextModeState();
 }
 
 class _TextModeState extends State<TextMode> {
-  final OrbEventStream eventStream;
-  final OrbConnection connection;
-  final Function toggleMode;
-
   FocusNode composerFocusNode = FocusNode();
   TextEditingController textEditingController = TextEditingController();
-
-  _TextModeState({
-    @required this.eventStream,
-    @required this.connection,
-    @required this.toggleMode,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -111,7 +89,7 @@ class _TextModeState extends State<TextMode> {
         children: <Widget>[
           OrbComposerIconButton(
             icon: OrbIcon(OrbIcons.extraInput),
-            onPressed: () => toggleMode(Mode.extra),
+            onPressed: () => widget.toggleMode(Mode.extra),
           ),
 
           // Edit text
@@ -130,7 +108,7 @@ class _TextModeState extends State<TextMode> {
                 controller: textEditingController,
                 focusNode: composerFocusNode,
                 onSubmitted: (text) {
-                  connection.publishEvent(
+                  widget.connection.publishEvent(
                       OrbEvent.createSayEvent(textEditingController.text));
                   textEditingController.clear();
                   composerFocusNode.requestFocus();
@@ -151,10 +129,10 @@ class _TextModeState extends State<TextMode> {
           // Button send message
           Container(
             margin: EdgeInsets.symmetric(horizontal: 8.0),
-            child: connection.connected
+            child: widget.connection.connected
                 ? SendTextButton(
-                    eventStream: eventStream,
-                    connection: connection,
+                    eventStream: widget.eventStream,
+                    connection: widget.connection,
                     textEditingController: textEditingController,
                   )
                 : CircularProgressIndicator(),

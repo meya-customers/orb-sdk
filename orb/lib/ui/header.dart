@@ -9,14 +9,10 @@ class OrbHeader extends StatefulWidget {
   OrbHeader({Key key, this.connection}) : super(key: key);
 
   @override
-  _OrbHeaderState createState() => _OrbHeaderState(connection: connection);
+  _OrbHeaderState createState() => _OrbHeaderState();
 }
 
 class _OrbHeaderState extends State<OrbHeader> {
-  final OrbConnection connection;
-
-  _OrbHeaderState({this.connection});
-
   @override
   void initState() {
     super.initState();
@@ -30,8 +26,8 @@ class _OrbHeaderState extends State<OrbHeader> {
   }
 
   void buildCloseButton(BuildContext context) {
-    if (connection.enableCloseButton != null && !connection.enableCloseButton)
-      return;
+    if (widget.connection.enableCloseButton != null &&
+        !widget.connection.enableCloseButton) return;
 
     final entry = OverlayEntry(
       builder: (context) => Positioned(
@@ -41,7 +37,7 @@ class _OrbHeaderState extends State<OrbHeader> {
           color: Colors.transparent,
           child: InkWell(
             borderRadius: BorderRadius.circular(30),
-            onTap: () => connection.closeUi(),
+            onTap: () => widget.connection.closeUi(),
             child: Container(
               width: 30,
               height: 30,

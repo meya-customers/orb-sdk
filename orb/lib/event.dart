@@ -1,4 +1,7 @@
 import 'dart:io';
+import 'dart:ui';
+
+import 'package:flutter/material.dart';
 
 import 'package:meta/meta.dart';
 
@@ -58,7 +61,11 @@ class OrbEvent implements Comparable<OrbEvent> {
     );
   }
 
-  factory OrbEvent.createDeviceEvent({String deviceId, String deviceToken}) {
+  factory OrbEvent.createDeviceEvent({
+    String deviceId,
+    String deviceToken,
+    AppLifecycleState deviceState,
+  }) {
     String platform = 'unsupported';
     if (Platform.isAndroid) {
       platform = 'android';
@@ -70,16 +77,21 @@ class OrbEvent implements Comparable<OrbEvent> {
       data: {
         'device_id': deviceId,
         'device_token': deviceToken,
+        'device_state': deviceState.state,
         'platform': platform,
       },
     );
   }
 
-  factory OrbEvent.createHeartbeatEvent(String deviceId) {
+  factory OrbEvent.createHeartbeatEvent({
+    String deviceId,
+    AppLifecycleState deviceState,
+  }) {
     return OrbEvent(
       type: 'meya.orb.event.device.heartbeat',
       data: {
         'device_id': deviceId,
+        'device_state': deviceState.state,
       },
     );
   }
@@ -157,5 +169,22 @@ class OrbEvent implements Comparable<OrbEvent> {
   factory OrbEvent.createVirtualUserNameEvent(String id, String userId) {
     return OrbEvent(
         id: id, type: 'virtual.orb.event.user_name', data: {'user_id': userId});
+  }
+}
+
+extension DeviceState on AppLifecycleState {
+  String get state {
+    switch (this) {
+      case AppLifecycleState.resumed:
+        return "resumed";
+      case AppLifecycleState.inactive:
+        return "inactive";
+      case AppLifecycleState.paused:
+        return "paused";
+      case AppLifecycleState.detached:
+        return "detached";
+      default:
+        return null;
+    }
   }
 }

@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -46,6 +48,7 @@ class OrbConnection extends ChangeNotifier {
   EventEmitter _eventEmitter = EventEmitter();
   OrbEventStream _eventStream = OrbEventStream();
   FlutterSecureStorage _storage = FlutterSecureStorage();
+  AppLifecycleState _deviceState = AppLifecycleState.resumed;
 
   OrbConnection({
     @required this.gridUrl,
@@ -63,11 +66,26 @@ class OrbConnection extends ChangeNotifier {
     this.deviceToken,
     this.onFirstConnect,
     this.enableCloseButton,
+    AppLifecycleState deviceState,
   }) {
     blobUrl = '$gridUrl/gateway/v2/blob/$appId/blob';
+    if (deviceState != null) _deviceState = deviceState;
   }
 
   bool get connected => _connected;
+
+  AppLifecycleState get deviceState => _deviceState;
+
+  set deviceState(AppLifecycleState state) {
+    _deviceState = state;
+    if (connected) {
+      publishEvent(OrbEvent.createDeviceEvent(
+        deviceId: deviceId,
+        deviceToken: deviceToken,
+        deviceState: deviceState,
+      ));
+    }
+  }
 
   void addOrbListener(String type, Function(Map<String, dynamic>) listener) =>
       _eventEmitter.on(type, listener);
@@ -163,12 +181,19 @@ class OrbConnection extends ChangeNotifier {
             publishEvent(OrbEvent.createDeviceEvent(
               deviceId: deviceId,
               deviceToken: deviceToken,
+              deviceState: deviceState,
             ));
             final heartbeatInterval = _getHeartbeatInterval();
-            _heartbeatTimer = Timer.periodic(heartbeatInterval, (timer) {
-              print('HEARTBEAT $deviceId');
-              publishEvent(OrbEvent.createHeartbeatEvent(deviceId));
-            });
+            _heartbeatTimer = Timer.periodic(
+              heartbeatInterval,
+              (timer) {
+                print('HEARTBEAT $deviceId');
+                publishEvent(OrbEvent.createHeartbeatEvent(
+                  deviceId: deviceId,
+                  deviceState: deviceState,
+                ));
+              },
+            );
           }
 
           notifyListeners();
@@ -225,19 +250,20 @@ class OrbConnection extends ChangeNotifier {
     _timer?.cancel();
     _heartbeatTimer?.cancel();
     _channel?.sink?.close();
+    _eventEmitter.emit('disconnected', {});
   }
 
   void publishEvent(OrbEvent event) {
     final eventMap = {
-      "type": event.type,
-      "data": event.data,
+      'type': event.type,
+      'data': event.data,
     };
     final payloadMap = {
-      "type": "meya.orb.entry.ws.publish_request",
-      "data": {
-        "request_id": OrbUtil.uuid4Hex(),
-        "event": eventMap,
-        "thread_id": this.threadId,
+      'type': 'meya.orb.entry.ws.publish_request',
+      'data': {
+        'request_id': OrbUtil.uuid4Hex(),
+        'event': eventMap,
+        'thread_id': this.threadId,
       }
     };
     _channel.sink.add(serialize(payloadMap));
@@ -256,11 +282,15 @@ class OrbConnection extends ChangeNotifier {
   }
 
   void _reconnect() async {
-    if (!reconnect) return;
-
     final retryInterval = _getRetryTimeoutInterval();
     print('RETRYING $retries $retryInterval');
     await Future.delayed(retryInterval);
+
+    if (!reconnect) {
+      print('Retry cancelled.');
+      return;
+    }
+
     retries++;
     connect();
   }
