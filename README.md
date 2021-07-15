@@ -109,11 +109,11 @@ If the Gradle build fails with the following error:
 
 ```text
 AndroidManifest.xml Error:
-  uses-sdk:minSdkVersion 16 cannot be smaller than version 18 declared in library [:orb] 
+	uses-sdk:minSdkVersion 16 cannot be smaller than version 18 declared in library [:orb] 
 ...
-  Suggestion: use a compatible library with a minSdk of at most 16,
-    or increase this project's minSdk version to at least 18,
-    or use tools:overrideLibrary="ai.meya.orb" to force usage (may lead to runtime failures)
+	Suggestion: use a compatible library with a minSdk of at most 16,
+		or increase this project's minSdk version to at least 18,
+		or use tools:overrideLibrary="ai.meya.orb" to force usage (may lead to runtime failures)
 ```
 
 Then manually edit the generated Gradle build file:

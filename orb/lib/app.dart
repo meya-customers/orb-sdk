@@ -13,12 +13,13 @@ class OrbApp extends StatefulWidget {
   _OrbAppState createState() => _OrbAppState();
 }
 
-class _OrbAppState extends State<OrbApp> {
+class _OrbAppState extends State<OrbApp> with WidgetsBindingObserver {
   final OrbThemeData theme = OrbThemeData();
 
   OrbConnection connection;
   String platformVersion = "Unknown";
   bool ready = false;
+  AppLifecycleState deviceState = AppLifecycleState.resumed;
 
   @override
   void initState() {
@@ -29,6 +30,13 @@ class _OrbAppState extends State<OrbApp> {
     OrbPlugin.connect = connect;
     OrbPlugin.disconnect = disconnect;
     OrbPlugin.publishEvent = publishEvent;
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   Future<void> initPlatformState() async {
@@ -49,6 +57,7 @@ class _OrbAppState extends State<OrbApp> {
 
   void connect(ConnectionOptions options) {
     setState(() {
+      connection?.disconnect();
       connection = OrbConnection(
         gridUrl: options.gridUrl,
         appId: options.appId,
@@ -63,8 +72,10 @@ class _OrbAppState extends State<OrbApp> {
         deviceId: options.deviceId,
         deviceToken: options.deviceToken,
         enableCloseButton: options.enableCloseButton,
+        deviceState: deviceState,
       );
       connection.addOrbListener('connected', onConnected);
+      connection.addOrbListener('disconnected', onDisconnected);
       connection.addOrbListener('firstConnect', onFirstConnect);
       connection.addOrbListener('reconnect', onReconnect);
       connection.addOrbListener('event', onEvent);
@@ -84,18 +95,19 @@ class _OrbAppState extends State<OrbApp> {
     setState(() {
       connection = null;
     });
-    OrbPlugin.disconnected();
   }
 
   void publishEvent(Map<dynamic, dynamic> event) {
     if (connection == null) throw Exception('Orb is not connected.');
-    if (connection != null) {
-      connection.publishEvent(OrbEvent.fromEventMap(event));
-    }
+    connection?.publishEvent(OrbEvent.fromEventMap(event));
   }
 
   void onConnected(Map<String, dynamic> arguments) {
     OrbPlugin.connected();
+  }
+
+  void onDisconnected(Map<String, dynamic> arguments) {
+    OrbPlugin.disconnected();
   }
 
   void onFirstConnect(Map<String, dynamic> arguments) {
@@ -125,6 +137,14 @@ class _OrbAppState extends State<OrbApp> {
 
   void onCloseUi(Map<String, dynamic> arguments) {
     OrbPlugin.closeUi();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    setState(() {
+      deviceState = state;
+      connection?.deviceState = state;
+    });
   }
 
   @override

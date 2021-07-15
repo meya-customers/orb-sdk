@@ -30,6 +30,7 @@ plugin in Android Studio will do a couple of things:
 - Run `flutter pub get`: this will read the `pubspec.yaml` file and download
   all the Flutter dependencies.
 - Index all the Dart source code.
+- Download Firebase config to example/android/app/google-services.json
 - Detect any running Android/iOS/Web devices
 
 ### Code Formatting

@@ -1,6 +1,6 @@
 name: orb
 description: Orb Mobile SDK for Android and iOS
-version: 2.6.8
+version: 2.6.9
 
 # Don't publish to pub.dev using `pub publish`.
 publish_to: none

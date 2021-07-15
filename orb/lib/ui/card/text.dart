@@ -158,11 +158,12 @@ class OrbTextOther extends OrbText {
         children: [
           buildUserAvatar(context),
           Flexible(
-              child: Column(
-            children: [
-              buildContainer(context),
-            ],
-          )),
+            child: Column(
+              children: [
+                buildContainer(context),
+              ],
+            ),
+          ),
         ],
       );
     }

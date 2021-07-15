@@ -22,11 +22,24 @@ import UserNotifications
         didReceiveRemoteNotification userInfo: [AnyHashable: Any],
         fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
     ) {
-        guard let _ = userInfo["aps"] as? [String: AnyObject] else {
+        if
+            let aps = userInfo["aps"] as? [String: AnyObject],
+            let meyaIntegrationId = userInfo["meya_integration_id"] as? String
+        {
+            // Handle Meya notifications
+            print(meyaIntegrationId)
+            print(aps)
+            if
+                let alert = aps["alert"],
+                let title = alert["title"],
+                let body = alert["body"]
+            {
+                sendNotification(title: title as! String, body: body as! String)
+            }
+        } else {
             completionHandler(.failed)
             return
         }
-        print("Handle in-app notification")
     }
     
     override func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
@@ -56,6 +69,51 @@ import UserNotifications
                 UIApplication.shared.registerForRemoteNotifications()
             }
         }
+    }
+    
+    func sendNotification(title: String, body: String) {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = UNNotificationSound.default
+        content.categoryIdentifier = "MEYA_ORB"
+        
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1.0, repeats: false)
+        let request = UNNotificationRequest(
+            identifier: "MEYA_ORB",
+            content: content,
+            trigger: trigger
+        )
+
+        let center =  UNUserNotificationCenter.current()
+        center.add(request) { (error) in
+            if error != nil {
+                print("Notification error: \(String(describing: error))")
+            }
+        }
+    }
+    
+    override func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.badge, .sound, .alert])
+    }
+    
+    override func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        let userInfo = response.notification.request.content.userInfo
+        
+        // Handle Meya local notification action
+        if let _ = userInfo["meya_integration_id"] {
+            launchOrb()
+        }
+        
+        completionHandler()
     }
     
     func launchOrb() {
