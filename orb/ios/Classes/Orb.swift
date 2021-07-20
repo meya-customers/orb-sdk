@@ -20,13 +20,22 @@ extension OSLog {
     private var _ready: Bool = false
     private var _onReady: (() -> Void)? = nil
     
-    public init(engine: FlutterEngine? = nil, name: String = "meya") {
+    override init() {
+        self.engine = FlutterEngine(name: "orb")
+        self.deviceId = Orb.getDeviceId()
+    }
+    
+    public init(engine: FlutterEngine? = nil, name: String = "orb") {
         self.engine = engine ?? FlutterEngine(name: name)
-        self.deviceId = UIDevice.current.identifierForVendor?.uuidString
+        self.deviceId = Orb.getDeviceId()
     }
     
     deinit {
         Orb.log("Orb is being deinitialized")
+    }
+    
+    static func getDeviceId() -> String? {
+        return UIDevice.current.identifierForVendor?.uuidString
     }
     
     public func initCallbacks() {

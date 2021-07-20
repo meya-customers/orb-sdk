@@ -224,10 +224,46 @@ For extra information on adding Flutter modules to Android, view the
       }
   });
   ```
+  
 
+### Add to an iOS app 
 
-## Add to an iOS app
-### Project setup
+### Add to an iOS app using the Orb Cocoapod
+If you're using Cocoapods for dependency management, or you want to integrate
+Orb quickly then it's very easy to add Orb to your project.
+
+#### Project setup
+Requirements:
+- [CocoaPods](https://cocoapods.org/) v1.10 or later.
+- XCode 12.5
+- Swift 5
+
+If your existing iOS app doesn't already have a Podfile, follow the 
+[CocoaPods getting started guide](https://guides.cocoapods.org/using/using-cocoapods.html)
+to add a `Podfile` to your project.
+
+- Add the following to your Podfile:
+  `pod 'Orb', '2.6.10', :source => 'https://github.com/meya-customers/orb-cocoapods'`
+- Your Podfile should like something like this:
+  ```ruby
+  platform :ios, '9.0'
+
+  target 'OrbDemo' do
+      use_frameworks!
+      pod 'Orb', '2.6.10', :source => 'https://github.com/meya-customers/orb-cocoapods'
+  end
+  ```
+- Run `pod install`
+
+### Add to an iOS app using the `orb-sdk/module` Flutter module
+This method of integration is very useful for development purposes because it
+allows you to run the Orb Flutter code in debug mode, and allows you to make
+Dart code changes.
+
+Note, that currently you will need to **disable bitcode** for your app. If you
+need bitcode enabled, then we recommend using the pre-compiled Orb Cocoapod.
+
+#### Project setup
 Requirements:
 - [CocoaPods](https://cocoapods.org/) v1.10 or later.
 
