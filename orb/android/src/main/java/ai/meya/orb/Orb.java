@@ -8,6 +8,7 @@ import android.util.Log;
 import java.util.List;
 import java.util.Map;
 
+import ai.meya.orb.config.OrbConfig;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -91,6 +92,11 @@ public class Orb {
         engine.getDartExecutor().executeDartEntrypoint(
                 DartExecutor.DartEntrypoint.createDefault()
         );
+    }
+    
+    public void configure(OrbConfig config) {
+        OrbPlugin plugin = getPlugin(engine);
+        if (plugin != null) plugin.configure(config);
     }
 
     public void connect(OrbConnectionOptions options) {

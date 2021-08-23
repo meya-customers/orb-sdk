@@ -29,9 +29,9 @@ class OrbAskButtons extends StatelessWidget {
       return Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Container(
-            margin: OrbUserAvatar.defaultMargin(context),
-            child: (userAvatar ?? OrbUserAvatar.placeholder(context)),
+          OrbUserAvatar.avatarOrPlaceholder(
+            context,
+            avatar: userAvatar,
           ),
           text != null
               ? Flexible(

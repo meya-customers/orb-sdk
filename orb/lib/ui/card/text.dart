@@ -24,14 +24,14 @@ abstract class OrbText extends StatelessWidget {
     @required OrbUserAvatar userAvatar,
   }) {
     if (isSelfEvent) {
-      return OrbTextSelf._(
+      return OrbTextSelf(
         event: event,
         text: text,
         isSelfEvent: isSelfEvent,
         userAvatar: userAvatar,
       );
     } else {
-      return OrbTextOther._(
+      return OrbTextOther(
         event: event,
         text: text,
         isSelfEvent: isSelfEvent,
@@ -71,7 +71,8 @@ abstract class OrbText extends StatelessWidget {
 }
 
 class OrbTextSelf extends OrbText {
-  OrbTextSelf._({
+  @protected
+  OrbTextSelf({
     @required OrbEvent event,
     @required String text,
     @required bool isSelfEvent,
@@ -122,7 +123,8 @@ class OrbTextSelf extends OrbText {
 class OrbTextOther extends OrbText {
   final bool containerOnly;
 
-  OrbTextOther._({
+  @protected
+  OrbTextOther({
     @required OrbEvent event,
     @required String text,
     @required bool isSelfEvent,
@@ -139,7 +141,7 @@ class OrbTextOther extends OrbText {
     @required OrbEvent event,
     @required String text,
   }) {
-    return OrbTextOther._(
+    return OrbTextOther(
       event: event,
       text: text,
       isSelfEvent: false,
@@ -156,7 +158,10 @@ class OrbTextOther extends OrbText {
       return Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          buildUserAvatar(context),
+          OrbUserAvatar.avatarOrPlaceholder(
+            context,
+            avatar: userAvatar,
+          ),
           Flexible(
             child: Column(
               children: [
@@ -167,13 +172,6 @@ class OrbTextOther extends OrbText {
         ],
       );
     }
-  }
-
-  Widget buildUserAvatar(BuildContext context) {
-    return Container(
-      margin: OrbUserAvatar.defaultMargin(context),
-      child: userAvatar ?? OrbUserAvatar.placeholder(context),
-    );
   }
 
   @override

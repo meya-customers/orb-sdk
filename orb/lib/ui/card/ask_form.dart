@@ -23,9 +23,9 @@ class OrbAskForm extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          margin: OrbUserAvatar.defaultMargin(context),
-          child: (userAvatar ?? OrbUserAvatar.placeholder(context)),
+        OrbUserAvatar.avatarOrPlaceholder(
+          context,
+          avatar: userAvatar,
         ),
         Flexible(
           child: Column(

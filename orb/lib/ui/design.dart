@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:orb/config.dart';
+import 'package:orb/ui/color.dart';
+
 class OrbThemeData {
   final OrbThemePalette palette;
   final OrbThemeLengths lengths;
@@ -24,8 +27,11 @@ class OrbThemeData {
     @required this.avatar,
   });
 
-  factory OrbThemeData() {
-    final palette = OrbThemePalette();
+  factory OrbThemeData({Color brandColor, double backgroundTranslucency}) {
+    final palette = OrbThemePalette(
+      brandColor: brandColor,
+      backgroundTranslucency: backgroundTranslucency,
+    );
     final lengths = OrbThemeLengths();
     final outerShadow = OrbThemeOuterShadow();
     final innerBorder = OrbThemeInnerBorder();
@@ -42,6 +48,12 @@ class OrbThemeData {
       avatar: avatar,
     );
   }
+
+  factory OrbThemeData.fromThemeConfigSpec({ThemeConfigSpec theme}) =>
+      OrbThemeData(
+        brandColor: HexColor.fromHex(theme.brandColor),
+        backgroundTranslucency: theme.backgroundTranslucency,
+      );
 
   ThemeData toMaterialThemeData() =>
       ThemeData(textTheme: GoogleFonts.interTextTheme());
@@ -67,8 +79,8 @@ class OrbThemeLengths {
 }
 
 class OrbThemePalette {
-  Color get _brandColor => Color(0xFF4989EA);
-  double get _backgroundTranslucency => 0.44;
+  Color _brandColor;
+  double _backgroundTranslucency;
 
   Color get blank => Color(0xFFFFFFFF);
   Color get blankTranslucent => blank.withOpacity(_backgroundTranslucency);
@@ -88,6 +100,11 @@ class OrbThemePalette {
   Color get brandDark => _darken(0.12, _brandColor);
   Color get error => Color(0xFFE02020);
   Color get errorShadow => Color(0x1AE02020);
+
+  OrbThemePalette({Color brandColor, double backgroundTranslucency}) {
+    _brandColor = brandColor ?? Color(0xFF4989EA);
+    _backgroundTranslucency = backgroundTranslucency ?? 0.44;
+  }
 
   Color _lighten(double amount, Color color) {
     final hsl = HSLColor.fromColor(color);

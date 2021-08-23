@@ -2,44 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 
-import 'package:meta/meta.dart';
-
-class ConnectionOptions {
-  final String gridUrl;
-  final String appId;
-  final String integrationId;
-  final Map<dynamic, dynamic> pageContext;
-  final String gridUserId;
-  final String userId;
-  final String threadId;
-  final String sessionToken;
-  final String magicLinkId;
-  final String url;
-  final String referrer;
-  final String deviceId;
-  final String deviceToken;
-  final bool enableCloseButton;
-
-  ConnectionOptions({
-    @required this.gridUrl,
-    @required this.appId,
-    @required this.integrationId,
-    this.pageContext,
-    this.gridUserId,
-    this.userId,
-    this.threadId,
-    this.sessionToken,
-    this.magicLinkId,
-    this.url,
-    this.referrer,
-    this.deviceId,
-    this.deviceToken,
-    this.enableCloseButton,
-  });
-}
+import 'package:orb/config.dart';
+import 'package:orb/connection.dart';
 
 class OrbPlugin {
   static const MethodChannel channel = const MethodChannel('orb');
+  static void Function(ThemeConfigSpec, ComposerConfigSpec, SplashConfigSpec)
+      configure;
   static void Function(ConnectionOptions) connect;
   static void Function(bool logOut) disconnect;
   static void Function(Map<dynamic, dynamic>) publishEvent;
@@ -51,6 +20,28 @@ class OrbPlugin {
 
   static Future<dynamic> nativeMethodCallHandler(MethodCall call) async {
     switch (call.method) {
+      case 'configure':
+        if (configure != null) {
+          final theme = call.arguments['theme'] ?? {};
+          final composer = call.arguments['composer'] ?? {};
+          final splash = call.arguments['splash'] ?? {};
+          configure(
+            ThemeConfigSpec(brandColor: theme['brandColor']),
+            ComposerConfigSpec(
+              placeholderText: composer['placeholderText'],
+              collapsePlaceholderText: composer['collapsePlaceholderText'],
+              fileButtonText: composer['fileButtonText'],
+              fileSendText: composer['fileSendText'],
+              imageButtonText: composer['imageButtonText'],
+              cameraButtonText: composer['cameraButtonText'],
+              galleryButtonText: composer['galleryButtonText'],
+            ),
+            SplashConfigSpec(
+              readyText: splash['readyText'],
+            ),
+          );
+        }
+        return 'Configure called';
       case 'connect':
         if (connect != null)
           connect(ConnectionOptions(

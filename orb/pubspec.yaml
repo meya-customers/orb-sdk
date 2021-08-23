@@ -1,6 +1,6 @@
 name: orb
 description: Orb Mobile SDK for Android and iOS
-version: 2.6.10
+version: 2.6.11
 
 # Don't publish to pub.dev using `pub publish`.
 publish_to: none
@@ -35,6 +35,10 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - icons/
+
   plugin:
     platforms:
       android:

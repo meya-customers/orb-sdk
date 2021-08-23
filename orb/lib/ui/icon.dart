@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_svg/svg.dart';
 
 import 'package:orb/ui/color.dart';
@@ -34,16 +36,36 @@ class OrbIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!src.url.startsWith("http")) {
-      return Icon(Icons.check_box_outline_blank);
+    if (src.svg != null) {
+      return src.svg;
+    } else if (src.url != null) {
+      if (!src.url.startsWith("http")) {
+        return placeholderIcon;
+      }
+      return SvgPicture.network(
+        src.url,
+        color: color,
+        placeholderBuilder: (BuildContext context) => placeholderIcon,
+      );
+    } else if (src.assetName != null) {
+      return SvgPicture.asset(
+        src.assetName,
+        bundle: src.assetBundle ?? DefaultAssetBundle.of(context),
+        package: src.package ?? 'orb',
+        color: color,
+        placeholderBuilder: (BuildContext context) => placeholderIcon,
+      );
+    } else {
+      throw OrbIconError(
+          "Invalid OrbIconSpec, the inco spec requires either a 'url' or "
+          "'assetName'");
     }
-    return SvgPicture.network(
-      src.url,
-      color: color,
-      placeholderBuilder: (BuildContext context) =>
-          Icon(Icons.check_box_outline_blank),
-    );
   }
+
+  Icon get placeholderIcon => Icon(
+        Icons.check_box_outline_blank,
+        color: color,
+      );
 
   Color colorFromString(String color) {
     return {
@@ -75,30 +97,79 @@ class OrbIcon extends StatelessWidget {
   }
 }
 
+class OrbIconError extends Error {
+  final String message;
+
+  OrbIconError(this.message);
+
+  String toString() => "OrbIconError: $message";
+}
+
 class OrbIconSpec {
   final String url;
+  final String assetName;
+  final AssetBundle assetBundle;
+  final String package;
   final String color;
+  final Widget svg;
 
-  OrbIconSpec._({@required this.url, this.color});
+  OrbIconSpec._({
+    this.url,
+    this.assetName,
+    this.assetBundle,
+    this.package,
+    this.color,
+    this.svg,
+  });
 
   factory OrbIconSpec({
-    @required String url,
+    String url,
+    String assetName,
+    AssetBundle assetBundle,
+    String package,
     String color,
+    Widget svg,
   }) {
-    /*
-     TODO: Unify web & mobile icons - currently flutter_svg does not support
-           CSS styles.
-     */
-    if (url.contains(MEYA_CDN_URL) && !url.contains("orb-mobile")) {
-      url = url.replaceFirst("icon", "icon/orb-mobile");
-    } else if (url.startsWith("streamline")) {
-      url = urlFromPath(url);
+    if (svg != null) {
+      return OrbIconSpec._(
+        assetName: assetName,
+        assetBundle: assetBundle,
+        package: package,
+        svg: svg,
+      );
+    } else if (url != null) {
+      // TODO: Unify web & mobile icons - currently flutter_svg does not support CSS styles.
+      if (url.contains(MEYA_CDN_URL) && !url.contains("orb-mobile")) {
+        url = url.replaceFirst("icon", "icon/orb-mobile");
+      } else if (url.startsWith("streamline")) {
+        url = urlFromPath(url);
+      }
+      return OrbIconSpec._(url: url, color: color);
+    } else if (assetName != null) {
+      return OrbIconSpec._(
+        assetName: assetName,
+        assetBundle: assetBundle,
+        package: package,
+        color: color,
+      );
+    } else {
+      throw OrbIconSpecError(
+          "An icon spec must contain either a 'url', 'assetName' or 'svg'");
     }
-    return OrbIconSpec._(url: url, color: color);
   }
 
   factory OrbIconSpec.buildIconSpec(String path) =>
       OrbIconSpec(url: urlFromPath(path));
+
+  factory OrbIconSpec.buildAssetIconSpec(
+    String assetName, {
+    String package = 'orb',
+  }) =>
+      OrbIconSpec(
+        assetName: assetName,
+        package: package,
+        svg: SvgPicture.asset(assetName, package: package),
+      );
 
   static OrbIconSpec fromMap(Map<dynamic, dynamic> icon) {
     if (icon == null || icon['url'] == null) return null;
@@ -119,58 +190,64 @@ class OrbIconSpec {
       '$MEYA_CDN_URL/icon/orb-mobile/${path.replaceAll(RegExp(r'\s&\s|[:\s]'), '-')}';
 }
 
+class OrbIconSpecError extends Error {
+  final String message;
+
+  OrbIconSpecError(this.message);
+
+  String toString() => "OrbIconSpecError: $message";
+}
+
 class OrbIcons {
-  static OrbIconSpec check = OrbIconSpec.buildIconSpec(
-      'streamline-regular/01-interface essential/33-form-validation/check-circle-1.svg');
+  static OrbIconSpec check =
+      OrbIconSpec.buildAssetIconSpec('icons/check-circle-1.svg');
 
-  static OrbIconSpec expandInput = OrbIconSpec.buildIconSpec(
-      'streamline-regular/21-messages-chat-smileys/02-messages-speech-bubbles/messages-bubble-edit.svg');
+  static OrbIconSpec expandInput =
+      OrbIconSpec.buildAssetIconSpec('icons/messages-bubble-edit.svg');
 
-  static OrbIconSpec extraInput = OrbIconSpec.buildIconSpec(
-      'streamline-regular/01-interface essential/43-remove:add/add-square.svg');
+  static OrbIconSpec extraInput =
+      OrbIconSpec.buildAssetIconSpec('icons/add-square.svg');
 
-  static OrbIconSpec file = OrbIconSpec.buildIconSpec(
-      'streamline-regular/16-files-folders/01-common-files/common-file-text.svg');
+  static OrbIconSpec file =
+      OrbIconSpec.buildAssetIconSpec('icons/common-file-text.svg');
 
-  static OrbIconSpec left = OrbIconSpec.buildIconSpec(
-      'streamline-regular/52-arrows-diagrams/01-arrows/arrow-left-1.svg');
+  static OrbIconSpec left =
+      OrbIconSpec.buildAssetIconSpec('icons/arrow-left-1.svg');
 
-  static OrbIconSpec right = OrbIconSpec.buildIconSpec(
-      'streamline-regular/52-arrows-diagrams/01-arrows/arrow-right-1.svg');
+  static OrbIconSpec right =
+      OrbIconSpec.buildAssetIconSpec('icons/arrow-right-1.svg');
 
-  static OrbIconSpec sendText = OrbIconSpec.buildIconSpec(
-      'streamline-regular/19-emails/01-send-email/send-email-2.svg');
+  static OrbIconSpec sendText =
+      OrbIconSpec.buildAssetIconSpec('icons/send-email-2.svg');
 
-  static OrbIconSpec sendFile = OrbIconSpec.buildIconSpec(
-      'streamline-regular/16-files-folders/01-common-files/common-file-text-add.svg');
+  static OrbIconSpec sendFile =
+      OrbIconSpec.buildAssetIconSpec('icons/common-file-text-add.svg');
 
-  static OrbIconSpec sendImage = OrbIconSpec.buildIconSpec(
-      'streamline-regular/13-images-photography/18-image-files/image-file-add.svg');
+  static OrbIconSpec sendImage =
+      OrbIconSpec.buildAssetIconSpec('icons/image-file-add.svg');
 
-  static OrbIconSpec camera = OrbIconSpec.buildIconSpec(
-      'streamline-regular/13-images-photography/02-cameras/camera-1.svg');
+  static OrbIconSpec camera =
+      OrbIconSpec.buildAssetIconSpec('icons/camera-1.svg');
 
-  static OrbIconSpec gallery = OrbIconSpec.buildIconSpec(
-      'streamline-regular/13-images-photography/05-pictures/picture-stack-landscape.svg');
+  static OrbIconSpec gallery =
+      OrbIconSpec.buildAssetIconSpec('icons/picture-stack-landscape.svg');
 
-  static OrbIconSpec emailAddress = OrbIconSpec.buildIconSpec(
-      'streamline-regular/19-emails/02-read-email/read-email-at.svg');
+  static OrbIconSpec emailAddress =
+      OrbIconSpec.buildAssetIconSpec('icons/read-email-at.svg');
 
-  static OrbIconSpec phone = OrbIconSpec.buildIconSpec(
-      'streamline-regular/20-phones-mobile-devices/01-phone/phone.svg');
+  static OrbIconSpec phone = OrbIconSpec.buildAssetIconSpec('icons/phone.svg');
 
-  static OrbIconSpec flag = OrbIconSpec.buildIconSpec(
-      'streamline-regular/22-social-medias-rewards-rating/13-flags/flag-plain-3.svg');
+  static OrbIconSpec flag =
+      OrbIconSpec.buildAssetIconSpec('icons/flag-plain-3.svg');
 
-  static OrbIconSpec user = OrbIconSpec.buildIconSpec(
-      'streamline-regular/17-users/10-geomertic-close up-single user-neutral/single-neutral.svg');
+  static OrbIconSpec user =
+      OrbIconSpec.buildAssetIconSpec('icons/single-neutral.svg');
 
-  static OrbIconSpec pencil = OrbIconSpec.buildIconSpec(
-      'streamline-regular/01-interface essential/22-edit/pencil.svg');
+  static OrbIconSpec pencil =
+      OrbIconSpec.buildAssetIconSpec('icons/pencil.svg');
 
-  static OrbIconSpec link = OrbIconSpec.buildIconSpec(
-      'streamline-regular/01-interface essential/52-expand:retract/expand-6.svg');
+  static OrbIconSpec link =
+      OrbIconSpec.buildAssetIconSpec('icons/expand-6.svg');
 
-  static OrbIconSpec close = OrbIconSpec.buildIconSpec(
-      'streamline-regular/01-interface essential/43-remove:add/remove.svg');
+  static OrbIconSpec close = OrbIconSpec.buildAssetIconSpec('icons/remove.svg');
 }

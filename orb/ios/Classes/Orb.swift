@@ -51,13 +51,26 @@ extension OSLog {
         }
     }
     
-    public func connect(options: OrbConnectionOptions, result: FlutterResult? = nil) {
+    public func configure(
+        config: OrbConfig,
+        result: FlutterResult? = nil
+    ) {
+        Orb.getPlugin(self.engine)?.configure(config: config, result: result)
+    }
+    
+    public func connect(
+        options: OrbConnectionOptions,
+        result: FlutterResult? = nil
+    ) {
         options.deviceId = options.deviceId ?? self.deviceId
         options.deviceToken = options.deviceToken ?? self.deviceToken
         Orb.getPlugin(self.engine)?.connect(options: options, result: result)
     }
     
-    public func disconnect(logOut: Bool = false, result: FlutterResult? = nil) {
+    public func disconnect(
+        logOut: Bool = false,
+        result: FlutterResult? = nil
+    ) {
         Orb.getPlugin(self.engine)?.disconnect(logOut: logOut, result: result)
     }
     

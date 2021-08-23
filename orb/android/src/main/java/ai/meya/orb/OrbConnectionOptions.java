@@ -19,14 +19,21 @@ public class OrbConnectionOptions {
     public String deviceToken;
     public boolean enableCloseButton = true;
 
-    public OrbConnectionOptions(String gridUrl, String appId, String integrationId) {
+    public OrbConnectionOptions(
+            String gridUrl,
+            String appId,
+            String integrationId
+    ) {
         this.gridUrl = gridUrl;
         this.appId = appId;
         this.integrationId = integrationId;
     }
 
     public OrbConnectionOptions(
-            String gridUrl, String appId, String integrationId, Map<String, Object> pageContext
+            String gridUrl,
+            String appId,
+            String integrationId,
+            Map<String, Object> pageContext
     ) {
         this.gridUrl = gridUrl;
         this.appId = appId;
