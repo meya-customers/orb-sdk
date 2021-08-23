@@ -12,6 +12,7 @@ class OrbEventStream {
   final String Function(OrbEvent event) getEventText;
   final bool Function(OrbEvent event) isAttributionEvent;
   final OrbEvent quickRepliesEvent;
+  final OrbEvent typingOnEvent;
   final Map<String, OrbUserData> userData;
   final Map<String, bool> buttonClicks;
   final Map<String, OrbFormView> forms;
@@ -24,6 +25,7 @@ class OrbEventStream {
     @required this.getEventText,
     @required this.isAttributionEvent,
     @required this.quickRepliesEvent,
+    @required this.typingOnEvent,
     @required this.userData,
     @required this.buttonClicks,
     @required this.forms,
@@ -40,6 +42,8 @@ class OrbEventStream {
     final getEventText = _createGetEventText(events);
     final isAttributionEvent = _createIsAttributionEvent();
     final quickRepliesEvent = _createQuickRepliesEvent(events, isHiddenEvent);
+    final typingOnEvent =
+        _createTypingOnEvent(events, isActiveEvent, isSelfEvent);
     final buttonClicks = _createButtonClicks(events);
     final forms = _createForms(events);
     final eventStream = OrbEventStream._(
@@ -50,6 +54,7 @@ class OrbEventStream {
       getEventText: getEventText,
       isAttributionEvent: isAttributionEvent,
       quickRepliesEvent: quickRepliesEvent,
+      typingOnEvent: typingOnEvent,
       userData: userData,
       buttonClicks: buttonClicks,
       forms: forms,
@@ -114,6 +119,7 @@ class OrbEventStream {
       getEventText: getEventText,
       isAttributionEvent: isAttributionEvent,
       quickRepliesEvent: quickRepliesEvent,
+      typingOnEvent: typingOnEvent,
       userData: userData,
       buttonClicks: buttonClicks,
       forms: forms,
@@ -186,10 +192,26 @@ class OrbEventStream {
     bool Function(OrbEvent event) isHiddenEvent,
   ) {
     for (final event in events) {
-      final quickReplies = event.data['quick_replies'];
+      final List quickReplies = event.data['quick_replies'];
       if (isHiddenEvent(event)) {
         break;
       } else if (quickReplies != null) {
+        return event;
+      }
+    }
+    return null;
+  }
+
+  static OrbEvent _createTypingOnEvent(
+      List<OrbEvent> events,
+      bool Function(OrbEvent event) isActiveEvent,
+      bool Function(OrbEvent event) isSelfEvent) {
+    for (final event in events) {
+      final isActive = isActiveEvent(event);
+      final isSelf = isSelfEvent(event);
+      if (isActive && !isSelf) {
+        break;
+      } else if (event.type == 'meya.presence.event.typing.on' && !isSelf) {
         return event;
       }
     }

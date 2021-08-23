@@ -3,12 +3,14 @@ import 'package:meta/meta.dart';
 enum OrbAvatarCrop { circle, square }
 
 extension OrbAvatarCropExtension on OrbAvatarCrop {
-  static OrbAvatarCrop fromString(String crop) =>
-      {
-        'circle': OrbAvatarCrop.circle,
-        'square': OrbAvatarCrop.square,
-      }[crop] ??
-      OrbAvatarCrop.circle;
+  static OrbAvatarCrop fromString(String crop) {
+    switch (crop) {
+      case 'square':
+        return OrbAvatarCrop.square;
+      default:
+        return OrbAvatarCrop.circle;
+    }
+  }
 }
 
 class OrbAvatar {

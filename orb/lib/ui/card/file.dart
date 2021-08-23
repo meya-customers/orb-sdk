@@ -159,9 +159,9 @@ class OrbFileOther extends OrbFile {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Container(
-          margin: OrbUserAvatar.defaultMargin(context),
-          child: userAvatar ?? OrbUserAvatar.placeholder(context),
+        OrbUserAvatar.avatarOrPlaceholder(
+          context,
+          avatar: userAvatar,
         ),
         buildContainer(context),
       ],

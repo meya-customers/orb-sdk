@@ -83,6 +83,10 @@ public class SwiftOrbPlugin: NSObject, FlutterPlugin {
         channel.invokeMethod("unsubscribe", arguments: ["name": name], result: result)
     }
 
+    public func configure(config: OrbConfig, result: FlutterResult?) {
+        channel.invokeMethod("configure", arguments: config.toDict(), result: result)
+    }
+    
     public func connect(options: OrbConnectionOptions, result callback: FlutterResult?) {
         channel.invokeMethod("connect", arguments: options.toDict()) { result in
             switch result {

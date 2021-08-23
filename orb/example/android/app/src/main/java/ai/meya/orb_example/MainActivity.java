@@ -11,6 +11,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import ai.meya.orb.OrbConnectionOptions;
+import ai.meya.orb.config.OrbComposer;
+import ai.meya.orb.config.OrbConfig;
+import ai.meya.orb.config.OrbSplash;
+import ai.meya.orb.config.OrbTheme;
 import androidx.annotation.NonNull;
 import io.flutter.embedding.android.FlutterActivity;
 import ai.meya.orb.Orb;
@@ -65,13 +69,33 @@ public class MainActivity extends FlutterActivity {
                 pageContext
         );
 
+        OrbConfig config = new OrbConfig(
+                new OrbTheme(
+                        "#691ac9"
+                ),
+                new OrbComposer(
+                        "Enter text here...",
+                        "Anything else to say?",
+                        "File",
+                        "Send ",
+                        "Photo",
+                        "Camera",
+                        "Gallery"
+                ),
+                new OrbSplash(
+                        "Example app is ready..."
+                )
+        );
+
         if (!orb.ready) {
             orb.setOnReadyListener(new Orb.ReadyListener() {
                 public void onReady() {
+                    orb.configure(config);
                     orb.connect(connectionOptions);
                 }
             });
         } else {
+            orb.configure(config);
             orb.connect(connectionOptions);
         }
 

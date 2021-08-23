@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import ai.meya.orb.config.OrbConfig;
 import androidx.annotation.NonNull;
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
@@ -125,6 +126,11 @@ public class OrbPlugin implements FlutterPlugin, MethodCallHandler {
     channel.invokeMethod("unsubscribe", arguments, new GenericResult("unsubscribe"));
   }
 
+  public void configure(OrbConfig config) {
+    Log.d(TAG, "Configuring Orb");
+    channel.invokeMethod("configure", config.toMap(), new GenericResult("configure"));
+  }
+  
   public void connect(OrbConnectionOptions options) {
     Log.d(TAG, "Connecting to '" + options.gridUrl + "'");
     channel.invokeMethod("connect", options.toMap(), new GenericResult("connect"));

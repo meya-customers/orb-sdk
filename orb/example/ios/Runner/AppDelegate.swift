@@ -134,6 +134,23 @@ import UserNotifications
                 ]
             ] as [String: Any?]
         )
+        let config = OrbConfig(
+            theme: OrbTheme(
+                brandColor: "#691ac9"
+            ),
+            composer: OrbComposer(
+                placeholderText: "Enter text here...",
+                collapsePlaceholderText: "Anything else to say?",
+                fileButtonText: "File",
+                fileSendText: "Send ",
+                imageButtonText: "Photo",
+                cameraButtonText: "Camera",
+                galleryButtonText: "Gallery"
+            ),
+            splash: OrbSplash(
+                readyText: "Example app is ready..."
+            )            
+        )
         
         if (!orb.ready) {
             orb.onReady {
@@ -172,9 +189,11 @@ import UserNotifications
                     }
                 )
                 */
+                self.orb.configure(config: config)
                 self.orb.connect(options: connectionOptions)
             }
         } else {
+            self.orb.configure(config: config)
             self.orb.connect(options: connectionOptions)
         }
         orb.onConnnected {

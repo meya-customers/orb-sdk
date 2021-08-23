@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import 'package:orb/event.dart';
 import 'package:orb/event_stream.dart';
 import 'package:orb/ui/avatar.dart';
 import 'package:orb/ui/design.dart';
@@ -12,6 +13,16 @@ class OrbUserAvatar extends StatelessWidget {
   final String userId;
 
   OrbUserAvatar({@required this.eventStream, @required this.userId});
+
+  factory OrbUserAvatar.fromEvent({
+    @required OrbEventStream eventStream,
+    @required OrbEvent event,
+  }) {
+    return OrbUserAvatar(
+      eventStream: eventStream,
+      userId: event.data['user_id'],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,8 +100,10 @@ class OrbUserAvatar extends StatelessWidget {
   static EdgeInsets defaultMargin(BuildContext context) =>
       OrbTheme.of(context).avatar.defaultMargin;
 
-  static Widget avatarOrPlaceholder(BuildContext context,
-      {OrbUserAvatar avatar}) {
+  static Widget avatarOrPlaceholder(
+    BuildContext context, {
+    OrbUserAvatar avatar,
+  }) {
     return Container(
       margin: OrbUserAvatar.defaultMargin(context),
       child: (avatar ?? OrbUserAvatar.placeholder(context)),

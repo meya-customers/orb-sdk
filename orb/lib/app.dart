@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:provider/provider.dart';
+
+import 'package:orb/config.dart';
 import 'package:orb/connection.dart';
 import 'package:orb/event.dart';
 import 'package:orb/event_stream.dart';
@@ -14,8 +17,7 @@ class OrbApp extends StatefulWidget {
 }
 
 class _OrbAppState extends State<OrbApp> with WidgetsBindingObserver {
-  final OrbThemeData theme = OrbThemeData();
-
+  OrbConfig orbConfig;
   OrbConnection connection;
   String platformVersion = "Unknown";
   bool ready = false;
@@ -24,9 +26,11 @@ class _OrbAppState extends State<OrbApp> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    orbConfig = OrbConfig.init();
     OrbPlugin.init();
     initPlatformState();
     OrbPlugin.ready();
+    OrbPlugin.configure = configure;
     OrbPlugin.connect = connect;
     OrbPlugin.disconnect = disconnect;
     OrbPlugin.publishEvent = publishEvent;
@@ -53,6 +57,11 @@ class _OrbAppState extends State<OrbApp> with WidgetsBindingObserver {
       print('Platform version: $version');
       platformVersion = version;
     });
+  }
+
+  void configure(ThemeConfigSpec theme, ComposerConfigSpec composer,
+      SplashConfigSpec splash) {
+    orbConfig.update(theme: theme, composer: composer, splash: splash);
   }
 
   void connect(ConnectionOptions options) {
@@ -91,7 +100,7 @@ class _OrbAppState extends State<OrbApp> with WidgetsBindingObserver {
   }
 
   void disconnect(bool logOut) {
-    connection.disconnect(logOut: logOut);
+    connection?.disconnect(logOut: logOut);
     setState(() {
       connection = null;
     });
@@ -149,20 +158,39 @@ class _OrbAppState extends State<OrbApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: theme.toMaterialThemeData(),
-      home: connection != null
-          ? OrbChat(
-              eventStream: connection.getEventStream(),
-              connection: connection,
-            )
-          : Scaffold(
-              backgroundColor: theme.palette.brandLight,
-              body: Center(
-                child: Text('Ready to connect'),
-              ),
-            ),
-      builder: theme.builder,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<OrbConfig>(
+          create: (_) => orbConfig,
+        )
+      ],
+      child: Consumer<OrbConfig>(
+        builder: (BuildContext context, OrbConfig orbConfig, Widget child) =>
+            MaterialApp(
+          theme: orbConfig.orbThemeData.toMaterialThemeData(),
+          home: connection != null
+              ? OrbChat(
+                  eventStream: connection.getEventStream(),
+                  connection: connection,
+                )
+              : OrbSplash(),
+          builder: orbConfig.orbThemeData.builder,
+        ),
+      ),
+    );
+  }
+}
+
+class OrbSplash extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<OrbConfig>(
+      builder: (BuildContext context, OrbConfig orbConfig, child) => Scaffold(
+        backgroundColor: OrbTheme.of(context).palette.blank,
+        body: Center(
+          child: Text(orbConfig.splash.readyText),
+        ),
+      ),
     );
   }
 }

@@ -226,9 +226,11 @@ class TilesRow extends StatelessWidget {
 
 class RowTile extends StatelessWidget {
   final List<Widget> children;
+  final EdgeInsetsGeometry padding;
 
   RowTile({
     @required this.children,
+    this.padding,
   });
 
   @override
@@ -241,8 +243,11 @@ class RowTile extends StatelessWidget {
     );
   }
 
-  Widget buildContainer(BuildContext context,
-      {@required Widget child, Border border}) {
+  Widget buildContainer(
+    BuildContext context, {
+    @required Widget child,
+    Border border,
+  }) {
     return ConstrainedBox(
       constraints: BoxConstraints(maxWidth: 340),
       child: Container(
@@ -250,6 +255,7 @@ class RowTile extends StatelessWidget {
           top: OrbTheme.of(context).lengths.medium,
           right: OrbTheme.of(context).lengths.medium,
         ),
+        padding: padding,
         decoration: BoxDecoration(
           boxShadow: [OrbTheme.of(context).outerShadow.small],
           color: OrbTheme.of(context).palette.blank,

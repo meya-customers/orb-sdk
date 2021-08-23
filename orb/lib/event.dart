@@ -61,7 +61,7 @@ class OrbEvent implements Comparable<OrbEvent> {
     );
   }
 
-  factory OrbEvent.createDeviceEvent({
+  factory OrbEvent.createDeviceConnectEvent({
     String deviceId,
     String deviceToken,
     AppLifecycleState deviceState,
@@ -73,25 +73,44 @@ class OrbEvent implements Comparable<OrbEvent> {
       platform = 'ios';
     }
     return OrbEvent(
-      type: 'meya.orb.event.device',
+      type: 'meya.orb.event.device.connect',
       data: {
         'device_id': deviceId,
+        'key': 'state',
+        'value': deviceState.state,
         'device_token': deviceToken,
-        'device_state': deviceState.state,
+        'state': deviceState.state,
         'platform': platform,
       },
     );
   }
 
-  factory OrbEvent.createHeartbeatEvent({
+  factory OrbEvent.createDeviceStateEvent({
     String deviceId,
     AppLifecycleState deviceState,
   }) {
     return OrbEvent(
+      type: 'meya.orb.event.device.state',
+      data: {
+        'device_id': deviceId,
+        'key': 'state',
+        'value': deviceState.state,
+        'state': deviceState.state,
+      },
+    );
+  }
+
+  factory OrbEvent.createDeviceHeartbeatEvent({
+    String deviceId,
+  }) {
+    final timestamp = DateTime.now().toUtc().millisecondsSinceEpoch;
+    return OrbEvent(
       type: 'meya.orb.event.device.heartbeat',
       data: {
         'device_id': deviceId,
-        'device_state': deviceState.state,
+        'key': 'timestamp',
+        'value': timestamp,
+        'timestamp': timestamp,
       },
     );
   }
@@ -169,6 +188,55 @@ class OrbEvent implements Comparable<OrbEvent> {
   factory OrbEvent.createVirtualUserNameEvent(String id, String userId) {
     return OrbEvent(
         id: id, type: 'virtual.orb.event.user_name', data: {'user_id': userId});
+  }
+}
+
+enum ComposerFocus { file, image, text, blur }
+
+extension ComposerFocusExtension on ComposerFocus {
+  static ComposerFocus fromString(String focus) {
+    switch (focus) {
+      case 'file':
+        return ComposerFocus.file;
+      case 'image':
+        return ComposerFocus.image;
+      case 'blur':
+        return ComposerFocus.blur;
+      default:
+        return ComposerFocus.text;
+    }
+  }
+}
+
+enum ComposerVisibility { collapse, hide, show }
+
+extension ComposerVisibilityExtension on ComposerVisibility {
+  static ComposerVisibility fromString(String focus) {
+    switch (focus) {
+      case 'collapse':
+        return ComposerVisibility.collapse;
+      case 'hide':
+        return ComposerVisibility.hide;
+      default:
+        return ComposerVisibility.show;
+    }
+  }
+}
+
+class ComposerEventSpec {
+  final ComposerFocus focus;
+  final String placeholder;
+  final ComposerVisibility visibility;
+
+  ComposerEventSpec({this.focus, this.placeholder, this.visibility});
+
+  factory ComposerEventSpec.fromMap(Map map) {
+    if (map == null) return null;
+    return ComposerEventSpec(
+      focus: ComposerFocusExtension.fromString(map['focus']),
+      placeholder: map['placeholder'],
+      visibility: ComposerVisibilityExtension.fromString(map['visibility']),
+    );
   }
 }
 

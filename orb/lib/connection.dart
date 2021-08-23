@@ -19,6 +19,40 @@ import 'package:orb/event_stream.dart';
 import 'package:orb/util.dart';
 import 'package:orb/version.dart';
 
+class ConnectionOptions {
+  final String gridUrl;
+  final String appId;
+  final String integrationId;
+  final Map<dynamic, dynamic> pageContext;
+  final String gridUserId;
+  final String userId;
+  final String threadId;
+  final String sessionToken;
+  final String magicLinkId;
+  final String url;
+  final String referrer;
+  final String deviceId;
+  final String deviceToken;
+  final bool enableCloseButton;
+
+  ConnectionOptions({
+    @required this.gridUrl,
+    @required this.appId,
+    @required this.integrationId,
+    this.pageContext,
+    this.gridUserId,
+    this.userId,
+    this.threadId,
+    this.sessionToken,
+    this.magicLinkId,
+    this.url,
+    this.referrer,
+    this.deviceId,
+    this.deviceToken,
+    this.enableCloseButton,
+  });
+}
+
 class OrbConnection extends ChangeNotifier {
   String gridUrl;
   String blobUrl;
@@ -79,9 +113,8 @@ class OrbConnection extends ChangeNotifier {
   set deviceState(AppLifecycleState state) {
     _deviceState = state;
     if (connected) {
-      publishEvent(OrbEvent.createDeviceEvent(
+      publishEvent(OrbEvent.createDeviceStateEvent(
         deviceId: deviceId,
-        deviceToken: deviceToken,
         deviceState: deviceState,
       ));
     }
@@ -159,6 +192,18 @@ class OrbConnection extends ChangeNotifier {
 
           _connected = true;
 
+          if (deviceToken != null) {
+            publishEvent(OrbEvent.createDeviceConnectEvent(
+              deviceId: deviceId,
+              deviceToken: deviceToken,
+              deviceState: deviceState,
+            ));
+          }
+
+          final heartbeatIntervalSeconds =
+              payload['data']['heartbeat_interval_seconds'];
+          _startHeartbeat(heartbeatIntervalSeconds);
+
           final firstConnect = this.firstConnect;
           if (firstConnect) {
             this.firstConnect = false;
@@ -169,6 +214,7 @@ class OrbConnection extends ChangeNotifier {
               () => _onFirstConnect(payload['data']),
             );
           }
+
           _receiveAll(
             receiveBuffer: historyEvents,
             userData: historyUserData,
@@ -177,24 +223,6 @@ class OrbConnection extends ChangeNotifier {
               {'eventStream': _eventStream},
             ),
           );
-          if (deviceToken != null) {
-            publishEvent(OrbEvent.createDeviceEvent(
-              deviceId: deviceId,
-              deviceToken: deviceToken,
-              deviceState: deviceState,
-            ));
-            final heartbeatInterval = _getHeartbeatInterval();
-            _heartbeatTimer = Timer.periodic(
-              heartbeatInterval,
-              (timer) {
-                print('HEARTBEAT $deviceId');
-                publishEvent(OrbEvent.createHeartbeatEvent(
-                  deviceId: deviceId,
-                  deviceState: deviceState,
-                ));
-              },
-            );
-          }
 
           notifyListeners();
         } else if (payload["type"] == "meya.orb.entry.ws.publish_request") {
@@ -281,6 +309,22 @@ class OrbConnection extends ChangeNotifier {
     }
   }
 
+  void _startHeartbeat(int heartbeatIntervalSeconds) {
+    _heartbeatTimer?.cancel();
+    if (heartbeatIntervalSeconds != null && heartbeatIntervalSeconds >= 5) {
+      _heartbeatTimer = Timer.periodic(
+        Duration(seconds: heartbeatIntervalSeconds),
+        (timer) {
+          if (deviceState != AppLifecycleState.resumed) return;
+          print('HEARTBEAT $deviceId');
+          publishEvent(OrbEvent.createDeviceHeartbeatEvent(
+            deviceId: deviceId,
+          ));
+        },
+      );
+    }
+  }
+
   void _reconnect() async {
     final retryInterval = _getRetryTimeoutInterval();
     print('RETRYING $retries $retryInterval');
@@ -295,17 +339,7 @@ class OrbConnection extends ChangeNotifier {
     connect();
   }
 
-  Duration _getTimeoutInterval() {
-    return Duration(
-      milliseconds: 3000,
-    );
-  }
-
-  Duration _getHeartbeatInterval() {
-    return Duration(
-      milliseconds: 5000,
-    );
-  }
+  Duration _getTimeoutInterval() => Duration(milliseconds: 3000);
 
   Duration _getRetryTimeoutInterval() {
     final base = 10;

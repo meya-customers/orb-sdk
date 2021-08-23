@@ -18,9 +18,10 @@ class OrbQuickReplies extends StatelessWidget {
   Widget build(BuildContext context) {
     final quickReplies = event.data["quick_replies"] as List<dynamic>;
     if (quickReplies.length == 0) {
-      return Container();
+      return SizedBox.shrink();
     } else {
       return Container(
+        alignment: Alignment.centerRight,
         child: Wrap(
           alignment: WrapAlignment.end,
           children: [

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:orb/connection.dart';
@@ -9,19 +11,33 @@ import 'package:orb/ui/card/ask_tiles.dart';
 import 'package:orb/ui/card/file.dart';
 import 'package:orb/ui/card/image.dart';
 import 'package:orb/ui/card/quick_replies.dart';
+import 'package:orb/ui/card/rating.dart';
 import 'package:orb/ui/card/status.dart';
 import 'package:orb/ui/card/text.dart';
+import 'package:orb/ui/card/typing_indicator.dart';
 import 'package:orb/ui/design.dart';
 import 'package:orb/ui/presence/user_avatar.dart';
 import 'package:orb/ui/presence/user_name.dart';
 
-class OrbHistory extends StatelessWidget {
+class OrbHistory extends StatefulWidget {
   final OrbEventStream eventStream;
   final OrbConnection connection;
   final ScrollController listScrollController = ScrollController();
 
-  OrbHistory({Key key, @required this.eventStream, @required this.connection})
-      : super(key: key);
+  OrbHistory({
+    Key key,
+    @required this.eventStream,
+    @required this.connection,
+  }) : super(key: key);
+
+  @override
+  _OrbHistoryState createState() => _OrbHistoryState();
+}
+
+class _OrbHistoryState extends State<OrbHistory> {
+  Timer expireTypingEventTimer;
+  String hideTypingEventId;
+  Map<String, bool> processedTypingEvents = {};
 
   @override
   Widget build(BuildContext context) {
@@ -31,39 +47,83 @@ class OrbHistory extends StatelessWidget {
         horizontal: OrbTheme.of(context).lengths.mediumSmall,
       ),
       itemBuilder: (context, index) => buildItem(index),
-      itemCount: eventStream.events.length + 1,
+      itemCount: widget.eventStream.events.length + 1,
       reverse: true,
-      controller: listScrollController,
+      controller: widget.listScrollController,
     );
   }
 
   Widget buildItem(int index) {
     if (index == 0) {
-      return buildQuickReplies();
+      return buildStaticWidget();
     }
-    final event = eventStream.events[index - 1];
-    final userId = event.data['user_id'];
+    final event = widget.eventStream.events[index - 1];
     return buildEvent(
       event: event,
       userAvatar: (event.showAvatar
-          ? OrbUserAvatar(
-              eventStream: eventStream,
-              userId: userId,
+          ? OrbUserAvatar.fromEvent(
+              eventStream: widget.eventStream,
+              event: event,
             )
           : null),
     );
   }
 
-  Widget buildQuickReplies() {
-    if (eventStream.quickRepliesEvent == null) {
-      return SizedBox.shrink();
-    } else {
-      return OrbQuickReplies(
-        event: eventStream.quickRepliesEvent,
-        connection: connection,
-      );
+  Widget buildStaticWidget() {
+    processTypingEvents();
+    return Column(
+      children: [
+        if (widget.eventStream.quickRepliesEvent != null)
+          OrbQuickReplies(
+            event: widget.eventStream.quickRepliesEvent,
+            connection: widget.connection,
+          ),
+        if (widget.eventStream.typingOnEvent != null &&
+            widget.eventStream.typingOnEvent.id != hideTypingEventId)
+          OrbTypingIndicator(
+            event: widget.eventStream.typingOnEvent,
+            userAvatar: OrbUserAvatar.fromEvent(
+              eventStream: widget.eventStream,
+              event: widget.eventStream.typingOnEvent,
+            ),
+          ),
+      ],
+    );
+  }
+
+  void processTypingEvents() {
+    final typingOnEventId = widget.eventStream.typingOnEvent?.id;
+
+    for (final event in widget.eventStream.events) {
+      if (processedTypingEvents.containsKey(event.id)) return;
+
+      final isSelf = widget.eventStream.isSelfEvent(event);
+      if (event.type == "meya.presence.event.typing.on" && !isSelf) {
+        expireTypingEventTimer?.cancel();
+        expireTypingEventTimer = Timer(
+          getTypingOnInterval(),
+          () => setState(() {
+            hideTypingEventId = typingOnEventId;
+          }),
+        );
+      }
+
+      if (event.type == "meya.presence.event.typing.off" && !isSelf) {
+        expireTypingEventTimer?.cancel();
+        expireTypingEventTimer = Timer(
+          getTypingOffInterval(),
+          () => setState(() {
+            hideTypingEventId = typingOnEventId;
+          }),
+        );
+      }
+      processedTypingEvents[event.id] = true;
     }
   }
+
+  Duration getTypingOnInterval() => Duration(seconds: 10);
+
+  Duration getTypingOffInterval() => Duration(milliseconds: 100);
 
   Widget buildEvent({
     @required OrbEvent event,
@@ -77,10 +137,12 @@ class OrbHistory extends StatelessWidget {
         return buildAskForm(event, userAvatar);
       case 'meya.tile.event.ask':
         return buildAskTiles(event, userAvatar);
-      case 'meya.image.event':
-        return buildImage(event, userAvatar);
       case 'meya.file.event':
         return buildFile(event, userAvatar);
+      case 'meya.image.event':
+        return buildImage(event, userAvatar);
+      case 'meya.tile.event.rating':
+        return buildRating(event, userAvatar);
       case 'meya.text.event.status':
         return buildStatus(event);
       case 'virtual.orb.event.user_name':
@@ -96,7 +158,7 @@ class OrbHistory extends StatelessWidget {
   ) {
     return OrbAskForm(
       event: event,
-      connection: connection,
+      connection: widget.connection,
       userAvatar: userAvatar,
     );
   }
@@ -107,7 +169,7 @@ class OrbHistory extends StatelessWidget {
   ) {
     return OrbAskTiles(
       event: event,
-      connection: connection,
+      connection: widget.connection,
       userAvatar: userAvatar,
     );
   }
@@ -118,7 +180,7 @@ class OrbHistory extends StatelessWidget {
   ) {
     return OrbAskButtons(
       event: event,
-      connection: connection,
+      connection: widget.connection,
       userAvatar: userAvatar,
     );
   }
@@ -134,16 +196,27 @@ class OrbHistory extends StatelessWidget {
       return OrbImage(
         event: event,
         url: url,
-        isSelfEvent: eventStream.isSelfEvent(event),
+        isSelfEvent: widget.eventStream.isSelfEvent(event),
         userAvatar: userAvatar,
       );
     }
   }
 
+  Widget buildRating(
+    OrbEvent event,
+    OrbUserAvatar userAvatar,
+  ) {
+    return OrbRating(
+      event: event,
+      connection: widget.connection,
+      userAvatar: userAvatar,
+    );
+  }
+
   Widget buildStatus(OrbEvent event) {
     return OrbStatus(
       event: event,
-      isActiveEvent: eventStream.isActiveEvent(event),
+      isActiveEvent: widget.eventStream.isActiveEvent(event),
     );
   }
 
@@ -160,7 +233,7 @@ class OrbHistory extends StatelessWidget {
         event: event,
         filename: filename,
         url: url,
-        isSelfEvent: eventStream.isSelfEvent(event),
+        isSelfEvent: widget.eventStream.isSelfEvent(event),
         userAvatar: userAvatar,
       );
     }
@@ -169,9 +242,9 @@ class OrbHistory extends StatelessWidget {
   Widget buildUserName(OrbEvent event) {
     final userId = event.data['user_id'];
     return OrbUserName(
-      eventStream: eventStream,
+      eventStream: widget.eventStream,
       userId: userId,
-      isSelfEvent: eventStream.isSelfEvent(event),
+      isSelfEvent: widget.eventStream.isSelfEvent(event),
     );
   }
 
@@ -186,14 +259,14 @@ class OrbHistory extends StatelessWidget {
       return OrbText(
         event: event,
         text: text,
-        isSelfEvent: eventStream.isSelfEvent(event),
+        isSelfEvent: widget.eventStream.isSelfEvent(event),
         userAvatar: userAvatar,
       );
     }
   }
 
   void scroll() {
-    listScrollController.animateTo(
+    widget.listScrollController.animateTo(
       0.0,
       duration: Duration(milliseconds: 300),
       curve: Curves.easeOut,
