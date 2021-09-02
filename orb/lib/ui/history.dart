@@ -75,7 +75,6 @@ class _OrbHistoryState extends State<OrbHistory> {
       children: [
         if (widget.eventStream.quickRepliesEvent != null)
           OrbQuickReplies(
-            event: widget.eventStream.quickRepliesEvent,
             connection: widget.connection,
           ),
         if (widget.eventStream.typingOnEvent != null &&
@@ -195,7 +194,6 @@ class _OrbHistoryState extends State<OrbHistory> {
     } else {
       return OrbImage(
         event: event,
-        url: url,
         isSelfEvent: widget.eventStream.isSelfEvent(event),
         userAvatar: userAvatar,
       );
@@ -224,15 +222,12 @@ class _OrbHistoryState extends State<OrbHistory> {
     OrbEvent event,
     OrbUserAvatar userAvatar,
   ) {
-    final filename = event.data['filename'];
     final url = event.data['url'];
     if (url == null || url == '') {
       return SizedBox.shrink();
     } else {
       return OrbFile(
         event: event,
-        filename: filename,
-        url: url,
         isSelfEvent: widget.eventStream.isSelfEvent(event),
         userAvatar: userAvatar,
       );
@@ -258,7 +253,6 @@ class _OrbHistoryState extends State<OrbHistory> {
     } else {
       return OrbText(
         event: event,
-        text: text,
         isSelfEvent: widget.eventStream.isSelfEvent(event),
         userAvatar: userAvatar,
       );

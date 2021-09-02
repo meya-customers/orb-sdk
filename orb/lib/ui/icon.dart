@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_svg/svg.dart';
 
-import 'package:orb/ui/color.dart';
+import 'package:orb/string.dart';
 import 'package:orb/ui/design.dart';
 
 const String MEYA_CDN_URL = 'https://cdn-staging.meya.ai';
@@ -15,7 +15,7 @@ class OrbIcon extends StatelessWidget {
 
   OrbIcon(this.src, {Color color, Color defaultColor}) {
     if (src.color != null) {
-      this.color = colorFromString(src.color);
+      this.color = src.color;
     } else if (color != null) {
       this.color = color;
     } else if (defaultColor != null) {
@@ -36,7 +36,7 @@ class OrbIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (src.svg != null) {
+    if (src.svg != null && color == src.color) {
       return src.svg;
     } else if (src.url != null) {
       if (!src.url.startsWith("http")) {
@@ -62,32 +62,20 @@ class OrbIcon extends StatelessWidget {
     }
   }
 
+  Widget fromAsset(BuildContext context) {
+    return SvgPicture.asset(
+      src.assetName,
+      bundle: src.assetBundle ?? DefaultAssetBundle.of(context),
+      package: src.package ?? 'orb',
+      color: color,
+      placeholderBuilder: (BuildContext context) => placeholderIcon,
+    );
+  }
+
   Icon get placeholderIcon => Icon(
         Icons.check_box_outline_blank,
         color: color,
       );
-
-  Color colorFromString(String color) {
-    return {
-          "black": Colors.black,
-          "white": Colors.white,
-          "red": Colors.red,
-          "pink": Colors.pink,
-          "purple": Colors.amber,
-          "yellow": Colors.yellow,
-          "blue": Colors.blue,
-          "brown": Colors.brown,
-          "cyan": Colors.cyan,
-          "indigo": Colors.indigo,
-          "green": Colors.green,
-          "grey": Colors.grey,
-          "teal": Colors.teal,
-          "orange": Colors.orange,
-          "lime": Colors.lime,
-        }[color] ??
-        HexColor.fromHex(color) ??
-        OrbThemePalette().normal;
-  }
 
   OrbIcon copyWith({
     OrbIconSpec src,
@@ -110,7 +98,7 @@ class OrbIconSpec {
   final String assetName;
   final AssetBundle assetBundle;
   final String package;
-  final String color;
+  final Color color;
   final Widget svg;
 
   OrbIconSpec._({
@@ -144,13 +132,13 @@ class OrbIconSpec {
       } else if (url.startsWith("streamline")) {
         url = urlFromPath(url);
       }
-      return OrbIconSpec._(url: url, color: color);
+      return OrbIconSpec._(url: url, color: color?.toColor());
     } else if (assetName != null) {
       return OrbIconSpec._(
         assetName: assetName,
         assetBundle: assetBundle,
         package: package,
-        color: color,
+        color: color?.toColor(),
       );
     } else {
       throw OrbIconSpecError(

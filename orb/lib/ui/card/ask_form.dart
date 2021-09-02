@@ -67,6 +67,7 @@ class _OrbInputFieldState extends State<OrbInputField> {
 
   FocusNode focusNode;
   FocusAttachment nodeAttachment;
+  bool disabled;
   bool focus = false;
   bool invalid = false;
   Map<String, bool> processedEvents = {};
@@ -79,6 +80,7 @@ class _OrbInputFieldState extends State<OrbInputField> {
     focusNode = FocusNode(debugLabel: 'OrbInputField');
     focusNode.addListener(_handleFocusChange);
     nodeAttachment = focusNode.attach(context, onKey: _handleKeyPress);
+    disabled = isDisabled;
   }
 
   @override
@@ -99,17 +101,24 @@ class _OrbInputFieldState extends State<OrbInputField> {
     return KeyEventResult.ignored;
   }
 
+  bool get isActiveError {
+    final eventStream = widget.connection.getEventStream();
+    final form = eventStream.forms[widget.event.data['form_id']];
+    return (form.errorEvent != null &&
+        eventStream.isActiveEvent(form.errorEvent));
+  }
+
+  bool get isDisabled {
+    final eventStream = widget.connection.getEventStream();
+    return !(eventStream.isActiveEvent(widget.event) || isActiveError);
+  }
+
   @override
   Widget build(BuildContext context) {
     nodeAttachment.reparent();
     final eventStream = widget.connection.getEventStream();
     final form = eventStream.forms[widget.event.data['form_id']];
     final ok = form?.okEvent != null;
-    final disabled = !(eventStream.isActiveEvent(widget.event) ||
-        (form.errorEvent != null &&
-            eventStream.isActiveEvent(form.errorEvent)));
-    final isActiveError =
-        (form.errorEvent != null && eventStream.isActiveEvent(form.errorEvent));
     if (isActiveError && !invalid) {
       setState(() {
         invalid = true;
@@ -248,12 +257,12 @@ class _OrbInputFieldState extends State<OrbInputField> {
 
   Widget buildSubmit(BuildContext context, bool disabled, bool ok) {
     if (!ok) {
-      if (disabled) {
-        return buildSubmitButton(context, disabled);
-      } else {
-        return InkWell(
-            onTap: submitForm, child: buildSubmitButton(context, disabled));
-      }
+      return disabled
+          ? buildSubmitButton(context, disabled)
+          : InkWell(
+              onTap: submitForm,
+              child: buildSubmitButton(context, disabled),
+            );
     } else {
       return Container(
         padding: EdgeInsets.all(OrbTheme.of(context).lengths.mediumSmall),
@@ -328,7 +337,9 @@ class _OrbInputFieldState extends State<OrbInputField> {
   Border border(BuildContext context, bool disabled, bool ok) {
     Color color;
     if (focus) {
-      color = OrbTheme.of(context).palette.brand;
+      color = disabled
+          ? OrbTheme.of(context).palette.disabled
+          : OrbTheme.of(context).palette.brand;
     } else if (invalid) {
       color = OrbTheme.of(context).palette.error;
     } else {
@@ -414,5 +425,9 @@ class _OrbInputFieldState extends State<OrbInputField> {
       widget.event.data['form_id'],
       {field['name']: textEditingController.text},
     ));
+    setState(() {
+      inputText = textEditingController.text;
+      disabled = true;
+    });
   }
 }
