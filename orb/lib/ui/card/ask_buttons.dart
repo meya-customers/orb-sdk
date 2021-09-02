@@ -7,7 +7,7 @@ import 'package:orb/ui/card/text.dart';
 import 'package:orb/ui/design.dart';
 import 'package:orb/ui/presence/user_avatar.dart';
 
-class OrbAskButtons extends StatelessWidget {
+class OrbAskButtons extends StatefulWidget {
   final OrbEvent event;
   final OrbConnection connection;
   final OrbUserAvatar userAvatar;
@@ -18,11 +18,27 @@ class OrbAskButtons extends StatelessWidget {
     @required this.userAvatar,
   });
 
+  _OrbAskButtonsState createState() => _OrbAskButtonsState();
+}
+
+class _OrbAskButtonsState extends State<OrbAskButtons> {
+  bool disabled;
+  String selectedButtonId;
+
+  @override
+  void initState() {
+    super.initState();
+    disabled = !widget.connection.getEventStream().isActiveEvent(widget.event);
+  }
+
+  bool isButtonSelected(String buttonId) => selectedButtonId != null
+      ? selectedButtonId == buttonId
+      : widget.connection.getEventStream().buttonClicks[buttonId] ?? false;
+
   @override
   Widget build(BuildContext context) {
-    final text = event.data['text'];
-    final disabled = !connection.getEventStream().isActiveEvent(event);
-    final buttons = event.data['buttons'] as List<dynamic>;
+    final text = widget.event.data['text'];
+    final buttons = widget.event.data['buttons'] as List<dynamic>;
     if (buttons.length == 0) {
       return SizedBox.shrink();
     } else {
@@ -31,13 +47,13 @@ class OrbAskButtons extends StatelessWidget {
         children: [
           OrbUserAvatar.avatarOrPlaceholder(
             context,
-            avatar: userAvatar,
+            avatar: widget.userAvatar,
           ),
           text != null
               ? Flexible(
                   child: (Column(
                     children: [
-                      OrbTextOther.container(event: event, text: text),
+                      OrbTextOther.container(event: widget.event, text: text),
                       Wrap(
                         alignment: WrapAlignment.center,
                         crossAxisAlignment: WrapCrossAlignment.center,
@@ -65,27 +81,35 @@ class OrbAskButtons extends StatelessWidget {
     bool disabled,
     List<dynamic> buttons,
   ) {
-    return [
-      for (final button in buttons)
-        Button(
-          text: button["text"],
-          onTap: () {
-            if (button["button_id"] != null) {
-              connection.publishEvent(OrbEvent.createButtonClickEvent(
-                button["button_id"],
-                text: button["text"],
-                context: button["context"],
-              ));
-            } else {
-              connection.publishEvent(OrbEvent.createSayEvent(
-                button["text"],
-                context: button["context"],
-              ));
-            }
-          },
-          disabled: disabled,
-        )
-    ];
+    return buttons.map((button) {
+      final buttonId = button['button_id'];
+      final text = button['text'];
+      final context = button['context'];
+
+      return Button(
+        text: text,
+        onTap: () {
+          if (buttonId != null) {
+            widget.connection.publishEvent(OrbEvent.createButtonClickEvent(
+              buttonId,
+              text: text,
+              context: context,
+            ));
+          } else {
+            widget.connection.publishEvent(OrbEvent.createSayEvent(
+              text,
+              context: context,
+            ));
+          }
+          setState(() {
+            this.disabled = true;
+            this.selectedButtonId = buttonId;
+          });
+        },
+        disabled: disabled,
+        selected: isButtonSelected(buttonId),
+      );
+    }).toList();
   }
 }
 
@@ -93,11 +117,13 @@ class Button extends StatelessWidget {
   final String text;
   final Function onTap;
   final bool disabled;
+  final bool selected;
 
   Button({
     @required this.text,
     @required this.onTap,
     @required this.disabled,
+    @required this.selected,
   });
 
   @override
@@ -125,9 +151,11 @@ class Button extends StatelessWidget {
           color: disabled
               ? OrbTheme.of(context).palette.disabled
               : OrbTheme.of(context).palette.brand,
-          border: OrbTheme.of(context).innerBorder.thick(
+          border: OrbTheme.of(context).innerBorder.thin(
                 disabled
-                    ? OrbTheme.of(context).palette.disabled
+                    ? selected
+                        ? OrbTheme.of(context).palette.normal
+                        : OrbTheme.of(context).palette.disabled
                     : OrbTheme.of(context).palette.brand,
               ),
           borderRadius:
@@ -140,7 +168,9 @@ class Button extends StatelessWidget {
               .merge(OrbTheme.of(context).text.size.medium)
               .copyWith(
                   color: disabled
-                      ? OrbTheme.of(context).palette.disabledDark
+                      ? selected
+                          ? OrbTheme.of(context).palette.normal
+                          : OrbTheme.of(context).palette.disabledDark
                       : OrbTheme.of(context).palette.blank),
         ),
       ),

@@ -195,7 +195,7 @@ class OrbEventStream {
       final List quickReplies = event.data['quick_replies'];
       if (isHiddenEvent(event)) {
         break;
-      } else if (quickReplies != null) {
+      } else if (quickReplies != null && quickReplies.isNotEmpty) {
         return event;
       }
     }

@@ -19,10 +19,10 @@ abstract class OrbImage extends StatelessWidget {
 
   factory OrbImage({
     @required OrbEvent event,
-    @required String url,
     @required bool isSelfEvent,
     @required OrbUserAvatar userAvatar,
   }) {
+    final url = event.data['url'];
     if (isSelfEvent) {
       return OrbImageSelf._(
         event: event,

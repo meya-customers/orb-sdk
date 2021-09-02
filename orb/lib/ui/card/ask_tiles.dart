@@ -13,7 +13,6 @@ class OrbAskTiles extends StatelessWidget {
   final OrbEvent event;
   final OrbConnection connection;
   final OrbUserAvatar userAvatar;
-  bool disabled;
   String buttonStyle;
 
   OrbAskTiles({
@@ -21,7 +20,6 @@ class OrbAskTiles extends StatelessWidget {
     @required this.connection,
     @required this.userAvatar,
   }) {
-    this.disabled = !connection.getEventStream().isActiveEvent(event);
     this.buttonStyle = event.data['button_style'] ?? 'action';
   }
 
@@ -72,29 +70,44 @@ class OrbAskTiles extends StatelessWidget {
 
   Widget buildRow(BuildContext context) {
     return TilesRow(
+      event: event,
       connection: connection,
-      tiles: event.data['tiles'],
-      disabled: disabled,
       buttonStyle: buttonStyle,
     );
   }
 }
 
-class TilesRow extends StatelessWidget {
+class TilesRow extends StatefulWidget {
+  final OrbEvent event;
   final OrbConnection connection;
-  final List<dynamic> tiles;
-  final bool disabled;
   final String buttonStyle;
 
   TilesRow({
+    @required this.event,
     @required this.connection,
-    @required this.tiles,
-    @required this.disabled,
     @required this.buttonStyle,
   });
 
+  _TilesRowState createState() => _TilesRowState();
+}
+
+class _TilesRowState extends State<TilesRow> {
+  bool disabled;
+  String selectedButtonId;
+
+  @override
+  void initState() {
+    super.initState();
+    disabled = !widget.connection.getEventStream().isActiveEvent(widget.event);
+  }
+
+  bool isButtonSelected(String buttonId) => selectedButtonId != null
+      ? selectedButtonId == buttonId
+      : widget.connection.getEventStream().buttonClicks[buttonId] ?? false;
+
   @override
   Widget build(BuildContext context) {
+    final tiles = widget.event.data['tiles'];
     return SingleChildScrollView(
       padding: EdgeInsets.only(
         top: OrbTheme.of(context).lengths.small,
@@ -116,8 +129,7 @@ class TilesRow extends StatelessWidget {
     final noButtons = (tile['buttons'] == null || tile['buttons'].isEmpty);
     final isTileButton = tile['button_id'] != null;
     final tileButtonId = tile['button_id'];
-    final isTileButtonSelected =
-        connection.getEventStream().buttonClicks[tileButtonId] ?? false;
+    final isTileButtonSelected = isButtonSelected(tileButtonId);
     final isTileLink = tile['url'] == true;
     final contents = buildTileContents(context, tile);
 
@@ -162,7 +174,7 @@ class TilesRow extends StatelessWidget {
         bottomRight: OrbTheme.of(context).borderRadius.small,
       ),
       child: Container(
-        margin: buttonStyle == 'radio'
+        margin: widget.buttonStyle == 'radio'
             ? EdgeInsets.only(top: OrbTheme.of(context).lengths.medium)
             : EdgeInsets.only(bottom: OrbTheme.of(context).lengths.medium),
         child: Column(children: [
@@ -174,16 +186,15 @@ class TilesRow extends StatelessWidget {
 
   Widget buildButton(BuildContext context, Map<dynamic, dynamic> button) {
     final buttonId = button['button_id'];
-    final selected =
-        connection.getEventStream().buttonClicks[buttonId] ?? false;
+    final selected = isButtonSelected(buttonId);
     if (button['url'] != null) {
-      switch (buttonStyle) {
+      switch (widget.buttonStyle) {
         // TODO: Support 'text' and 'radio' buttons
         default:
           return RowActionLinkButton(url: button['url'], text: button['text']);
       }
     } else {
-      switch (buttonStyle) {
+      switch (widget.buttonStyle) {
         // TODO: Support 'text' buttons
         case 'radio':
           return RadioButton(
@@ -196,7 +207,7 @@ class TilesRow extends StatelessWidget {
                   : OrbTheme.of(context).palette.blank,
             ),
             text: button['text'],
-            onTap: () => connection.publishEvent(
+            onTap: () => widget.connection.publishEvent(
                 OrbEvent.createButtonClickEvent(button['button_id'])),
             disabled: disabled,
             selected: selected,
@@ -220,8 +231,13 @@ class TilesRow extends StatelessWidget {
     }
   }
 
-  void onButtonTap(String buttonId) =>
-      connection.publishEvent(OrbEvent.createButtonClickEvent(buttonId));
+  void onButtonTap(String buttonId) {
+    widget.connection.publishEvent(OrbEvent.createButtonClickEvent(buttonId));
+    setState(() {
+      disabled = true;
+      selectedButtonId = buttonId;
+    });
+  }
 }
 
 class RowTile extends StatelessWidget {

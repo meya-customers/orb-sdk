@@ -247,15 +247,13 @@ class ExtraMode extends StatelessWidget {
             icon: OrbIcon(OrbIcons.left),
             onPressed: () => toggleMode(ComposerMode.text),
           ),
-          // TODO: remove this when file_picker bug is fixed for iOS
-          if (Platform.isAndroid)
-            OrbComposerButton(
-              eventStream: eventStream,
-              connection: connection,
-              icon: OrbIcon(OrbIcons.sendFile),
-              text: orbConfig.composer.fileButtonText,
-              onTap: () => getFile(context),
-            ),
+          OrbComposerButton(
+            eventStream: eventStream,
+            connection: connection,
+            icon: OrbIcon(OrbIcons.sendFile),
+            text: orbConfig.composer.fileButtonText,
+            onTap: () => getFile(context),
+          ),
           OrbComposerButton(
             eventStream: eventStream,
             connection: connection,

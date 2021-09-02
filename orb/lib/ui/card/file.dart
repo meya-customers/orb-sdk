@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:path/path.dart' as p;
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:orb/event.dart';
 import 'package:orb/ui/design.dart';
@@ -24,11 +25,11 @@ abstract class OrbFile extends StatelessWidget {
 
   factory OrbFile({
     @required OrbEvent event,
-    @required String filename,
-    @required String url,
     @required bool isSelfEvent,
     @required OrbUserAvatar userAvatar,
   }) {
+    final filename = event.data['filename'];
+    final url = event.data['url'];
     final basename = p.basename(filename);
     if (isSelfEvent) {
       return OrbFileSelf._(
@@ -55,6 +56,7 @@ abstract class OrbFile extends StatelessWidget {
         maxWidth: 300,
       ),
       child: Container(
+        width: MediaQuery.of(context).size.width * 0.70,
         margin: EdgeInsets.only(
           top: (!event.isFirstInGroup
               ? OrbTheme.of(context).lengths.large
@@ -83,14 +85,24 @@ abstract class OrbFile extends StatelessWidget {
           margin: EdgeInsets.only(right: OrbTheme.of(context).lengths.small),
           child: buildIcon(context),
         ),
-        // TODO: Download file
         Expanded(
-          child: Text(
-            filename,
-            style: (OrbTheme.of(context).text.font.normal)
-                .merge(OrbTheme.of(context).text.style.bold)
-                .merge(OrbTheme.of(context).text.size.medium)
-                .copyWith(color: OrbTheme.of(context).palette.brand),
+          child: InkWell(
+            child: Text(
+              filename,
+              style: (OrbTheme.of(context).text.font.normal)
+                  .merge(OrbTheme.of(context).text.style.bold)
+                  .merge(OrbTheme.of(context).text.size.medium)
+                  .copyWith(color: OrbTheme.of(context).palette.brand),
+            ),
+            onTap: () async {
+              if (await canLaunch(url)) {
+                await launch(url);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text("Could not open '$url'"),
+                    duration: Duration(milliseconds: 2000)));
+              }
+            },
           ),
         ),
       ],
