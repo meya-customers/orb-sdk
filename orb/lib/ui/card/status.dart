@@ -8,8 +8,8 @@ class OrbStatus extends StatelessWidget {
   final bool isActiveEvent;
 
   OrbStatus({
-    @required this.event,
-    @required this.isActiveEvent,
+    required this.event,
+    required this.isActiveEvent,
   });
 
   @override

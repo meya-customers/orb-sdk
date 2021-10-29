@@ -12,16 +12,15 @@ import 'package:orb/ui/presence/user_avatar.dart';
 class OrbAskTiles extends StatelessWidget {
   final OrbEvent event;
   final OrbConnection connection;
-  final OrbUserAvatar userAvatar;
-  String buttonStyle;
+  final OrbUserAvatar? userAvatar;
 
   OrbAskTiles({
-    @required this.event,
-    @required this.connection,
-    @required this.userAvatar,
-  }) {
-    this.buttonStyle = event.data['button_style'] ?? 'action';
-  }
+    required this.event,
+    required this.connection,
+    required this.userAvatar,
+  });
+
+  String get buttonStyle => event.data['button_style'] ?? 'action';
 
   @override
   Widget build(BuildContext context) {
@@ -83,17 +82,17 @@ class TilesRow extends StatefulWidget {
   final String buttonStyle;
 
   TilesRow({
-    @required this.event,
-    @required this.connection,
-    @required this.buttonStyle,
+    required this.event,
+    required this.connection,
+    required this.buttonStyle,
   });
 
   _TilesRowState createState() => _TilesRowState();
 }
 
 class _TilesRowState extends State<TilesRow> {
-  bool disabled;
-  String selectedButtonId;
+  late bool disabled;
+  String? selectedButtonId;
 
   @override
   void initState() {
@@ -101,7 +100,7 @@ class _TilesRowState extends State<TilesRow> {
     disabled = !widget.connection.getEventStream().isActiveEvent(widget.event);
   }
 
-  bool isButtonSelected(String buttonId) => selectedButtonId != null
+  bool isButtonSelected(String? buttonId) => selectedButtonId != null
       ? selectedButtonId == buttonId
       : widget.connection.getEventStream().buttonClicks[buttonId] ?? false;
 
@@ -231,7 +230,7 @@ class _TilesRowState extends State<TilesRow> {
     }
   }
 
-  void onButtonTap(String buttonId) {
+  void onButtonTap(String? buttonId) {
     widget.connection.publishEvent(OrbEvent.createButtonClickEvent(buttonId));
     setState(() {
       disabled = true;
@@ -242,10 +241,10 @@ class _TilesRowState extends State<TilesRow> {
 
 class RowTile extends StatelessWidget {
   final List<Widget> children;
-  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry? padding;
 
   RowTile({
-    @required this.children,
+    required this.children,
     this.padding,
   });
 
@@ -261,8 +260,8 @@ class RowTile extends StatelessWidget {
 
   Widget buildContainer(
     BuildContext context, {
-    @required Widget child,
-    Border border,
+    required Widget child,
+    Border? border,
   }) {
     return ConstrainedBox(
       constraints: BoxConstraints(maxWidth: 340),
@@ -287,21 +286,21 @@ class RowTile extends StatelessWidget {
 
 class RowTileButton extends RowTile {
   final Function onTap;
-  final bool disabled;
+  final bool? disabled;
   final bool selected;
   final List<Widget> children;
 
   RowTileButton({
-    @required this.onTap,
-    @required this.disabled,
-    @required this.selected,
-    @required this.children,
-  });
+    required this.onTap,
+    required this.disabled,
+    required this.selected,
+    required this.children,
+  }) : super(children: children);
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap,
+      onTap: onTap as void Function()?,
       child: buildContainer(
         context,
         child: Column(
@@ -328,23 +327,23 @@ class RowTileButton extends RowTile {
 }
 
 class RowActionButton extends StatelessWidget {
-  final OrbIcon icon;
-  final String text;
-  final Function onTap;
-  final bool disabled;
+  final OrbIcon? icon;
+  final String? text;
+  final Function? onTap;
+  final bool? disabled;
   final bool selected;
 
   RowActionButton({
     this.icon,
-    @required this.text,
+    required this.text,
     this.onTap,
-    @required this.disabled,
-    @required this.selected,
+    required this.disabled,
+    required this.selected,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (disabled) {
+    if (disabled!) {
       return buildButton(context);
     } else {
       return InkWell(
@@ -370,15 +369,15 @@ class RowActionButton extends StatelessWidget {
       ),
       decoration: BoxDecoration(
           boxShadow: [OrbTheme.of(context).outerShadow.tiny],
-          color: disabled
+          color: disabled!
               ? OrbTheme.of(context).palette.disabled
               : OrbTheme.of(context).palette.brand,
           border: OrbTheme.of(context).innerBorder.thin(
-                disabled
+                disabled!
                     ? selected
                         ? OrbTheme.of(context).palette.normal
                         : OrbTheme.of(context).palette.disabled
-                    : OrbTheme.of(context).palette.brand,
+                    : OrbTheme.of(context).palette.brand!,
               ),
           borderRadius:
               BorderRadius.all(OrbTheme.of(context).borderRadius.small)),
@@ -392,7 +391,7 @@ class RowActionButton extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         if (icon != null)
-          buildButtonIcon(context, text: text, icon: icon, left: true),
+          buildButtonIcon(context, text: text as Text, icon: icon, left: true),
         buildText(context),
       ],
     );
@@ -400,13 +399,13 @@ class RowActionButton extends StatelessWidget {
 
   Widget buildText(BuildContext context) {
     return Text(
-      text,
+      text!,
       textAlign: TextAlign.center,
       style: (OrbTheme.of(context).text.font.normal)
           .merge(OrbTheme.of(context).text.style.bold)
           .merge(OrbTheme.of(context).text.size.small)
           .copyWith(
-              color: disabled
+              color: disabled!
                   ? selected
                       ? OrbTheme.of(context).palette.normal
                       : OrbTheme.of(context).palette.disabledDark
@@ -416,12 +415,12 @@ class RowActionButton extends StatelessWidget {
 
   Widget buildButtonIcon(
     BuildContext context, {
-    @required Text text,
-    @required OrbIcon icon,
-    bool left,
-    bool right,
+    required Text text,
+    required OrbIcon? icon,
+    bool? left,
+    bool? right,
   }) {
-    EdgeInsets margin;
+    EdgeInsets? margin;
     if (left == true) {
       margin = EdgeInsets.only(
         right: OrbTheme.of(context).lengths.tiny,
@@ -433,27 +432,27 @@ class RowActionButton extends StatelessWidget {
     }
     return Container(
       margin: margin,
-      height: text.style.fontSize * 1.2,
+      height: text.style!.fontSize! * 1.2,
       child: icon,
     );
   }
 
   void processOnTap(BuildContext context) {
     if (onTap != null) {
-      onTap();
+      onTap!();
     }
   }
 }
 
 class RowActionLinkButton extends RowActionButton {
-  final String url;
+  final String? url;
 
-  RowActionLinkButton({@required this.url, OrbIcon icon, @required String text})
+  RowActionLinkButton({required this.url, OrbIcon? icon, required String? text})
       : super(icon: icon, text: text, disabled: false, selected: false);
 
   @override
   Widget buildContent(BuildContext context) {
-    final Text text = buildText(context);
+    final Text text = buildText(context) as Text;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -475,8 +474,8 @@ class RowActionLinkButton extends RowActionButton {
 
   @override
   void processOnTap(BuildContext context) async {
-    if (await canLaunch(url)) {
-      await launch(url);
+    if (await canLaunch(url!)) {
+      await launch(url!);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text("Could not open '$url'"),
@@ -487,11 +486,11 @@ class RowActionLinkButton extends RowActionButton {
 
 class RadioButton extends RowActionButton {
   RadioButton({
-    OrbIcon icon,
-    @required String text,
-    Function onTap,
-    @required bool disabled,
-    @required bool selected,
+    OrbIcon? icon,
+    required String? text,
+    Function? onTap,
+    required bool? disabled,
+    required bool selected,
   }) : super(
             icon: icon,
             text: text,
@@ -534,7 +533,7 @@ class RadioButton extends RowActionButton {
         ),
         buildText(context),
         if (icon != null)
-          buildButtonIcon(context, text: text, icon: icon, right: true),
+          buildButtonIcon(context, text: text as Text, icon: icon, right: true),
       ],
     );
   }
@@ -542,13 +541,13 @@ class RadioButton extends RowActionButton {
   @override
   Widget buildText(BuildContext context) {
     return Text(
-      text,
+      text!,
       textAlign: TextAlign.center,
       style: (OrbTheme.of(context).text.font.normal)
           .merge(OrbTheme.of(context).text.style.bold)
           .merge(OrbTheme.of(context).text.size.small)
           .copyWith(
-              color: disabled
+              color: disabled!
                   ? selected
                       ? OrbTheme.of(context).palette.brand
                       : OrbTheme.of(context).palette.disabledDark
@@ -558,10 +557,10 @@ class RadioButton extends RowActionButton {
 }
 
 class RadioIcon extends StatelessWidget {
-  final bool disabled;
+  final bool? disabled;
   final bool selected;
 
-  RadioIcon({@required this.disabled, @required this.selected});
+  RadioIcon({required this.disabled, required this.selected});
 
   @override
   Widget build(BuildContext context) {
@@ -572,7 +571,7 @@ class RadioIcon extends StatelessWidget {
           width: OrbTheme.of(context).lengths.medium,
           height: OrbTheme.of(context).lengths.medium,
           decoration: new BoxDecoration(
-            color: disabled
+            color: disabled!
                 ? OrbTheme.of(context).palette.disabled
                 : OrbTheme.of(context).palette.brandShadow,
             shape: BoxShape.circle,
@@ -593,9 +592,9 @@ class RadioIcon extends StatelessWidget {
 }
 
 class RowIcon extends StatelessWidget {
-  final OrbIcon icon;
+  final OrbIcon? icon;
 
-  RowIcon({@required this.icon});
+  RowIcon({required this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -613,9 +612,9 @@ class RowIcon extends StatelessWidget {
 }
 
 class RowImage extends StatelessWidget {
-  final Map<dynamic, dynamic> image;
+  final Map<dynamic, dynamic>? image;
 
-  RowImage({@required this.image});
+  RowImage({required this.image});
 
   @override
   Widget build(BuildContext context) {
@@ -627,13 +626,13 @@ class RowImage extends StatelessWidget {
           topRight: OrbTheme.of(context).borderRadius.small,
         ),
         child: Image.network(
-          image['url'],
+          image!['url'],
           loadingBuilder: (context, child, progress) {
             return progress == null
                 ? child
                 : LinearProgressIndicator(
                     value: progress.cumulativeBytesLoaded /
-                        progress.expectedTotalBytes,
+                        progress.expectedTotalBytes!,
                   );
           },
         ),
@@ -643,9 +642,9 @@ class RowImage extends StatelessWidget {
 }
 
 class Title extends StatelessWidget {
-  final String text;
+  final String? text;
 
-  Title({@required this.text});
+  Title({required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -655,7 +654,7 @@ class Title extends StatelessWidget {
         left: OrbTheme.of(context).lengths.mediumSmall,
         right: OrbTheme.of(context).lengths.mediumSmall,
       ),
-      child: Text(text,
+      child: Text(text!,
           style: OrbTheme.of(context)
               .text
               .style
@@ -666,9 +665,9 @@ class Title extends StatelessWidget {
 }
 
 class Description extends StatelessWidget {
-  final String text;
+  final String? text;
 
-  Description({@required this.text});
+  Description({required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -678,7 +677,7 @@ class Description extends StatelessWidget {
         left: OrbTheme.of(context).lengths.mediumSmall,
         right: OrbTheme.of(context).lengths.mediumSmall,
       ),
-      child: Text(text,
+      child: Text(text!,
           style: OrbTheme.of(context)
               .text
               .style

@@ -20,25 +20,25 @@ import 'package:orb/util.dart';
 import 'package:orb/version.dart';
 
 class ConnectionOptions {
-  final String gridUrl;
-  final String appId;
-  final String integrationId;
-  final Map<dynamic, dynamic> pageContext;
-  final String gridUserId;
-  final String userId;
-  final String threadId;
-  final String sessionToken;
-  final String magicLinkId;
-  final String url;
-  final String referrer;
-  final String deviceId;
-  final String deviceToken;
-  final bool enableCloseButton;
+  final String? gridUrl;
+  final String? appId;
+  final String? integrationId;
+  final Map<dynamic, dynamic>? pageContext;
+  final String? gridUserId;
+  final String? userId;
+  final String? threadId;
+  final String? sessionToken;
+  final String? magicLinkId;
+  final String? url;
+  final String? referrer;
+  final String? deviceId;
+  final String? deviceToken;
+  final bool? enableCloseButton;
 
   ConnectionOptions({
-    @required this.gridUrl,
-    @required this.appId,
-    @required this.integrationId,
+    required this.gridUrl,
+    required this.appId,
+    required this.integrationId,
     this.pageContext,
     this.gridUserId,
     this.userId,
@@ -54,40 +54,40 @@ class ConnectionOptions {
 }
 
 class OrbConnection extends ChangeNotifier {
-  String gridUrl;
-  String blobUrl;
-  String appId;
-  String integrationId;
-  Map<dynamic, dynamic> pageContext;
-  String gridUserId;
-  String userId;
-  String threadId;
-  String sessionToken;
-  String magicLinkId;
-  String url;
-  String referrer;
-  String deviceId;
-  String deviceToken;
-  bool enableCloseButton;
-  Function(Map<dynamic, dynamic>, Function) onFirstConnect;
+  String? gridUrl;
+  late String blobUrl;
+  String? appId;
+  String? integrationId;
+  Map<dynamic, dynamic>? pageContext;
+  String? gridUserId;
+  String? userId;
+  String? threadId;
+  String? sessionToken;
+  String? magicLinkId;
+  String? url;
+  String? referrer;
+  String? deviceId;
+  String? deviceToken;
+  bool? enableCloseButton;
+  Function(Map<dynamic, dynamic>?, Function)? onFirstConnect;
 
   bool firstConnect = true;
   bool reconnect = false;
   int retries = 0;
 
-  Timer _heartbeatTimer;
-  Timer _timer;
+  Timer? _heartbeatTimer;
+  Timer? _timer;
   bool _connected = false;
-  WebSocketChannel _channel;
+  WebSocketChannel? _channel;
   EventEmitter _eventEmitter = EventEmitter();
   OrbEventStream _eventStream = OrbEventStream();
   FlutterSecureStorage _storage = FlutterSecureStorage();
   AppLifecycleState _deviceState = AppLifecycleState.resumed;
 
   OrbConnection({
-    @required this.gridUrl,
-    @required this.appId,
-    @required this.integrationId,
+    required this.gridUrl,
+    required this.appId,
+    required this.integrationId,
     this.pageContext,
     this.gridUserId,
     this.userId,
@@ -100,7 +100,7 @@ class OrbConnection extends ChangeNotifier {
     this.deviceToken,
     this.onFirstConnect,
     this.enableCloseButton,
-    AppLifecycleState deviceState,
+    AppLifecycleState? deviceState,
   }) {
     blobUrl = '$gridUrl/gateway/v2/blob/$appId/blob';
     if (deviceState != null) _deviceState = deviceState;
@@ -161,11 +161,11 @@ class OrbConnection extends ChangeNotifier {
     final timeoutInterval = _getTimeoutInterval();
     _timer = Timer(timeoutInterval, () {
       print('TIMEOUT $timeoutInterval');
-      _channel.sink.close();
+      _channel!.sink.close();
     });
 
     print("Listening $_channel");
-    _channel.stream.listen(
+    _channel!.stream.listen(
       (streamEvent) {
         final payload = deserialize(streamEvent);
         if (payload["type"] == "meya.orb.entry.ws.connected_request") {
@@ -277,7 +277,7 @@ class OrbConnection extends ChangeNotifier {
     retries = 0;
     _timer?.cancel();
     _heartbeatTimer?.cancel();
-    _channel?.sink?.close();
+    _channel?.sink.close();
     _eventEmitter.emit('disconnected', {});
   }
 
@@ -294,7 +294,7 @@ class OrbConnection extends ChangeNotifier {
         'thread_id': this.threadId,
       }
     };
-    _channel.sink.add(serialize(payloadMap));
+    _channel?.sink.add(serialize(payloadMap));
   }
 
   OrbEventStream getEventStream() {
@@ -309,7 +309,7 @@ class OrbConnection extends ChangeNotifier {
     }
   }
 
-  void _startHeartbeat(int heartbeatIntervalSeconds) {
+  void _startHeartbeat(int? heartbeatIntervalSeconds) {
     _heartbeatTimer?.cancel();
     if (heartbeatIntervalSeconds != null && heartbeatIntervalSeconds >= 5) {
       _heartbeatTimer = Timer.periodic(
@@ -351,9 +351,9 @@ class OrbConnection extends ChangeNotifier {
   }
 
   void _receiveAll({
-    @required List<OrbEvent> receiveBuffer,
-    @required Map<String, OrbUserData> userData,
-    @required Function emit,
+    required List<OrbEvent> receiveBuffer,
+    required Map<String, OrbUserData> userData,
+    required Function emit,
   }) {
     final newEventStream = OrbEventStream(gridUserId: gridUserId, events: [
       ...receiveBuffer,
@@ -376,7 +376,7 @@ class OrbConnection extends ChangeNotifier {
     final response = await http.post(
       Uri.parse(blobUrl),
       headers: {
-        "Content-Type": mimeType,
+        "Content-Type": mimeType!,
       },
       body: body,
     );

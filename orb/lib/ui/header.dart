@@ -6,7 +6,7 @@ import 'package:orb/ui/icon.dart';
 class OrbHeader extends StatefulWidget {
   final OrbConnection connection;
 
-  OrbHeader({Key key, this.connection}) : super(key: key);
+  OrbHeader({Key? key, required this.connection}) : super(key: key);
 
   @override
   _OrbHeaderState createState() => _OrbHeaderState();
@@ -16,7 +16,7 @@ class _OrbHeaderState extends State<OrbHeader> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance
+    WidgetsBinding.instance!
         .addPostFrameCallback((_) => buildCloseButton(context));
   }
 
@@ -27,7 +27,7 @@ class _OrbHeaderState extends State<OrbHeader> {
 
   void buildCloseButton(BuildContext context) {
     if (widget.connection.enableCloseButton != null &&
-        !widget.connection.enableCloseButton) return;
+        !widget.connection.enableCloseButton!) return;
 
     final entry = OverlayEntry(
       builder: (context) => Positioned(
@@ -51,6 +51,6 @@ class _OrbHeaderState extends State<OrbHeader> {
         ),
       ),
     );
-    Overlay.of(context).insert(entry);
+    Overlay.of(context)!.insert(entry);
   }
 }

@@ -10,13 +10,13 @@ import 'package:orb/ui/presence/user_name.dart';
 
 class OrbUserAvatar extends StatelessWidget {
   final OrbEventStream eventStream;
-  final String userId;
+  final String? userId;
 
-  OrbUserAvatar({@required this.eventStream, @required this.userId});
+  OrbUserAvatar({required this.eventStream, required this.userId});
 
   factory OrbUserAvatar.fromEvent({
-    @required OrbEventStream eventStream,
-    @required OrbEvent event,
+    required OrbEventStream eventStream,
+    required OrbEvent event,
   }) {
     return OrbUserAvatar(
       eventStream: eventStream,
@@ -26,7 +26,7 @@ class OrbUserAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final userData = eventStream.userData[userId];
+    final userData = eventStream.userData[userId!];
     final avatar = userData?.avatar;
     final avatarImage = avatar?.image;
     final avatarCrop = avatar?.crop;
@@ -72,7 +72,7 @@ class OrbUserAvatar extends StatelessWidget {
     }
   }
 
-  Widget _croppedImage(BuildContext context, String url, OrbAvatarCrop crop) {
+  Widget _croppedImage(BuildContext context, String url, OrbAvatarCrop? crop) {
     if (crop == OrbAvatarCrop.square) {
       return ClipRect(
         child: Align(
@@ -102,7 +102,7 @@ class OrbUserAvatar extends StatelessWidget {
 
   static Widget avatarOrPlaceholder(
     BuildContext context, {
-    OrbUserAvatar avatar,
+    OrbUserAvatar? avatar,
   }) {
     return Container(
       margin: OrbUserAvatar.defaultMargin(context),
@@ -116,9 +116,9 @@ class BotSemicircle extends StatelessWidget {
   final Color color;
 
   const BotSemicircle({
-    Key key,
-    @required this.radius,
-    @required this.color,
+    Key? key,
+    required this.radius,
+    required this.color,
   }) : super(key: key);
 
   @override
@@ -133,7 +133,7 @@ class BotSemicircle extends StatelessWidget {
 class SemicirclePainter extends CustomPainter {
   final Color color;
 
-  SemicirclePainter({@required this.color});
+  SemicirclePainter({required this.color});
 
   @override
   void paint(Canvas canvas, Size size) {

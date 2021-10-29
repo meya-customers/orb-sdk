@@ -13,20 +13,20 @@ abstract class OrbFile extends StatelessWidget {
   final String filename;
   final String url;
   final bool isSelfEvent;
-  final OrbUserAvatar userAvatar;
+  final OrbUserAvatar? userAvatar;
 
   OrbFile._({
-    @required this.event,
-    @required this.filename,
-    @required this.url,
-    @required this.isSelfEvent,
-    @required this.userAvatar,
+    required this.event,
+    required this.filename,
+    required this.url,
+    required this.isSelfEvent,
+    required this.userAvatar,
   });
 
   factory OrbFile({
-    @required OrbEvent event,
-    @required bool isSelfEvent,
-    @required OrbUserAvatar userAvatar,
+    required OrbEvent event,
+    required bool isSelfEvent,
+    required OrbUserAvatar? userAvatar,
   }) {
     final filename = event.data['filename'];
     final url = event.data['url'];
@@ -129,11 +129,11 @@ abstract class OrbFile extends StatelessWidget {
 
 class OrbFileSelf extends OrbFile {
   OrbFileSelf._({
-    @required OrbEvent event,
-    @required String filename,
-    @required String url,
-    @required bool isSelfEvent,
-    @required OrbUserAvatar userAvatar,
+    required OrbEvent event,
+    required String filename,
+    required String url,
+    required bool isSelfEvent,
+    required OrbUserAvatar? userAvatar,
   }) : super._(
           event: event,
           filename: filename,
@@ -154,11 +154,11 @@ class OrbFileSelf extends OrbFile {
 
 class OrbFileOther extends OrbFile {
   OrbFileOther._({
-    @required OrbEvent event,
-    @required String filename,
-    @required String url,
-    @required bool isSelfEvent,
-    @required OrbUserAvatar userAvatar,
+    required OrbEvent event,
+    required String filename,
+    required String url,
+    required bool isSelfEvent,
+    required OrbUserAvatar? userAvatar,
   }) : super._(
           event: event,
           filename: filename,

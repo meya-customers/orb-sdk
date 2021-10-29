@@ -1,9 +1,7 @@
-import 'package:meta/meta.dart';
-
 enum OrbAvatarCrop { circle, square }
 
 extension OrbAvatarCropExtension on OrbAvatarCrop {
-  static OrbAvatarCrop fromString(String crop) {
+  static OrbAvatarCrop fromString(String? crop) {
     switch (crop) {
       case 'square':
         return OrbAvatarCrop.square;
@@ -14,17 +12,17 @@ extension OrbAvatarCropExtension on OrbAvatarCrop {
 }
 
 class OrbAvatar {
-  final String image;
+  final String? image;
   final OrbAvatarCrop crop;
-  final String monogram;
+  final String? monogram;
 
   OrbAvatar({
-    @required this.image,
-    @required this.crop,
-    @required this.monogram,
+    required this.image,
+    required this.crop,
+    required this.monogram,
   });
 
-  factory OrbAvatar.fromMap(Map<dynamic, dynamic> map) {
+  static OrbAvatar? fromMap(Map<dynamic, dynamic>? map) {
     if (map == null) return null;
     return OrbAvatar(
       image: map['image'],

@@ -10,20 +10,20 @@ import 'package:orb/ui/presence/user_avatar.dart';
 class OrbAskButtons extends StatefulWidget {
   final OrbEvent event;
   final OrbConnection connection;
-  final OrbUserAvatar userAvatar;
+  final OrbUserAvatar? userAvatar;
 
   OrbAskButtons({
-    @required this.event,
-    @required this.connection,
-    @required this.userAvatar,
+    required this.event,
+    required this.connection,
+    required this.userAvatar,
   });
 
   _OrbAskButtonsState createState() => _OrbAskButtonsState();
 }
 
 class _OrbAskButtonsState extends State<OrbAskButtons> {
-  bool disabled;
-  String selectedButtonId;
+  bool? disabled;
+  String? selectedButtonId;
 
   @override
   void initState() {
@@ -31,7 +31,7 @@ class _OrbAskButtonsState extends State<OrbAskButtons> {
     disabled = !widget.connection.getEventStream().isActiveEvent(widget.event);
   }
 
-  bool isButtonSelected(String buttonId) => selectedButtonId != null
+  bool isButtonSelected(String? buttonId) => selectedButtonId != null
       ? selectedButtonId == buttonId
       : widget.connection.getEventStream().buttonClicks[buttonId] ?? false;
 
@@ -77,8 +77,8 @@ class _OrbAskButtonsState extends State<OrbAskButtons> {
 
   List<Widget> buildButtons(
     BuildContext context,
-    String text,
-    bool disabled,
+    String? text,
+    bool? disabled,
     List<dynamic> buttons,
   ) {
     return buttons.map((button) {
@@ -114,25 +114,25 @@ class _OrbAskButtonsState extends State<OrbAskButtons> {
 }
 
 class Button extends StatelessWidget {
-  final String text;
+  final String? text;
   final Function onTap;
-  final bool disabled;
+  final bool? disabled;
   final bool selected;
 
   Button({
-    @required this.text,
-    @required this.onTap,
-    @required this.disabled,
-    @required this.selected,
+    required this.text,
+    required this.onTap,
+    required this.disabled,
+    required this.selected,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (disabled) {
+    if (disabled!) {
       return buildButton(context);
     } else {
       return InkWell(
-        onTap: onTap,
+        onTap: onTap as void Function()?,
         child: buildButton(context),
       );
     }
@@ -148,26 +148,26 @@ class Button extends StatelessWidget {
       padding: EdgeInsets.all(OrbTheme.of(context).lengths.medium),
       decoration: BoxDecoration(
           boxShadow: [OrbTheme.of(context).outerShadow.tiny],
-          color: disabled
+          color: disabled!
               ? OrbTheme.of(context).palette.disabled
               : OrbTheme.of(context).palette.brand,
           border: OrbTheme.of(context).innerBorder.thin(
-                disabled
+                disabled!
                     ? selected
                         ? OrbTheme.of(context).palette.normal
                         : OrbTheme.of(context).palette.disabled
-                    : OrbTheme.of(context).palette.brand,
+                    : OrbTheme.of(context).palette.brand!,
               ),
           borderRadius:
               BorderRadius.all(OrbTheme.of(context).borderRadius.small)),
       child: FittedBox(
         child: Text(
-          text,
+          text!,
           style: (OrbTheme.of(context).text.font.normal)
               .merge(OrbTheme.of(context).text.style.bold)
               .merge(OrbTheme.of(context).text.size.medium)
               .copyWith(
-                  color: disabled
+                  color: disabled!
                       ? selected
                           ? OrbTheme.of(context).palette.normal
                           : OrbTheme.of(context).palette.disabledDark

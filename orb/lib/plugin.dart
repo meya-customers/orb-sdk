@@ -7,12 +7,12 @@ import 'package:orb/connection.dart';
 
 class OrbPlugin {
   static const MethodChannel channel = const MethodChannel('orb');
-  static void Function(ThemeConfigSpec, ComposerConfigSpec, SplashConfigSpec)
+  static void Function(ThemeConfigSpec, ComposerConfigSpec, SplashConfigSpec)?
       configure;
-  static void Function(ConnectionOptions) connect;
-  static void Function(bool logOut) disconnect;
-  static void Function(Map<dynamic, dynamic>) publishEvent;
-  static Set<String> subscriptions = {};
+  static void Function(ConnectionOptions)? connect;
+  static void Function(bool logOut)? disconnect;
+  static void Function(Map<dynamic, dynamic>?)? publishEvent;
+  static Set<String?> subscriptions = {};
 
   static void init() {
     channel.setMethodCallHandler(nativeMethodCallHandler);
@@ -25,7 +25,7 @@ class OrbPlugin {
           final theme = call.arguments['theme'] ?? {};
           final composer = call.arguments['composer'] ?? {};
           final splash = call.arguments['splash'] ?? {};
-          configure(
+          configure!(
             ThemeConfigSpec(brandColor: theme['brandColor']),
             ComposerConfigSpec(
               placeholderText: composer['placeholderText'],
@@ -44,7 +44,7 @@ class OrbPlugin {
         return 'Configure called';
       case 'connect':
         if (connect != null)
-          connect(ConnectionOptions(
+          connect!(ConnectionOptions(
             gridUrl: call.arguments['gridUrl'],
             appId: call.arguments['appId'],
             integrationId: call.arguments['integrationId'],
@@ -61,10 +61,10 @@ class OrbPlugin {
           ));
         return 'Connect called';
       case 'disconnect':
-        if (disconnect != null) disconnect(call.arguments['logOut'] ?? false);
+        if (disconnect != null) disconnect!(call.arguments['logOut'] ?? false);
         return 'Disconnect called';
       case 'publishEvent':
-        if (publishEvent != null) publishEvent(call.arguments['event']);
+        if (publishEvent != null) publishEvent!(call.arguments['event']);
         return 'Publish event called';
       case 'subscribe':
         final name = call.arguments['name'];
@@ -81,37 +81,37 @@ class OrbPlugin {
 
   static bool isSubscribed(String name) => subscriptions.contains(name);
 
-  static Future<String> get platformVersion async {
+  static Future<String?> get platformVersion async {
     return await channel.invokeMethod('getPlatformVersion');
   }
 
-  static Future<String> ready() async {
+  static Future<String?> ready() async {
     return await channel.invokeMethod('ready');
   }
 
-  static Future<String> connected() async {
+  static Future<String?> connected() async {
     return await channel.invokeMethod('connected');
   }
 
-  static Future<String> disconnected() async {
+  static Future<String?> disconnected() async {
     return await channel.invokeMethod('disconnected');
   }
 
-  static Future<String> firstConnect(
+  static Future<String?> firstConnect(
     List<Map<String, dynamic>> eventStream,
   ) async {
     return await channel
         .invokeMethod('firstConnect', {'eventStream': eventStream});
   }
 
-  static Future<String> reconnect(
+  static Future<String?> reconnect(
     List<Map<String, dynamic>> eventStream,
   ) async {
     return await channel
         .invokeMethod('reconnect', {'eventStream': eventStream});
   }
 
-  static Future<String> event(
+  static Future<String?> event(
     Map<String, dynamic> event,
     List<Map<String, dynamic>> eventStream,
   ) async {
@@ -121,7 +121,7 @@ class OrbPlugin {
     });
   }
 
-  static Future<String> eventStream(
+  static Future<String?> eventStream(
     List<Map<String, dynamic>> eventStream,
   ) async {
     return await channel.invokeMethod(
@@ -132,7 +132,7 @@ class OrbPlugin {
     );
   }
 
-  static Future<String> closeUi() async {
+  static Future<String?> closeUi() async {
     return await channel.invokeMethod('closeUi');
   }
 }

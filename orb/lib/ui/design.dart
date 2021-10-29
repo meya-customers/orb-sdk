@@ -20,17 +20,17 @@ class OrbThemeData {
   final OrbMarkdownStyleSheet markdownStyleSheet;
 
   OrbThemeData._({
-    @required this.palette,
-    @required this.lengths,
-    @required this.outerShadow,
-    @required this.innerBorder,
-    @required this.borderRadius,
-    @required this.text,
-    @required this.avatar,
-    @required this.markdownStyleSheet,
+    required this.palette,
+    required this.lengths,
+    required this.outerShadow,
+    required this.innerBorder,
+    required this.borderRadius,
+    required this.text,
+    required this.avatar,
+    required this.markdownStyleSheet,
   });
 
-  factory OrbThemeData({Color brandColor, double backgroundTranslucency}) {
+  factory OrbThemeData({Color? brandColor, double? backgroundTranslucency}) {
     final palette = OrbThemePalette(
       brandColor: brandColor,
       backgroundTranslucency: backgroundTranslucency,
@@ -54,7 +54,7 @@ class OrbThemeData {
     );
   }
 
-  factory OrbThemeData.fromThemeConfigSpec({ThemeConfigSpec theme}) =>
+  factory OrbThemeData.fromThemeConfigSpec({required ThemeConfigSpec theme}) =>
       OrbThemeData(
         brandColor: HexColor.fromHex(theme.brandColor),
         backgroundTranslucency: theme.backgroundTranslucency,
@@ -63,10 +63,10 @@ class OrbThemeData {
   ThemeData toMaterialThemeData() =>
       ThemeData(textTheme: GoogleFonts.interTextTheme());
 
-  Widget builder(BuildContext context, Widget child) {
+  Widget builder(BuildContext context, Widget? child) {
     return OrbTheme(
       data: this,
-      child: child,
+      child: child!,
     );
   }
 }
@@ -113,14 +113,15 @@ class OrbThemePalette {
 
   Color get outline => Color(0xFFB7B7B7);
 
-  Color get brand => _brandColor;
+  Color? get brand => _brandColor;
 
   Color get brandTranslucent =>
-      Color.lerp(blank, _brandColor, 0.2).withOpacity(_backgroundTranslucency);
+      Color.lerp(blank, _brandColor, 0.2)!.withOpacity(_backgroundTranslucency);
 
-  Color get brandShadow => Color.lerp(blank, _brandColor, 0.2).withOpacity(0.5);
+  Color get brandShadow =>
+      Color.lerp(blank, _brandColor, 0.2)!.withOpacity(0.5);
 
-  Color get brandNeutral => Color.lerp(blank, _brandColor, 0.095);
+  Color get brandNeutral => Color.lerp(blank, _brandColor, 0.095)!;
 
   Color get brandLight => _lighten(0.32, _brandColor);
 
@@ -130,9 +131,13 @@ class OrbThemePalette {
 
   Color get errorShadow => Color(0x1AE02020);
 
-  OrbThemePalette({Color brandColor, double backgroundTranslucency}) {
-    _brandColor = brandColor ?? Color(0xFF4989EA);
-    _backgroundTranslucency = backgroundTranslucency ?? 0.44;
+  OrbThemePalette._(this._brandColor, this._backgroundTranslucency);
+
+  factory OrbThemePalette({Color? brandColor, double? backgroundTranslucency}) {
+    return OrbThemePalette._(
+      brandColor ?? Color(0xFF4989EA),
+      backgroundTranslucency ?? 0.44,
+    );
   }
 
   Color _lighten(double amount, Color color) {
@@ -202,9 +207,9 @@ class OrbThemeText {
   final OrbThemeTextSize size;
 
   OrbThemeText._({
-    @required this.font,
-    @required this.style,
-    @required this.size,
+    required this.font,
+    required this.style,
+    required this.size,
   });
 
   factory OrbThemeText() {
@@ -311,49 +316,49 @@ class OrbThemeAvatar {
 
 class OrbMarkdownStyleSheet extends MarkdownStyleSheet {
   OrbMarkdownStyleSheet({
-    TextStyle a,
-    TextStyle p,
-    TextStyle code,
-    TextStyle h1,
-    TextStyle h2,
-    TextStyle h3,
-    TextStyle h4,
-    TextStyle h5,
-    TextStyle h6,
-    TextStyle em,
-    TextStyle strong,
-    TextStyle del,
-    TextStyle blockquote,
-    TextStyle img,
-    TextStyle checkbox,
-    double blockSpacing,
-    double listIndent,
-    TextStyle listBullet,
-    EdgeInsets listBulletPadding,
-    TextStyle tableHead,
-    TextStyle tableBody,
-    TextAlign tableHeadAlign,
-    TableBorder tableBorder,
-    TableColumnWidth tableColumnWidth,
-    EdgeInsets tableCellsPadding,
-    Decoration tableCellsDecoration,
-    EdgeInsets blockquotePadding,
-    Decoration blockquoteDecoration,
-    EdgeInsets codeblockPadding,
-    Decoration codeblockDecoration,
-    Decoration horizontalRuleDecoration,
-    WrapAlignment textAlign,
-    WrapAlignment h1Align,
-    WrapAlignment h2Align,
-    WrapAlignment h3Align,
-    WrapAlignment h4Align,
-    WrapAlignment h5Align,
-    WrapAlignment h6Align,
-    WrapAlignment unorderedListAlign,
-    WrapAlignment orderedListAlign,
-    WrapAlignment blockquoteAlign,
-    WrapAlignment codeblockAlign,
-    double textScaleFactor,
+    TextStyle? a,
+    TextStyle? p,
+    TextStyle? code,
+    TextStyle? h1,
+    TextStyle? h2,
+    TextStyle? h3,
+    TextStyle? h4,
+    TextStyle? h5,
+    TextStyle? h6,
+    TextStyle? em,
+    TextStyle? strong,
+    TextStyle? del,
+    TextStyle? blockquote,
+    TextStyle? img,
+    TextStyle? checkbox,
+    double? blockSpacing,
+    double? listIndent,
+    TextStyle? listBullet,
+    EdgeInsets? listBulletPadding,
+    TextStyle? tableHead,
+    TextStyle? tableBody,
+    TextAlign? tableHeadAlign,
+    TableBorder? tableBorder,
+    TableColumnWidth? tableColumnWidth,
+    EdgeInsets? tableCellsPadding,
+    Decoration? tableCellsDecoration,
+    EdgeInsets? blockquotePadding,
+    Decoration? blockquoteDecoration,
+    EdgeInsets? codeblockPadding,
+    Decoration? codeblockDecoration,
+    Decoration? horizontalRuleDecoration,
+    required WrapAlignment textAlign,
+    required WrapAlignment h1Align,
+    required WrapAlignment h2Align,
+    required WrapAlignment h3Align,
+    required WrapAlignment h4Align,
+    required WrapAlignment h5Align,
+    required WrapAlignment h6Align,
+    required WrapAlignment unorderedListAlign,
+    required WrapAlignment orderedListAlign,
+    required WrapAlignment blockquoteAlign,
+    required WrapAlignment codeblockAlign,
+    double? textScaleFactor,
   }) : super(
           a: a,
           p: p,
@@ -409,78 +414,86 @@ class OrbMarkdownStyleSheet extends MarkdownStyleSheet {
         .merge(text.size.medium)
         .copyWith(color: palette.normal);
     return OrbMarkdownStyleSheet(
-      a: normal.copyWith(color: palette.brand),
-      p: normal,
-      code: normal.copyWith(fontFamily: 'courier'),
-      h1: normal.merge(text.size.large),
-      h2: normal.merge(text.size.mediumLarge),
-      h3: normal.merge(text.size.medium),
-      h4: normal.merge(text.size.small),
-      h5: normal.merge(text.size.tiny),
-      h6: normal.merge(text.size.superTiny),
-      em: normal.merge(text.style.italic),
-      strong: normal.merge(text.style.bold),
-      del: normal.merge(text.style.lineThrough),
-      blockquote: normal.merge(text.size.small),
-      img: normal.merge(text.size.small),
-      checkbox: normal.merge(text.size.small).copyWith(color: palette.brand),
-      blockSpacing: 8.0,
-      listIndent: 24.0,
-      listBullet: normal.merge(text.size.small),
-      listBulletPadding: const EdgeInsets.only(right: 4),
-      tableHead: const TextStyle(fontWeight: FontWeight.w600),
-      tableBody: normal.merge(text.size.small),
-      tableHeadAlign: TextAlign.center,
-      tableBorder: TableBorder.all(
-        color: palette.blank,
-        width: 1,
-      ),
-      tableColumnWidth: const FlexColumnWidth(),
-      tableCellsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      tableCellsDecoration: const BoxDecoration(),
-      blockquotePadding: const EdgeInsets.symmetric(
-        vertical: 8.0,
-        horizontal: 18,
-      ),
-      blockquoteDecoration: BoxDecoration(
+        a: normal.copyWith(color: palette.brand),
+        p: normal,
+        code: normal.copyWith(fontFamily: 'courier'),
+        h1: normal.merge(text.size.large),
+        h2: normal.merge(text.size.mediumLarge),
+        h3: normal.merge(text.size.medium),
+        h4: normal.merge(text.size.small),
+        h5: normal.merge(text.size.tiny),
+        h6: normal.merge(text.size.superTiny),
+        em: normal.merge(text.style.italic),
+        strong: normal.merge(text.style.bold),
+        del: normal.merge(text.style.lineThrough),
+        blockquote: normal.merge(text.size.small),
+        img: normal.merge(text.size.small),
+        checkbox: normal.merge(text.size.small).copyWith(color: palette.brand),
+        blockSpacing: 8.0,
+        listIndent: 24.0,
+        listBullet: normal.merge(text.size.small),
+        listBulletPadding: const EdgeInsets.only(right: 4),
+        tableHead: const TextStyle(fontWeight: FontWeight.w600),
+        tableBody: normal.merge(text.size.small),
+        tableHeadAlign: TextAlign.center,
+        tableBorder: TableBorder.all(
           color: palette.blank,
+          width: 1,
+        ),
+        tableColumnWidth: const FlexColumnWidth(),
+        tableCellsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+        tableCellsDecoration: const BoxDecoration(),
+        blockquotePadding: const EdgeInsets.symmetric(
+          vertical: 8.0,
+          horizontal: 18,
+        ),
+        blockquoteDecoration: BoxDecoration(
+            color: palette.blank,
+            border: Border(
+              left: BorderSide(
+                color: palette.disabled,
+                width: 4.0,
+              ),
+            )),
+        codeblockPadding: const EdgeInsets.all(8.0),
+        codeblockDecoration: BoxDecoration(
+          color: palette.blank,
+          borderRadius: BorderRadius.circular(2.0),
+        ),
+        horizontalRuleDecoration: BoxDecoration(
           border: Border(
-            left: BorderSide(
-              color: palette.disabled,
-              width: 4.0,
+            top: BorderSide(
+              width: 5.0,
+              color: palette.normal,
             ),
-          )),
-      codeblockPadding: const EdgeInsets.all(8.0),
-      codeblockDecoration: BoxDecoration(
-        color: palette.blank,
-        borderRadius: BorderRadius.circular(2.0),
-      ),
-      horizontalRuleDecoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(
-            width: 5.0,
-            color: palette.normal,
           ),
         ),
-      ),
-    );
+        h1Align: WrapAlignment.start,
+        h2Align: WrapAlignment.start,
+        h3Align: WrapAlignment.start,
+        h4Align: WrapAlignment.start,
+        h5Align: WrapAlignment.start,
+        h6Align: WrapAlignment.start,
+        orderedListAlign: WrapAlignment.start,
+        unorderedListAlign: WrapAlignment.start,
+        blockquoteAlign: WrapAlignment.start,
+        codeblockAlign: WrapAlignment.start,
+        textAlign: WrapAlignment.start);
   }
 }
 
 class OrbTheme extends InheritedWidget {
   const OrbTheme({
-    Key key,
-    @required this.data,
-    @required this.child,
-  })  : assert(child != null),
-        assert(data != null),
-        super(key: key, child: child);
+    Key? key,
+    required this.data,
+    required this.child,
+  }) : super(key: key, child: child);
 
   final OrbThemeData data;
   final Widget child;
 
   static OrbThemeData of(BuildContext context) {
-    return context.dependOnInheritedWidgetOfExactType<OrbTheme>().data;
+    return context.dependOnInheritedWidgetOfExactType<OrbTheme>()!.data;
   }
 
   Widget build(BuildContext context) {

@@ -11,7 +11,7 @@ class OrbChat extends StatelessWidget {
   final OrbEventStream eventStream;
   final OrbConnection connection;
 
-  OrbChat({Key key, @required this.eventStream, @required this.connection})
+  OrbChat({Key? key, required this.eventStream, required this.connection})
       : super(key: key);
 
   @override

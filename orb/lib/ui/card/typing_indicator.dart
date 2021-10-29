@@ -9,8 +9,8 @@ import 'package:orb/ui/presence/user_avatar.dart';
 
 class OrbTypingIndicator extends OrbTextOther {
   OrbTypingIndicator({
-    @required OrbEvent event,
-    @required OrbUserAvatar userAvatar,
+    required OrbEvent event,
+    required OrbUserAvatar userAvatar,
   }) : super(
           event: event,
           text: 'Typing',
@@ -46,7 +46,7 @@ class _TypingIndicator extends StatefulWidget {
 
 class _TypingIndicatorState extends State<_TypingIndicator>
     with SingleTickerProviderStateMixin {
-  AnimationController _animationController;
+  late AnimationController _animationController;
 
   @override
   void initState() {
@@ -93,11 +93,11 @@ class _TypingIndicatorState extends State<_TypingIndicator>
 }
 
 class _TypingIndicatorTween extends Tween<double> {
-  final double delay;
+  final double? delay;
 
-  _TypingIndicatorTween({double begin, double end, this.delay})
+  _TypingIndicatorTween({double? begin, double? end, this.delay})
       : super(begin: begin, end: end);
 
   @override
-  double lerp(double t) => super.lerp((sin((t - delay) * 2 * pi) + 1) / 2);
+  double lerp(double t) => super.lerp((sin((t - delay!) * 2 * pi) + 1) / 2);
 }
