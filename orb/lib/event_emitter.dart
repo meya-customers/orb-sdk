@@ -16,7 +16,7 @@ class EventEmitter {
   void emit(String type, Map<String, dynamic> event) {
     if (!_listeners.containsKey(type)) return;
 
-    for (final listener in _listeners[type]) {
+    for (final listener in _listeners[type]!) {
       listener(event);
     }
   }

@@ -3,24 +3,22 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-import 'package:meta/meta.dart';
-
 class OrbEvent implements Comparable<OrbEvent> {
-  String id;
+  String? id;
   String type;
   Map data;
   bool showAvatar = false;
   bool isFirstInGroup = false;
   bool isLastInGroup = false;
 
-  OrbEvent({this.id, @required this.type, @required this.data});
+  OrbEvent({this.id, required this.type, required this.data});
 
   @override
   int compareTo(OrbEvent other) {
-    final _id = id.split('-');
+    final _id = id!.split('-');
     final _ts = int.parse(_id[0]);
     final _seq = int.parse(_id[1]);
-    final _otherId = other.id.split('-');
+    final _otherId = other.id!.split('-');
     final _otherTs = int.parse(_otherId[0]);
     final _otherSeq = int.parse(_otherId[1]);
     if (_ts < _otherTs) {
@@ -49,7 +47,7 @@ class OrbEvent implements Comparable<OrbEvent> {
         'data': data,
       };
 
-  factory OrbEvent.fromEventMap(Map<dynamic, dynamic> eventMap) {
+  factory OrbEvent.fromEventMap(Map<dynamic, dynamic>? eventMap) {
     if (eventMap == null)
       throw Exception('Cannot create an OrbEvent from \'null\'.');
     if (eventMap['type'] == null)
@@ -62,9 +60,9 @@ class OrbEvent implements Comparable<OrbEvent> {
   }
 
   factory OrbEvent.createDeviceConnectEvent({
-    String deviceId,
-    String deviceToken,
-    AppLifecycleState deviceState,
+    String? deviceId,
+    String? deviceToken,
+    AppLifecycleState? deviceState,
   }) {
     String platform = 'unsupported';
     if (Platform.isAndroid) {
@@ -86,8 +84,8 @@ class OrbEvent implements Comparable<OrbEvent> {
   }
 
   factory OrbEvent.createDeviceStateEvent({
-    String deviceId,
-    AppLifecycleState deviceState,
+    String? deviceId,
+    AppLifecycleState? deviceState,
   }) {
     return OrbEvent(
       type: 'meya.orb.event.device.state',
@@ -101,7 +99,7 @@ class OrbEvent implements Comparable<OrbEvent> {
   }
 
   factory OrbEvent.createDeviceHeartbeatEvent({
-    String deviceId,
+    String? deviceId,
   }) {
     final timestamp = DateTime.now().toUtc().millisecondsSinceEpoch;
     return OrbEvent(
@@ -115,8 +113,8 @@ class OrbEvent implements Comparable<OrbEvent> {
     );
   }
 
-  factory OrbEvent.createSayEvent(String text,
-      {Map<dynamic, dynamic> context}) {
+  factory OrbEvent.createSayEvent(String? text,
+      {Map<dynamic, dynamic>? context}) {
     return OrbEvent(
       type: 'meya.text.event.say',
       data: {
@@ -127,9 +125,9 @@ class OrbEvent implements Comparable<OrbEvent> {
   }
 
   factory OrbEvent.createButtonClickEvent(
-    String buttonId, {
-    String text,
-    Map<dynamic, dynamic> context,
+    String? buttonId, {
+    String? text,
+    Map<dynamic, dynamic>? context,
   }) {
     return OrbEvent(
       type: 'meya.button.event.click',
@@ -142,10 +140,10 @@ class OrbEvent implements Comparable<OrbEvent> {
   }
 
   factory OrbEvent.createPageOpenEvent(
-    String url,
-    String referrer,
-    bool magicLinkOk,
-    Map<dynamic, dynamic> pageContext,
+    String? url,
+    String? referrer,
+    bool? magicLinkOk,
+    Map<dynamic, dynamic>? pageContext,
   ) {
     return OrbEvent(
       type: 'meya.session.event.page.open',
@@ -179,13 +177,13 @@ class OrbEvent implements Comparable<OrbEvent> {
   }
 
   factory OrbEvent.createFormSubmitEvent(
-      String formId, Map<String, String> fields) {
+      String? formId, Map<String?, String> fields) {
     return OrbEvent(
         type: 'meya.form.event.submit',
         data: {'fields': fields, 'form_id': formId});
   }
 
-  factory OrbEvent.createVirtualUserNameEvent(String id, String userId) {
+  factory OrbEvent.createVirtualUserNameEvent(String id, String? userId) {
     return OrbEvent(
         id: id, type: 'virtual.orb.event.user_name', data: {'user_id': userId});
   }
@@ -194,7 +192,7 @@ class OrbEvent implements Comparable<OrbEvent> {
 enum ComposerFocus { file, image, text, blur }
 
 extension ComposerFocusExtension on ComposerFocus {
-  static ComposerFocus fromString(String focus) {
+  static ComposerFocus fromString(String? focus) {
     switch (focus) {
       case 'file':
         return ComposerFocus.file;
@@ -211,7 +209,7 @@ extension ComposerFocusExtension on ComposerFocus {
 enum ComposerVisibility { collapse, hide, show }
 
 extension ComposerVisibilityExtension on ComposerVisibility {
-  static ComposerVisibility fromString(String focus) {
+  static ComposerVisibility fromString(String? focus) {
     switch (focus) {
       case 'collapse':
         return ComposerVisibility.collapse;
@@ -224,13 +222,13 @@ extension ComposerVisibilityExtension on ComposerVisibility {
 }
 
 class ComposerEventSpec {
-  final ComposerFocus focus;
-  final String placeholder;
-  final ComposerVisibility visibility;
+  final ComposerFocus? focus;
+  final String? placeholder;
+  final ComposerVisibility? visibility;
 
   ComposerEventSpec({this.focus, this.placeholder, this.visibility});
 
-  factory ComposerEventSpec.fromMap(Map map) {
+  static ComposerEventSpec? fromMap(Map? map) {
     if (map == null) return null;
     return ComposerEventSpec(
       focus: ComposerFocusExtension.fromString(map['focus']),
@@ -240,8 +238,8 @@ class ComposerEventSpec {
   }
 }
 
-extension DeviceState on AppLifecycleState {
-  String get state {
+extension DeviceState on AppLifecycleState? {
+  String? get state {
     switch (this) {
       case AppLifecycleState.resumed:
         return "resumed";

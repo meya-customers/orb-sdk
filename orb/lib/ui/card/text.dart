@@ -13,19 +13,19 @@ abstract class OrbText extends StatelessWidget {
   final OrbEvent event;
   final String text;
   final bool isSelfEvent;
-  final OrbUserAvatar userAvatar;
+  final OrbUserAvatar? userAvatar;
 
   OrbText._({
-    @required this.event,
-    @required this.text,
-    @required this.isSelfEvent,
-    @required this.userAvatar,
+    required this.event,
+    required this.text,
+    required this.isSelfEvent,
+    required this.userAvatar,
   });
 
   factory OrbText({
-    @required OrbEvent event,
-    @required bool isSelfEvent,
-    @required OrbUserAvatar userAvatar,
+    required OrbEvent event,
+    required bool isSelfEvent,
+    required OrbUserAvatar? userAvatar,
   }) {
     final text = event.data['text'];
     if (isSelfEvent) {
@@ -65,7 +65,7 @@ abstract class OrbText extends StatelessWidget {
   }
 
   Widget buildText(BuildContext context) {
-    final List markdown = event.data['markdown'];
+    final List? markdown = event.data['markdown'];
     final OrbThemeData orbTheme = OrbTheme.of(context);
     final TextStyle normal = orbTheme.text.font.normal
         .merge(orbTheme.text.style.normal)
@@ -88,8 +88,8 @@ abstract class OrbText extends StatelessWidget {
         data: text,
         selectable: true,
         styleSheet: OrbTheme.of(context).markdownStyleSheet,
-        onTapLink: (String text, String url, String title) async {
-          await _launchUrl(context, url);
+        onTapLink: (String text, String? url, String title) async {
+          await _launchUrl(context, url!);
         },
         inlineSyntaxes: [if (markdown.contains('breaks')) OrbLineBreakSyntax()],
       );
@@ -112,10 +112,10 @@ abstract class OrbText extends StatelessWidget {
 class OrbTextSelf extends OrbText {
   @protected
   OrbTextSelf({
-    @required OrbEvent event,
-    @required String text,
-    @required bool isSelfEvent,
-    @required OrbUserAvatar userAvatar,
+    required OrbEvent event,
+    required String text,
+    required bool isSelfEvent,
+    required OrbUserAvatar? userAvatar,
   }) : super._(
           event: event,
           text: text,
@@ -164,10 +164,10 @@ class OrbTextOther extends OrbText {
 
   @protected
   OrbTextOther({
-    @required OrbEvent event,
-    @required String text,
-    @required bool isSelfEvent,
-    @required OrbUserAvatar userAvatar,
+    required OrbEvent event,
+    required String text,
+    required bool isSelfEvent,
+    required OrbUserAvatar? userAvatar,
     this.containerOnly = false,
   }) : super._(
           event: event,
@@ -177,8 +177,8 @@ class OrbTextOther extends OrbText {
         );
 
   factory OrbTextOther.container({
-    @required OrbEvent event,
-    @required String text,
+    required OrbEvent event,
+    required String text,
   }) {
     return OrbTextOther(
       event: event,

@@ -7,25 +7,33 @@ import 'package:flutter_svg/svg.dart';
 import 'package:orb/string.dart';
 import 'package:orb/ui/design.dart';
 
-const String MEYA_CDN_URL = 'https://cdn-staging.meya.ai';
+const String MEYA_CDN_URL = 'https://cdn.meya.ai';
 
 class OrbIcon extends StatelessWidget {
   final OrbIconSpec src;
-  Color color;
+  final Color color;
 
-  OrbIcon(this.src, {Color color, Color defaultColor}) {
+  OrbIcon._({
+    required this.src,
+    required this.color,
+  });
+
+  factory OrbIcon(src, {Color? color, Color? defaultColor}) {
+    Color _color = OrbThemePalette().normal;
     if (src.color != null) {
-      this.color = src.color;
+      _color = src.color as Color;
     } else if (color != null) {
-      this.color = color;
+      _color = color;
     } else if (defaultColor != null) {
-      this.color = defaultColor;
-    } else {
-      this.color = OrbThemePalette().normal;
+      _color = defaultColor;
     }
+    return OrbIcon._(
+      src: src,
+      color: _color,
+    );
   }
 
-  static OrbIcon fromSpec(dynamic icon, {Color defaultColor}) {
+  static OrbIcon? fromSpec(dynamic icon, {Color? defaultColor}) {
     final iconSpec = OrbIconSpec.fromSpec(icon);
     if (iconSpec == null) return null;
     return OrbIcon(
@@ -37,19 +45,19 @@ class OrbIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (src.svg != null && color == src.color) {
-      return src.svg;
+      return src.svg!;
     } else if (src.url != null) {
-      if (!src.url.startsWith("http")) {
+      if (!src.url!.startsWith("http")) {
         return placeholderIcon;
       }
       return SvgPicture.network(
-        src.url,
+        src.url!,
         color: color,
         placeholderBuilder: (BuildContext context) => placeholderIcon,
       );
     } else if (src.assetName != null) {
       return SvgPicture.asset(
-        src.assetName,
+        src.assetName!,
         bundle: src.assetBundle ?? DefaultAssetBundle.of(context),
         package: src.package ?? 'orb',
         color: color,
@@ -64,7 +72,7 @@ class OrbIcon extends StatelessWidget {
 
   Widget fromAsset(BuildContext context) {
     return SvgPicture.asset(
-      src.assetName,
+      src.assetName!,
       bundle: src.assetBundle ?? DefaultAssetBundle.of(context),
       package: src.package ?? 'orb',
       color: color,
@@ -78,8 +86,8 @@ class OrbIcon extends StatelessWidget {
       );
 
   OrbIcon copyWith({
-    OrbIconSpec src,
-    Color color,
+    OrbIconSpec? src,
+    Color? color,
   }) {
     return OrbIcon(src ?? this.src, color: color ?? this.color);
   }
@@ -94,12 +102,12 @@ class OrbIconError extends Error {
 }
 
 class OrbIconSpec {
-  final String url;
-  final String assetName;
-  final AssetBundle assetBundle;
-  final String package;
-  final Color color;
-  final Widget svg;
+  final String? url;
+  final String? assetName;
+  final AssetBundle? assetBundle;
+  final String? package;
+  final Color? color;
+  final Widget? svg;
 
   OrbIconSpec._({
     this.url,
@@ -111,12 +119,12 @@ class OrbIconSpec {
   });
 
   factory OrbIconSpec({
-    String url,
-    String assetName,
-    AssetBundle assetBundle,
-    String package,
-    String color,
-    Widget svg,
+    String? url,
+    String? assetName,
+    AssetBundle? assetBundle,
+    String? package,
+    String? color,
+    Widget? svg,
   }) {
     if (svg != null) {
       return OrbIconSpec._(
@@ -159,12 +167,12 @@ class OrbIconSpec {
         svg: SvgPicture.asset(assetName, package: package),
       );
 
-  static OrbIconSpec fromMap(Map<dynamic, dynamic> icon) {
-    if (icon == null || icon['url'] == null) return null;
+  static OrbIconSpec? fromMap(Map<dynamic, dynamic> icon) {
+    if (icon['url'] == null) return null;
     return OrbIconSpec(url: icon['url'], color: icon['color']);
   }
 
-  static OrbIconSpec fromSpec(dynamic icon) {
+  static OrbIconSpec? fromSpec(dynamic icon) {
     if (icon is Map) {
       return fromMap(icon);
     } else if (icon is String) {

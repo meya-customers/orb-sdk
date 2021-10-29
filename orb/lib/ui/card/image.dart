@@ -8,19 +8,19 @@ abstract class OrbImage extends StatelessWidget {
   final OrbEvent event;
   final String url;
   final bool isSelfEvent;
-  final OrbUserAvatar userAvatar;
+  final OrbUserAvatar? userAvatar;
 
   OrbImage._({
-    @required this.event,
-    @required this.url,
-    @required this.isSelfEvent,
-    @required this.userAvatar,
+    required this.event,
+    required this.url,
+    required this.isSelfEvent,
+    required this.userAvatar,
   });
 
   factory OrbImage({
-    @required OrbEvent event,
-    @required bool isSelfEvent,
-    @required OrbUserAvatar userAvatar,
+    required OrbEvent event,
+    required bool isSelfEvent,
+    required OrbUserAvatar? userAvatar,
   }) {
     final url = event.data['url'];
     if (isSelfEvent) {
@@ -75,7 +75,7 @@ abstract class OrbImage extends StatelessWidget {
                 ? child
                 : LinearProgressIndicator(
                     value: progress.cumulativeBytesLoaded /
-                        progress.expectedTotalBytes,
+                        progress.expectedTotalBytes!,
                   );
           },
         ),
@@ -86,10 +86,10 @@ abstract class OrbImage extends StatelessWidget {
 
 class OrbImageSelf extends OrbImage {
   OrbImageSelf._({
-    @required OrbEvent event,
-    @required String url,
-    @required bool isSelfEvent,
-    @required OrbUserAvatar userAvatar,
+    required OrbEvent event,
+    required String url,
+    required bool isSelfEvent,
+    required OrbUserAvatar? userAvatar,
   }) : super._(
           event: event,
           url: url,
@@ -109,10 +109,10 @@ class OrbImageSelf extends OrbImage {
 
 class OrbImageOther extends OrbImage {
   OrbImageOther._({
-    @required OrbEvent event,
-    @required String url,
-    @required bool isSelfEvent,
-    @required OrbUserAvatar userAvatar,
+    required OrbEvent event,
+    required String url,
+    required bool isSelfEvent,
+    required OrbUserAvatar? userAvatar,
   }) : super._(
           event: event,
           url: url,

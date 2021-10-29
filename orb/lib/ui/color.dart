@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 extension HexColor on Color {
-  static Color fromHex(String hexString) {
+  static Color? fromHex(String? hexString) {
     if (hexString == null) return null;
     final buffer = StringBuffer();
     if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');

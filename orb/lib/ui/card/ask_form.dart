@@ -9,12 +9,12 @@ import 'package:orb/ui/presence/user_avatar.dart';
 class OrbAskForm extends StatelessWidget {
   final OrbEvent event;
   final OrbConnection connection;
-  final OrbUserAvatar userAvatar;
+  final OrbUserAvatar? userAvatar;
 
   OrbAskForm({
-    @required this.event,
-    @required this.connection,
-    @required this.userAvatar,
+    required this.event,
+    required this.connection,
+    required this.userAvatar,
   });
 
   @override
@@ -29,7 +29,8 @@ class OrbAskForm extends StatelessWidget {
         ),
         Flexible(
           child: Column(
-            children: buildFields(context, event.data['fields']),
+            children:
+                buildFields(context, event.data['fields']) as List<Widget>,
           ),
         ),
       ],
@@ -52,11 +53,11 @@ class OrbAskForm extends StatelessWidget {
 
 class OrbInputField extends StatefulWidget {
   final OrbEvent event;
-  final OrbConnection connection;
+  final OrbConnection? connection;
   final Map<dynamic, dynamic> field;
 
   OrbInputField(
-      {@required this.event, @required this.connection, @required this.field});
+      {required this.event, required this.connection, required this.field});
 
   @override
   _OrbInputFieldState createState() => _OrbInputFieldState();
@@ -65,12 +66,12 @@ class OrbInputField extends StatefulWidget {
 class _OrbInputFieldState extends State<OrbInputField> {
   final TextEditingController textEditingController = TextEditingController();
 
-  FocusNode focusNode;
-  FocusAttachment nodeAttachment;
-  bool disabled;
+  FocusNode? focusNode;
+  late FocusAttachment nodeAttachment;
+  bool? disabled;
   bool focus = false;
   bool invalid = false;
-  Map<String, bool> processedEvents = {};
+  Map<String?, bool> processedEvents = {};
   String inputText = '';
   String errorText = '';
 
@@ -78,21 +79,21 @@ class _OrbInputFieldState extends State<OrbInputField> {
   void initState() {
     super.initState();
     focusNode = FocusNode(debugLabel: 'OrbInputField');
-    focusNode.addListener(_handleFocusChange);
-    nodeAttachment = focusNode.attach(context, onKey: _handleKeyPress);
+    focusNode!.addListener(_handleFocusChange);
+    nodeAttachment = focusNode!.attach(context, onKey: _handleKeyPress);
     disabled = isDisabled;
   }
 
   @override
   void dispose() {
-    focusNode.dispose();
+    focusNode!.dispose();
     super.dispose();
   }
 
   void _handleFocusChange() {
-    if (focusNode.hasFocus != focus) {
+    if (focusNode!.hasFocus != focus) {
       setState(() {
-        focus = focusNode.hasFocus;
+        focus = focusNode!.hasFocus;
       });
     }
   }
@@ -102,21 +103,21 @@ class _OrbInputFieldState extends State<OrbInputField> {
   }
 
   bool get isActiveError {
-    final eventStream = widget.connection.getEventStream();
-    final form = eventStream.forms[widget.event.data['form_id']];
+    final eventStream = widget.connection!.getEventStream();
+    final form = eventStream.forms[widget.event.data['form_id']]!;
     return (form.errorEvent != null &&
         eventStream.isActiveEvent(form.errorEvent));
   }
 
   bool get isDisabled {
-    final eventStream = widget.connection.getEventStream();
+    final eventStream = widget.connection!.getEventStream();
     return !(eventStream.isActiveEvent(widget.event) || isActiveError);
   }
 
   @override
   Widget build(BuildContext context) {
     nodeAttachment.reparent();
-    final eventStream = widget.connection.getEventStream();
+    final eventStream = widget.connection!.getEventStream();
     final form = eventStream.forms[widget.event.data['form_id']];
     final ok = form?.okEvent != null;
     if (isActiveError && !invalid) {
@@ -137,7 +138,7 @@ class _OrbInputFieldState extends State<OrbInputField> {
           ),
           child: Text(
             (widget.field['label'] as String).toUpperCase(),
-            style: labelStyle(context, disabled, ok),
+            style: labelStyle(context, disabled!, ok),
           ),
         ),
         Container(
@@ -154,8 +155,8 @@ class _OrbInputFieldState extends State<OrbInputField> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              buildIcon(context, disabled, ok),
-              buildText(context, disabled),
+              buildIcon(context, disabled!, ok),
+              buildText(context, disabled!),
               buildSubmit(context, disabled, ok),
             ],
           ),
@@ -255,9 +256,9 @@ class _OrbInputFieldState extends State<OrbInputField> {
     }
   }
 
-  Widget buildSubmit(BuildContext context, bool disabled, bool ok) {
+  Widget buildSubmit(BuildContext context, bool? disabled, bool ok) {
     if (!ok) {
-      return disabled
+      return disabled!
           ? buildSubmitButton(context, disabled)
           : InkWell(
               onTap: submitForm,
@@ -285,8 +286,8 @@ class _OrbInputFieldState extends State<OrbInputField> {
   }
 
   Widget buildSubmitButton(BuildContext context, bool disabled) {
-    Color color;
-    Color borderColor;
+    Color? color;
+    Color? borderColor;
     if (disabled) {
       color = borderColor = OrbTheme.of(context).palette.neutral;
     } else if (invalid && !focus) {
@@ -302,7 +303,7 @@ class _OrbInputFieldState extends State<OrbInputField> {
       ),
       decoration: BoxDecoration(
         color: color,
-        border: OrbTheme.of(context).innerBorder.thick(borderColor),
+        border: OrbTheme.of(context).innerBorder.thick(borderColor!),
         borderRadius: BorderRadius.only(
           // TODO: Find a better way to adjust the inner border radius to the outer
           topRight:
@@ -334,10 +335,10 @@ class _OrbInputFieldState extends State<OrbInputField> {
         .copyWith(color: color);
   }
 
-  Border border(BuildContext context, bool disabled, bool ok) {
-    Color color;
+  Border border(BuildContext context, bool? disabled, bool ok) {
+    Color? color;
     if (focus) {
-      color = disabled
+      color = disabled!
           ? OrbTheme.of(context).palette.disabled
           : OrbTheme.of(context).palette.brand;
     } else if (invalid) {
@@ -346,9 +347,9 @@ class _OrbInputFieldState extends State<OrbInputField> {
       color = OrbTheme.of(context).palette.neutral;
     }
     if (ok) {
-      return OrbTheme.of(context).innerBorder.thin(color);
+      return OrbTheme.of(context).innerBorder.thin(color!);
     } else {
-      return OrbTheme.of(context).innerBorder.thick(color);
+      return OrbTheme.of(context).innerBorder.thick(color!);
     }
   }
 
@@ -359,7 +360,7 @@ class _OrbInputFieldState extends State<OrbInputField> {
   }
 
   void processAsk() {
-    if (!widget.connection.getEventStream().isActiveEvent(widget.event)) {
+    if (!widget.connection!.getEventStream().isActiveEvent(widget.event)) {
       // Event not relevant
       return;
     } else if (processedEvents[widget.event.id] == true) {
@@ -370,58 +371,59 @@ class _OrbInputFieldState extends State<OrbInputField> {
       return;
     }
     setState(() {
-      focusNode.requestFocus();
+      focusNode!.requestFocus();
       processedEvents[widget.event.id] = true;
     });
   }
 
   void processSubmit() {
-    final form =
-        widget.connection.getEventStream().forms[widget.event.data['form_id']];
+    final form = widget.connection!
+        .getEventStream()
+        .forms[widget.event.data['form_id']]!;
     if (form.submitEvent == null) {
       // No event
       return;
-    } else if (processedEvents[form.submitEvent.id] == true) {
+    } else if (processedEvents[form.submitEvent!.id] == true) {
       // Event already processed
       return;
     }
     setState(() {
       final Map<dynamic, dynamic> submitFields =
-          form.submitEvent.data['fields'];
+          form.submitEvent!.data['fields'];
       for (final field in submitFields.entries) {
         final submitText = field.value;
         inputText = submitText;
       }
       textEditingController.text = inputText;
-      processedEvents[form.submitEvent.id] = true;
+      processedEvents[form.submitEvent!.id] = true;
     });
   }
 
   void processError() {
-    final eventStream = widget.connection.getEventStream();
-    final form = eventStream.forms[widget.event.data['form_id']];
+    final eventStream = widget.connection!.getEventStream();
+    final form = eventStream.forms[widget.event.data['form_id']]!;
     if (form.errorEvent == null) {
       // No event
       return;
     } else if (!eventStream.isActiveEvent(form.errorEvent)) {
       // Event not relevant
       return;
-    } else if (processedEvents[form.errorEvent.id] == true) {
+    } else if (processedEvents[form.errorEvent!.id] == true) {
       // Event already processed
       return;
     }
     setState(() {
-      final Map<dynamic, dynamic> errorFields = form.errorEvent.data['fields'];
+      final Map<dynamic, dynamic> errorFields = form.errorEvent!.data['fields'];
       for (final field in errorFields.entries) {
         errorText = field.value;
       }
-      processedEvents[form.errorEvent.id] = true;
+      processedEvents[form.errorEvent!.id] = true;
     });
   }
 
   void submitForm() {
     final field = widget.event.data['fields'][0];
-    widget.connection.publishEvent(OrbEvent.createFormSubmitEvent(
+    widget.connection!.publishEvent(OrbEvent.createFormSubmitEvent(
       widget.event.data['form_id'],
       {field['name']: textEditingController.text},
     ));

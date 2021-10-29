@@ -6,7 +6,7 @@ import 'package:orb/ui/card/image.dart';
 import 'package:orb/ui/card/rating.dart';
 import 'package:orb/ui/card/status.dart';
 
-final EventMap = {
+final eventMap = {
   'meya.button.event.ask': OrbAskButtons,
   'meya.form.event.ask': OrbAskForm,
   'meya.tile.event.ask': OrbAskTiles,

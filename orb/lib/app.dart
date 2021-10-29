@@ -17,8 +17,8 @@ class OrbApp extends StatefulWidget {
 }
 
 class _OrbAppState extends State<OrbApp> with WidgetsBindingObserver {
-  OrbConfig orbConfig;
-  OrbConnection connection;
+  late OrbConfig orbConfig;
+  OrbConnection? connection;
   String platformVersion = "Unknown";
   bool ready = false;
   AppLifecycleState deviceState = AppLifecycleState.resumed;
@@ -34,19 +34,19 @@ class _OrbAppState extends State<OrbApp> with WidgetsBindingObserver {
     OrbPlugin.connect = connect;
     OrbPlugin.disconnect = disconnect;
     OrbPlugin.publishEvent = publishEvent;
-    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance!.addObserver(this);
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
+    WidgetsBinding.instance!.removeObserver(this);
     super.dispose();
   }
 
   Future<void> initPlatformState() async {
     String version;
     try {
-      version = await OrbPlugin.platformVersion;
+      version = await OrbPlugin.platformVersion ?? "Unknown";
     } on PlatformException {
       version = 'Failed to get platform version.';
     }
@@ -59,8 +59,11 @@ class _OrbAppState extends State<OrbApp> with WidgetsBindingObserver {
     });
   }
 
-  void configure(ThemeConfigSpec theme, ComposerConfigSpec composer,
-      SplashConfigSpec splash) {
+  void configure(
+    ThemeConfigSpec theme,
+    ComposerConfigSpec composer,
+    SplashConfigSpec splash,
+  ) {
     orbConfig.update(theme: theme, composer: composer, splash: splash);
   }
 
@@ -83,19 +86,19 @@ class _OrbAppState extends State<OrbApp> with WidgetsBindingObserver {
         enableCloseButton: options.enableCloseButton,
         deviceState: deviceState,
       );
-      connection.addOrbListener('connected', onConnected);
-      connection.addOrbListener('disconnected', onDisconnected);
-      connection.addOrbListener('firstConnect', onFirstConnect);
-      connection.addOrbListener('reconnect', onReconnect);
-      connection.addOrbListener('event', onEvent);
-      connection.addOrbListener('eventStream', onEventStream);
-      connection.addOrbListener('closeUi', onCloseUi);
-      connection.addListener(
+      connection!.addOrbListener('connected', onConnected);
+      connection!.addOrbListener('disconnected', onDisconnected);
+      connection!.addOrbListener('firstConnect', onFirstConnect);
+      connection!.addOrbListener('reconnect', onReconnect);
+      connection!.addOrbListener('event', onEvent);
+      connection!.addOrbListener('eventStream', onEventStream);
+      connection!.addOrbListener('closeUi', onCloseUi);
+      connection!.addListener(
         () => setState(() {
           // New event stream ready for building
         }),
       );
-      connection.connect();
+      connection!.connect();
     });
   }
 
@@ -106,8 +109,7 @@ class _OrbAppState extends State<OrbApp> with WidgetsBindingObserver {
     });
   }
 
-  void publishEvent(Map<dynamic, dynamic> event) {
-    if (connection == null) throw Exception('Orb is not connected.');
+  void publishEvent(Map<dynamic, dynamic>? event) {
     connection?.publishEvent(OrbEvent.fromEventMap(event));
   }
 
@@ -158,25 +160,21 @@ class _OrbAppState extends State<OrbApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider<OrbConfig>(
-          create: (_) => orbConfig,
-        )
-      ],
-      child: Consumer<OrbConfig>(
-        builder: (BuildContext context, OrbConfig orbConfig, Widget child) =>
-            MaterialApp(
+    return ChangeNotifierProvider<OrbConfig>(
+      create: (_) => orbConfig,
+      builder: (context, child) {
+        final orbConfig = context.watch<OrbConfig>();
+        return MaterialApp(
           theme: orbConfig.orbThemeData.toMaterialThemeData(),
           home: connection != null
               ? OrbChat(
-                  eventStream: connection.getEventStream(),
-                  connection: connection,
+                  eventStream: connection!.getEventStream(),
+                  connection: connection!,
                 )
               : OrbSplash(),
           builder: orbConfig.orbThemeData.builder,
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -184,12 +182,11 @@ class _OrbAppState extends State<OrbApp> with WidgetsBindingObserver {
 class OrbSplash extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Consumer<OrbConfig>(
-      builder: (BuildContext context, OrbConfig orbConfig, child) => Scaffold(
-        backgroundColor: OrbTheme.of(context).palette.blank,
-        body: Center(
-          child: Text(orbConfig.splash.readyText),
-        ),
+    final orbConfig = context.watch<OrbConfig>();
+    return Scaffold(
+      backgroundColor: OrbTheme.of(context).palette.blank,
+      body: Center(
+        child: Text(orbConfig.splash.readyText!),
       ),
     );
   }

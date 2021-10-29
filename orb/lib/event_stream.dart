@@ -1,5 +1,3 @@
-import 'package:meta/meta.dart';
-
 import 'package:orb/event.dart';
 import 'package:orb/ui/avatar.dart';
 import 'package:orb/ui/card/event_map.dart';
@@ -8,31 +6,31 @@ class OrbEventStream {
   final List<OrbEvent> events;
   final bool Function(OrbEvent event) isSelfEvent;
   final bool Function(OrbEvent event) isHiddenEvent;
-  final bool Function(OrbEvent event) isActiveEvent;
-  final String Function(OrbEvent event) getEventText;
+  final bool Function(OrbEvent? event) isActiveEvent;
+  final String? Function(OrbEvent event) getEventText;
   final bool Function(OrbEvent event) isAttributionEvent;
-  final OrbEvent quickRepliesEvent;
-  final OrbEvent typingOnEvent;
+  final OrbEvent? quickRepliesEvent;
+  final OrbEvent? typingOnEvent;
   final Map<String, OrbUserData> userData;
-  final Map<String, bool> buttonClicks;
-  final Map<String, OrbFormView> forms;
+  final Map<String?, bool> buttonClicks;
+  final Map<String?, OrbFormView> forms;
 
   OrbEventStream._({
-    @required this.events,
-    @required this.isSelfEvent,
-    @required this.isHiddenEvent,
-    @required this.isActiveEvent,
-    @required this.getEventText,
-    @required this.isAttributionEvent,
-    @required this.quickRepliesEvent,
-    @required this.typingOnEvent,
-    @required this.userData,
-    @required this.buttonClicks,
-    @required this.forms,
+    required this.events,
+    required this.isSelfEvent,
+    required this.isHiddenEvent,
+    required this.isActiveEvent,
+    required this.getEventText,
+    required this.isAttributionEvent,
+    required this.quickRepliesEvent,
+    required this.typingOnEvent,
+    required this.userData,
+    required this.buttonClicks,
+    required this.forms,
   });
 
   factory OrbEventStream({
-    String gridUserId,
+    String? gridUserId,
     List<OrbEvent> events = const [],
     Map<String, OrbUserData> userData = const {},
   }) {
@@ -71,12 +69,12 @@ class OrbEventStream {
   }
 
   OrbEventStream preProcessEvents() {
-    String otherUserId;
+    String? otherUserId;
     List<OrbEvent> newEvents = [];
     int count = 0;
     for (final event in events) {
       if (event.type == 'virtual.orb.event.user_name') continue;
-      final eventClass = EventMap[event.type];
+      final eventClass = eventMap[event.type];
       final text = getEventText(event);
       final isVisible = eventClass != null || text != null;
       final isHidden = isHiddenEvent(event);
@@ -129,7 +127,7 @@ class OrbEventStream {
   List<Map<String, dynamic>> get rawEvents =>
       events.map((e) => e.toEventMap()).toList();
 
-  static bool Function(OrbEvent event) _createIsSelfEvent(String gridUserId) {
+  static bool Function(OrbEvent event) _createIsSelfEvent(String? gridUserId) {
     return (OrbEvent event) =>
         gridUserId != '' && event.data['user_id'] == gridUserId;
   }
@@ -139,8 +137,8 @@ class OrbEventStream {
         ['meya.button.event.click', 'meya.form.event.ok'].contains(event.type);
   }
 
-  static bool Function(OrbEvent) _createIsActiveEvent(List<OrbEvent> events) {
-    String activeId;
+  static bool Function(OrbEvent?) _createIsActiveEvent(List<OrbEvent> events) {
+    String? activeId;
     for (final event in events) {
       if (![
         'meya.session.event.chat.close',
@@ -159,10 +157,10 @@ class OrbEventStream {
         break;
       }
     }
-    return (OrbEvent event) => event.id == activeId;
+    return (OrbEvent? event) => event!.id == activeId;
   }
 
-  static String Function(OrbEvent) _createGetEventText(List<OrbEvent> events) {
+  static String? Function(OrbEvent) _createGetEventText(List<OrbEvent> events) {
     final quickReplyButtons = {};
     for (final event in events) {
       final quickReplies = event.data['quick_replies'];
@@ -187,12 +185,12 @@ class OrbEventStream {
     return (OrbEvent event) => !['meya.text.event.status'].contains(event.type);
   }
 
-  static OrbEvent _createQuickRepliesEvent(
+  static OrbEvent? _createQuickRepliesEvent(
     List<OrbEvent> events,
     bool Function(OrbEvent event) isHiddenEvent,
   ) {
     for (final event in events) {
-      final List quickReplies = event.data['quick_replies'];
+      final List? quickReplies = event.data['quick_replies'];
       if (isHiddenEvent(event)) {
         break;
       } else if (quickReplies != null && quickReplies.isNotEmpty) {
@@ -202,7 +200,7 @@ class OrbEventStream {
     return null;
   }
 
-  static OrbEvent _createTypingOnEvent(
+  static OrbEvent? _createTypingOnEvent(
       List<OrbEvent> events,
       bool Function(OrbEvent event) isActiveEvent,
       bool Function(OrbEvent event) isSelfEvent) {
@@ -218,8 +216,8 @@ class OrbEventStream {
     return null;
   }
 
-  static Map<String, bool> _createButtonClicks(List<OrbEvent> events) {
-    final Map<String, bool> buttonClicks = {};
+  static Map<String?, bool> _createButtonClicks(List<OrbEvent> events) {
+    final Map<String?, bool> buttonClicks = {};
     for (final event in events) {
       if (event.type == 'meya.button.event.click') {
         buttonClicks[event.data['button_id']] = true;
@@ -228,13 +226,13 @@ class OrbEventStream {
     return buttonClicks;
   }
 
-  static Map<String, OrbFormView> _createForms(List<OrbEvent> events) {
-    final Map<String, OrbFormView> forms = {};
+  static Map<String?, OrbFormView> _createForms(List<OrbEvent> events) {
+    final Map<String?, OrbFormView> forms = {};
     for (final event in events.reversed) {
       if (event.type == 'meya.form.event.ask') {
         forms[event.data['form_id']] = OrbFormView(askEvent: event);
       } else {
-        final OrbFormView formView = forms[event.data['form_id']];
+        final OrbFormView? formView = forms[event.data['form_id']];
         if (event.type == 'meya.form.event.submit') {
           formView?.submitEvent = event;
         } else if (event.type == 'meya.form.event.error') {
@@ -251,25 +249,25 @@ class OrbEventStream {
 enum OrbUserType { bot, agent, user, system }
 
 extension OrbUserTypeExtension on OrbUserType {
-  static OrbUserType fromString(String type) =>
+  static OrbUserType fromString(String? type) =>
       {
         'bot': OrbUserType.bot,
         'agent': OrbUserType.agent,
         'user': OrbUserType.user,
         'system': OrbUserType.system
-      }[type] ??
+      }[type!] ??
       OrbUserType.bot;
 }
 
 class OrbUserData {
-  final String name;
-  final OrbAvatar avatar;
+  final String? name;
+  final OrbAvatar? avatar;
   final OrbUserType type;
 
   OrbUserData({
-    @required this.name,
-    @required this.avatar,
-    @required this.type,
+    required this.name,
+    required this.avatar,
+    required this.type,
   });
 
   factory OrbUserData.fromMap(Map<dynamic, dynamic> map) {
@@ -283,12 +281,12 @@ class OrbUserData {
 
 class OrbFormView {
   OrbEvent askEvent;
-  OrbEvent submitEvent;
-  OrbEvent errorEvent;
-  OrbEvent okEvent;
+  OrbEvent? submitEvent;
+  OrbEvent? errorEvent;
+  OrbEvent? okEvent;
 
   OrbFormView({
-    @required this.askEvent,
+    required this.askEvent,
     this.submitEvent,
     this.errorEvent,
     this.okEvent,

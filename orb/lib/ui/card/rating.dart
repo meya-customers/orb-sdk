@@ -10,12 +10,12 @@ import 'package:orb/ui/presence/user_avatar.dart';
 class OrbRating extends StatefulWidget {
   final OrbEvent event;
   final OrbConnection connection;
-  final OrbUserAvatar userAvatar;
+  final OrbUserAvatar? userAvatar;
 
   OrbRating({
-    @required this.event,
-    @required this.connection,
-    @required this.userAvatar,
+    required this.event,
+    required this.connection,
+    required this.userAvatar,
   });
 
   @override
@@ -23,9 +23,9 @@ class OrbRating extends StatefulWidget {
 }
 
 class _OrbRatingState extends State<OrbRating> {
-  bool disabled;
-  int backfillIndex;
-  String selectedButtonId;
+  bool? disabled;
+  late int backfillIndex;
+  String? selectedButtonId;
 
   @override
   void initState() {
@@ -35,14 +35,14 @@ class _OrbRatingState extends State<OrbRating> {
     backfillIndex = -1;
   }
 
-  bool isButtonSelected(String buttonId) => selectedButtonId != null
+  bool isButtonSelected(String? buttonId) => selectedButtonId != null
       ? selectedButtonId == buttonId
       : widget.connection.getEventStream().buttonClicks[buttonId] ?? false;
 
   @override
   Widget build(BuildContext context) {
-    final List options = widget.event.data['options'];
-    final bool backfill = widget.event.data['backfill'];
+    final List options = widget.event.data['options'] ?? [];
+    final bool? backfill = widget.event.data['backfill'];
 
     return Row(
       children: [
@@ -76,13 +76,13 @@ class _OrbRatingState extends State<OrbRating> {
   List<Widget> buildIconButtons(
     BuildContext context,
     List<dynamic> options,
-    bool backfill,
+    bool? backfill,
   ) {
     int disabledBackfillIndex = -1;
 
     for (int index = 0; index < options.length; index++) {
       final option = options[index];
-      if (disabled && isButtonSelected(option['button_id']))
+      if (disabled! && isButtonSelected(option['button_id']))
         disabledBackfillIndex = index;
     }
 
@@ -95,7 +95,7 @@ class _OrbRatingState extends State<OrbRating> {
         color: option['icon']['color'],
         disabled: disabled,
         backfill: (index < disabledBackfillIndex || index <= backfillIndex) &&
-            backfill,
+            backfill!,
         selected: isButtonSelected(buttonId),
         onTap: () {
           widget.connection.publishEvent(
@@ -117,20 +117,20 @@ class _OrbRatingState extends State<OrbRating> {
 }
 
 class IconButton extends StatelessWidget {
-  final String url;
-  final String color;
-  final bool disabled;
+  final String? url;
+  final String? color;
+  final bool? disabled;
   final bool backfill;
   final bool selected;
   final Function onTap;
 
   IconButton({
-    @required this.url,
-    @required this.color,
-    @required this.disabled,
-    @required this.backfill,
-    @required this.selected,
-    @required this.onTap,
+    required this.url,
+    required this.color,
+    required this.disabled,
+    required this.backfill,
+    required this.selected,
+    required this.onTap,
   });
 
   @override
@@ -152,13 +152,13 @@ class IconButton extends StatelessWidget {
     final icon = OrbIcon(
       OrbIconSpec(
         url: url,
-        color: !disabled
+        color: !disabled!
             ? color
-            : disabled && backfill
+            : disabled! && backfill
                 ? color
                 : null,
       ),
-      color: disabled
+      color: disabled!
           ? selected || backfill
               ? OrbTheme.of(context).palette.normal
               : OrbTheme.of(context).palette.disabled
@@ -166,6 +166,8 @@ class IconButton extends StatelessWidget {
               ? OrbTheme.of(context).palette.brand
               : null,
     );
-    return disabled ? icon : InkWell(child: icon, onTap: onTap);
+    return disabled!
+        ? icon
+        : InkWell(child: icon, onTap: onTap as void Function()?);
   }
 }

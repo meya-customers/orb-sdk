@@ -6,17 +6,17 @@ import 'package:orb/ui/presence/user_avatar.dart';
 
 abstract class OrbUserName extends StatelessWidget {
   final OrbEventStream eventStream;
-  final String userId;
+  final String? userId;
 
   OrbUserName._({
-    @required this.eventStream,
-    @required this.userId,
+    required this.eventStream,
+    required this.userId,
   });
 
   factory OrbUserName({
-    @required OrbEventStream eventStream,
-    @required userId,
-    @required bool isSelfEvent,
+    required OrbEventStream eventStream,
+    required userId,
+    required bool isSelfEvent,
   }) {
     if (isSelfEvent) {
       return OrbUserNameSelf._(
@@ -31,9 +31,8 @@ abstract class OrbUserName extends StatelessWidget {
     }
   }
 
-  @override
   Widget buildContainer(BuildContext context) {
-    final userData = eventStream.userData[userId];
+    final userData = eventStream.userData[userId!];
     final name = getUserName(userData);
 
     return Container(
@@ -51,11 +50,11 @@ abstract class OrbUserName extends StatelessWidget {
     );
   }
 
-  static String getUserName(OrbUserData userData) {
+  static String getUserName(OrbUserData? userData) {
     return userData?.name ?? getDefaultUserName(userData);
   }
 
-  static String getDefaultUserName(OrbUserData userData) {
+  static String getDefaultUserName(OrbUserData? userData) {
     final type = userData?.type ?? OrbUserType.bot;
     final role = type.toString().split('.').last;
     return role[0].toUpperCase() + role.substring(1);
@@ -64,8 +63,8 @@ abstract class OrbUserName extends StatelessWidget {
 
 class OrbUserNameSelf extends OrbUserName {
   OrbUserNameSelf._({
-    @required OrbEventStream eventStream,
-    @required userId,
+    required OrbEventStream eventStream,
+    required userId,
   }) : super._(
           eventStream: eventStream,
           userId: userId,
@@ -79,8 +78,8 @@ class OrbUserNameSelf extends OrbUserName {
 
 class OrbUserNameOther extends OrbUserName {
   OrbUserNameOther._({
-    @required OrbEventStream eventStream,
-    @required userId,
+    required OrbEventStream eventStream,
+    required userId,
   }) : super._(
           eventStream: eventStream,
           userId: userId,

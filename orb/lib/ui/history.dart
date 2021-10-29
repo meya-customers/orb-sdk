@@ -25,9 +25,9 @@ class OrbHistory extends StatefulWidget {
   final ScrollController listScrollController = ScrollController();
 
   OrbHistory({
-    Key key,
-    @required this.eventStream,
-    @required this.connection,
+    Key? key,
+    required this.eventStream,
+    required this.connection,
   }) : super(key: key);
 
   @override
@@ -35,8 +35,8 @@ class OrbHistory extends StatefulWidget {
 }
 
 class _OrbHistoryState extends State<OrbHistory> {
-  Timer expireTypingEventTimer;
-  String hideTypingEventId;
+  Timer? expireTypingEventTimer;
+  String? hideTypingEventId;
   Map<String, bool> processedTypingEvents = {};
 
   @override
@@ -78,12 +78,12 @@ class _OrbHistoryState extends State<OrbHistory> {
             connection: widget.connection,
           ),
         if (widget.eventStream.typingOnEvent != null &&
-            widget.eventStream.typingOnEvent.id != hideTypingEventId)
+            widget.eventStream.typingOnEvent!.id != hideTypingEventId)
           OrbTypingIndicator(
-            event: widget.eventStream.typingOnEvent,
+            event: widget.eventStream.typingOnEvent!,
             userAvatar: OrbUserAvatar.fromEvent(
               eventStream: widget.eventStream,
-              event: widget.eventStream.typingOnEvent,
+              event: widget.eventStream.typingOnEvent!,
             ),
           ),
       ],
@@ -116,7 +116,7 @@ class _OrbHistoryState extends State<OrbHistory> {
           }),
         );
       }
-      processedTypingEvents[event.id] = true;
+      processedTypingEvents[event.id ?? "-"] = true;
     }
   }
 
@@ -125,10 +125,10 @@ class _OrbHistoryState extends State<OrbHistory> {
   Duration getTypingOffInterval() => Duration(milliseconds: 100);
 
   Widget buildEvent({
-    @required OrbEvent event,
-    OrbUserAvatar userAvatar,
+    required OrbEvent event,
+    OrbUserAvatar? userAvatar,
   }) {
-    // TODO: Consolidate this with EventMap class
+    // TODO: Consolidate this with eventMap
     switch (event.type) {
       case 'meya.button.event.ask':
         return buildAskButtons(event, userAvatar);
@@ -153,7 +153,7 @@ class _OrbHistoryState extends State<OrbHistory> {
 
   Widget buildAskForm(
     OrbEvent event,
-    OrbUserAvatar userAvatar,
+    OrbUserAvatar? userAvatar,
   ) {
     return OrbAskForm(
       event: event,
@@ -164,7 +164,7 @@ class _OrbHistoryState extends State<OrbHistory> {
 
   Widget buildAskTiles(
     OrbEvent event,
-    OrbUserAvatar userAvatar,
+    OrbUserAvatar? userAvatar,
   ) {
     return OrbAskTiles(
       event: event,
@@ -175,7 +175,7 @@ class _OrbHistoryState extends State<OrbHistory> {
 
   Widget buildAskButtons(
     OrbEvent event,
-    OrbUserAvatar userAvatar,
+    OrbUserAvatar? userAvatar,
   ) {
     return OrbAskButtons(
       event: event,
@@ -186,7 +186,7 @@ class _OrbHistoryState extends State<OrbHistory> {
 
   Widget buildImage(
     OrbEvent event,
-    OrbUserAvatar userAvatar,
+    OrbUserAvatar? userAvatar,
   ) {
     final url = event.data['url'];
     if (url == null || url == '') {
@@ -202,7 +202,7 @@ class _OrbHistoryState extends State<OrbHistory> {
 
   Widget buildRating(
     OrbEvent event,
-    OrbUserAvatar userAvatar,
+    OrbUserAvatar? userAvatar,
   ) {
     return OrbRating(
       event: event,
@@ -220,7 +220,7 @@ class _OrbHistoryState extends State<OrbHistory> {
 
   Widget buildFile(
     OrbEvent event,
-    OrbUserAvatar userAvatar,
+    OrbUserAvatar? userAvatar,
   ) {
     final url = event.data['url'];
     if (url == null || url == '') {
@@ -245,7 +245,7 @@ class _OrbHistoryState extends State<OrbHistory> {
 
   Widget buildText(
     OrbEvent event,
-    OrbUserAvatar userAvatar,
+    OrbUserAvatar? userAvatar,
   ) {
     final text = event.data['text'];
     if (text == null || text == '') {

@@ -21,7 +21,7 @@ class OrbComposer extends StatefulWidget {
   final OrbEventStream eventStream;
   final OrbConnection connection;
 
-  OrbComposer({Key key, @required this.eventStream, @required this.connection})
+  OrbComposer({Key? key, required this.eventStream, required this.connection})
       : super(key: key);
 
   @override
@@ -29,10 +29,10 @@ class OrbComposer extends StatefulWidget {
 }
 
 class _OrbComposerState extends State<OrbComposer> {
-  ComposerVisibility visibility = ComposerVisibility.show;
+  ComposerVisibility? visibility = ComposerVisibility.show;
   ComposerMode mode = ComposerMode.text;
   TextEditingController textEditingController = TextEditingController();
-  Map<String, bool> processedEvents = {};
+  Map<String?, bool> processedEvents = {};
 
   @override
   void initState() {
@@ -49,11 +49,10 @@ class _OrbComposerState extends State<OrbComposer> {
       orElse: () => OrbEvent(id: '-', type: 'empty', data: {}),
     );
     final composerSpec =
-        ComposerEventSpec.fromMap(currentEvent?.data['composer']);
+        ComposerEventSpec.fromMap(currentEvent.data['composer']);
     final collapse = textEditingController.value.text.isEmpty &&
         composerSpec?.visibility == ComposerVisibility.collapse;
-    final hide = currentEvent == null ||
-        composerSpec?.visibility == ComposerVisibility.hide;
+    final hide = composerSpec?.visibility == ComposerVisibility.hide;
 
     process(currentEvent, composerSpec);
 
@@ -94,10 +93,8 @@ class _OrbComposerState extends State<OrbComposer> {
     }
   }
 
-  void process(OrbEvent currentEvent, ComposerEventSpec composerSpec) {
-    if (currentEvent == null)
-      return;
-    else if (processedEvents.containsKey(currentEvent.id) ||
+  void process(OrbEvent currentEvent, ComposerEventSpec? composerSpec) {
+    if (processedEvents.containsKey(currentEvent.id) ||
         currentEvent.id == '-') {
       return;
     }
@@ -132,16 +129,16 @@ class TextMode extends StatefulWidget {
   final OrbConnection connection;
   final Function toggleMode;
   final TextEditingController textEditingController;
-  final ComposerEventSpec composerSpec;
+  final ComposerEventSpec? composerSpec;
 
   TextMode({
-    Key key,
-    @required this.orbConfig,
-    @required this.eventStream,
-    @required this.connection,
-    @required this.toggleMode,
-    @required this.textEditingController,
-    @required this.composerSpec,
+    Key? key,
+    required this.orbConfig,
+    required this.eventStream,
+    required this.connection,
+    required this.toggleMode,
+    required this.textEditingController,
+    required this.composerSpec,
   }) : super(key: key);
 
   @override
@@ -231,11 +228,11 @@ class ExtraMode extends StatelessWidget {
   final Function toggleMode;
 
   ExtraMode({
-    Key key,
-    @required this.orbConfig,
-    @required this.eventStream,
-    @required this.connection,
-    @required this.toggleMode,
+    Key? key,
+    required this.orbConfig,
+    required this.eventStream,
+    required this.connection,
+    required this.toggleMode,
   }) : super(key: key);
 
   @override
@@ -279,7 +276,7 @@ class ExtraMode extends StatelessWidget {
   Future getFile(BuildContext context) async {
     final result = await FilePicker.platform.pickFiles();
     if (result != null) {
-      final path = result.files.single.path;
+      final path = result.files.single.path!;
       final filename = p.basename(path);
       final accepted = await showDialog(
         context: context,
@@ -359,11 +356,11 @@ class ImageMode extends StatelessWidget {
   final Function toggleMode;
 
   ImageMode({
-    Key key,
-    @required this.orbConfig,
-    @required this.eventStream,
-    @required this.connection,
-    @required this.toggleMode,
+    Key? key,
+    required this.orbConfig,
+    required this.eventStream,
+    required this.connection,
+    required this.toggleMode,
   }) : super(key: key);
 
   @override
@@ -445,13 +442,13 @@ class ImageMode extends StatelessWidget {
 class CollapseMode extends StatelessWidget {
   final OrbConfig orbConfig;
   final Function toggleMode;
-  final ComposerEventSpec composerSpec;
+  final ComposerEventSpec? composerSpec;
 
   CollapseMode({
-    Key key,
-    @required this.orbConfig,
-    @required this.toggleMode,
-    @required this.composerSpec,
+    Key? key,
+    required this.orbConfig,
+    required this.toggleMode,
+    required this.composerSpec,
   }) : super(key: key);
 
   @override
@@ -463,8 +460,8 @@ class CollapseMode extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              composerSpec.placeholder ??
-                  orbConfig.composer.collapsePlaceholderText,
+              composerSpec!.placeholder ??
+                  orbConfig.composer.collapsePlaceholderText!,
               style: OrbTheme.of(context)
                   .text
                   .style
@@ -507,9 +504,9 @@ class OrbComposerIconButton extends StatelessWidget {
   final Function onPressed;
 
   OrbComposerIconButton({
-    Key key,
-    @required this.icon,
-    @required this.onPressed,
+    Key? key,
+    required this.icon,
+    required this.onPressed,
   });
 
   @override
@@ -518,7 +515,7 @@ class OrbComposerIconButton extends StatelessWidget {
       margin: EdgeInsets.symmetric(horizontal: 10.0),
       child: IconButton(
         icon: icon,
-        onPressed: onPressed,
+        onPressed: onPressed as void Function()?,
       ),
     );
   }
@@ -531,11 +528,11 @@ class SendTextButton extends StatelessWidget {
   final FocusNode composerFocusNode;
 
   SendTextButton({
-    Key key,
-    @required this.eventStream,
-    @required this.connection,
-    @required this.textEditingController,
-    @required this.composerFocusNode,
+    Key? key,
+    required this.eventStream,
+    required this.connection,
+    required this.textEditingController,
+    required this.composerFocusNode,
   }) : super(key: key);
 
   @override
@@ -555,18 +552,18 @@ class SendTextButton extends StatelessWidget {
 
 class OrbComposerButton extends StatelessWidget {
   final OrbEventStream eventStream;
-  final OrbConnection connection;
+  final OrbConnection? connection;
   final OrbIcon icon;
-  final String text;
+  final String? text;
   final Function onTap;
 
   OrbComposerButton({
-    Key key,
-    @required this.eventStream,
-    @required this.connection,
-    @required this.icon,
-    @required this.text,
-    @required this.onTap,
+    Key? key,
+    required this.eventStream,
+    required this.connection,
+    required this.icon,
+    required this.text,
+    required this.onTap,
   }) : super(key: key);
 
   @override
@@ -581,10 +578,10 @@ class OrbComposerButton extends StatelessWidget {
                     EdgeInsets.only(right: OrbTheme.of(context).lengths.small),
                 child: icon,
               ),
-              Text(text)
+              Text(text!)
             ],
           ),
-          onTap: onTap,
+          onTap: onTap as void Function()?,
         ));
   }
 }

@@ -9,15 +9,15 @@ class OrbQuickReplies extends StatelessWidget {
   final OrbConnection connection;
 
   OrbQuickReplies({
-    @required this.connection,
+    required this.connection,
   });
 
   @override
   Widget build(BuildContext context) {
     final eventStream = connection.getEventStream();
-    final event = eventStream.quickRepliesEvent;
-    final quickReplies = event.data["quick_replies"] as List<dynamic>;
-    if (!eventStream.isActiveEvent(event) || quickReplies.isEmpty) {
+    final event = eventStream.quickRepliesEvent!;
+    final quickReplies = event.data["quick_replies"] as List<dynamic>?;
+    if (!eventStream.isActiveEvent(event) || quickReplies!.isEmpty) {
       return SizedBox.shrink();
     } else {
       return _OrbQuickReplies(event: event, connection: connection);
@@ -27,11 +27,11 @@ class OrbQuickReplies extends StatelessWidget {
 
 class _OrbQuickReplies extends StatefulWidget {
   final OrbEvent event;
-  final OrbConnection connection;
+  final OrbConnection? connection;
 
   _OrbQuickReplies({
-    @required this.event,
-    @required this.connection,
+    required this.event,
+    required this.connection,
   });
 
   _OrbQuickRepliesState createState() => _OrbQuickRepliesState();
@@ -39,7 +39,7 @@ class _OrbQuickReplies extends StatefulWidget {
 
 class _OrbQuickRepliesState extends State<_OrbQuickReplies> {
   bool disabled = false;
-  int selectedIndex;
+  int? selectedIndex;
 
   @override
   Widget build(BuildContext context) {
@@ -70,13 +70,13 @@ class _OrbQuickRepliesState extends State<_OrbQuickReplies> {
         text: quickReply["text"],
         onTap: () {
           if (buttonId != null) {
-            widget.connection.publishEvent(OrbEvent.createButtonClickEvent(
+            widget.connection!.publishEvent(OrbEvent.createButtonClickEvent(
               buttonId,
               text: text,
               context: context,
             ));
           } else {
-            widget.connection.publishEvent(OrbEvent.createSayEvent(
+            widget.connection!.publishEvent(OrbEvent.createSayEvent(
               text,
               context: context,
             ));
@@ -94,16 +94,16 @@ class _OrbQuickRepliesState extends State<_OrbQuickReplies> {
 }
 
 class QuickReply extends StatelessWidget {
-  final String text;
+  final String? text;
   final Function onTap;
   final bool disabled;
   final bool selected;
 
   QuickReply({
-    @required this.text,
-    @required this.onTap,
-    @required this.disabled,
-    @required this.selected,
+    required this.text,
+    required this.onTap,
+    required this.disabled,
+    required this.selected,
   });
 
   @override
@@ -112,7 +112,7 @@ class QuickReply extends StatelessWidget {
       return buildQuickReply(context);
     } else {
       return InkWell(
-        onTap: onTap,
+        onTap: onTap as void Function()?,
         child: buildQuickReply(context),
       );
     }
@@ -134,7 +134,7 @@ class QuickReply extends StatelessWidget {
         border: OrbTheme.of(context).innerBorder.thick(
               disabled
                   ? OrbTheme.of(context).palette.disabledDark
-                  : OrbTheme.of(context).palette.brand,
+                  : OrbTheme.of(context).palette.brand!,
             ),
         borderRadius:
             BorderRadius.all(OrbTheme.of(context).borderRadius.medium) -
@@ -144,7 +144,7 @@ class QuickReply extends StatelessWidget {
       ),
       child: FittedBox(
         child: Text(
-          text,
+          text!,
           style: (OrbTheme.of(context).text.font.normal)
               .merge(OrbTheme.of(context).text.style.bold)
               .merge(OrbTheme.of(context).text.size.medium)
