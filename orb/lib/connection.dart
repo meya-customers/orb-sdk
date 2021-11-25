@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
 
@@ -9,10 +10,11 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:mime/mime.dart';
 import 'package:msgpack_dart/msgpack_dart.dart';
+import 'package:path/path.dart' as p;
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-import 'package:orb/blob.dart';
+import 'package:orb/config.dart';
 import 'package:orb/event.dart';
 import 'package:orb/event_emitter.dart';
 import 'package:orb/event_stream.dart';
@@ -20,9 +22,9 @@ import 'package:orb/util.dart';
 import 'package:orb/version.dart';
 
 class ConnectionOptions {
-  final String? gridUrl;
-  final String? appId;
-  final String? integrationId;
+  final String gridUrl;
+  final String appId;
+  final String integrationId;
   final Map<dynamic, dynamic>? pageContext;
   final String? gridUserId;
   final String? userId;
@@ -33,6 +35,7 @@ class ConnectionOptions {
   final String? referrer;
   final String? deviceId;
   final String? deviceToken;
+  void Function(Map<dynamic, dynamic>?, Function)? onFirstConnect;
   final bool? enableCloseButton;
 
   ConnectionOptions({
@@ -49,15 +52,17 @@ class ConnectionOptions {
     this.referrer,
     this.deviceId,
     this.deviceToken,
+    this.onFirstConnect,
     this.enableCloseButton,
   });
 }
 
 class OrbConnection extends ChangeNotifier {
-  String? gridUrl;
-  late String blobUrl;
-  String? appId;
-  String? integrationId;
+  OrbConfig orbConfig;
+  String gridUrl;
+  String blobUrl;
+  String appId;
+  String integrationId;
   Map<dynamic, dynamic>? pageContext;
   String? gridUserId;
   String? userId;
@@ -68,8 +73,8 @@ class OrbConnection extends ChangeNotifier {
   String? referrer;
   String? deviceId;
   String? deviceToken;
+  void Function(Map<dynamic, dynamic>?, Function)? onFirstConnect;
   bool? enableCloseButton;
-  Function(Map<dynamic, dynamic>?, Function)? onFirstConnect;
 
   bool firstConnect = true;
   bool reconnect = false;
@@ -82,30 +87,32 @@ class OrbConnection extends ChangeNotifier {
   EventEmitter _eventEmitter = EventEmitter();
   OrbEventStream _eventStream = OrbEventStream();
   FlutterSecureStorage _storage = FlutterSecureStorage();
-  AppLifecycleState _deviceState = AppLifecycleState.resumed;
+  AppLifecycleState _deviceState;
 
   OrbConnection({
-    required this.gridUrl,
-    required this.appId,
-    required this.integrationId,
-    this.pageContext,
-    this.gridUserId,
-    this.userId,
-    this.threadId,
-    this.sessionToken,
-    this.magicLinkId,
-    this.url,
-    this.referrer,
-    this.deviceId,
-    this.deviceToken,
-    this.onFirstConnect,
-    this.enableCloseButton,
+    required this.orbConfig,
+    required ConnectionOptions options,
     AppLifecycleState? deviceState,
-  }) {
-    blobUrl = '$gridUrl/gateway/v2/blob/$appId/blob';
-    if (deviceState != null) _deviceState = deviceState;
-  }
+  })  : gridUrl = options.gridUrl,
+        blobUrl = '${options.gridUrl}/gateway/v2/blob/${options.appId}/blob',
+        appId = options.appId,
+        integrationId = options.integrationId,
+        pageContext = options.pageContext,
+        gridUserId = options.gridUserId,
+        userId = options.userId,
+        threadId = options.threadId,
+        sessionToken = options.sessionToken,
+        magicLinkId = options.magicLinkId,
+        url = options.url,
+        referrer = options.referrer,
+        deviceId = options.deviceId,
+        deviceToken = options.deviceToken,
+        onFirstConnect = options.onFirstConnect,
+        enableCloseButton = options.enableCloseButton,
+        _deviceState = deviceState ?? AppLifecycleState.resumed;
 
+  MediaUploadConfigResult get mediaUpload =>
+      MediaUploadConfigResult.resolve(orbConfig.mediaUpload);
   bool get connected => _connected;
 
   AppLifecycleState get deviceState => _deviceState;
@@ -369,9 +376,9 @@ class OrbConnection extends ChangeNotifier {
     }
   }
 
-  Future<Uri> postBlob(OrbBlob blob) async {
-    var mimeType = lookupMimeType(blob.file.path);
-    var body = await blob.file.readAsBytes();
+  Future<Uri> postBlob(File blob, {String? mimeType}) async {
+    mimeType ??= lookupMimeType(blob.path);
+    final body = await blob.readAsBytes();
 
     final response = await http.post(
       Uri.parse(blobUrl),
@@ -387,13 +394,21 @@ class OrbConnection extends ChangeNotifier {
     return Uri.parse('$blobUrl/$blobId');
   }
 
-  Future postBlobAndPublishEvent(OrbBlob blob) async {
-    final url = await postBlob(blob);
+  Future<void> postBlobAndPublishEvent(File blob) async {
+    final mimeType = lookupMimeType(blob.path);
     OrbEvent event;
-    if (blob.type == OrbFileType.image) {
-      event = OrbEvent.createImageEvent(url.toString(), blob.basename);
+    if (mimeType != null && mimeType.startsWith('image/')) {
+      if (!mediaUpload.image) {
+        return;
+      }
+      final url = await postBlob(blob);
+      event = OrbEvent.createImageEvent(url.toString(), p.basename(blob.path));
     } else {
-      event = OrbEvent.createFileEvent(url.toString(), blob.basename);
+      if (!mediaUpload.file) {
+        return;
+      }
+      final url = await postBlob(blob);
+      event = OrbEvent.createFileEvent(url.toString(), p.basename(blob.path));
     }
     publishEvent(event);
   }

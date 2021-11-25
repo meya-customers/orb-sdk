@@ -149,7 +149,12 @@ import UserNotifications
             ),
             splash: OrbSplash(
                 readyText: "Example app is ready..."
-            )            
+            ),
+            mediaUpload: OrbMediaUpload(
+                all: nil,
+                image: nil,
+                file: nil
+            )
         )
         
         if (!orb.ready) {

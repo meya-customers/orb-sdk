@@ -7,7 +7,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:provider/provider.dart';
 
-import 'package:orb/blob.dart';
 import 'package:orb/config.dart';
 import 'package:orb/connection.dart';
 import 'package:orb/event.dart';
@@ -54,7 +53,7 @@ class _OrbComposerState extends State<OrbComposer> {
         composerSpec?.visibility == ComposerVisibility.collapse;
     final hide = composerSpec?.visibility == ComposerVisibility.hide;
 
-    process(currentEvent, composerSpec);
+    process(currentEvent, composerSpec, orbConfig);
 
     if (visibility == ComposerVisibility.collapse && collapse) {
       return CollapseMode(
@@ -93,25 +92,23 @@ class _OrbComposerState extends State<OrbComposer> {
     }
   }
 
-  void process(OrbEvent currentEvent, ComposerEventSpec? composerSpec) {
+  void process(OrbEvent currentEvent, ComposerEventSpec? composerSpec,
+      OrbConfig orbConfig) {
     if (processedEvents.containsKey(currentEvent.id) ||
         currentEvent.id == '-') {
       return;
     }
 
-    switch (composerSpec?.focus) {
-      case ComposerFocus.text:
-        mode = ComposerMode.text;
-        break;
-      case ComposerFocus.file:
-        mode = ComposerMode.extra;
-        break;
-      case ComposerFocus.image:
-        mode = ComposerMode.image;
-        break;
-      default:
-        mode = ComposerMode.text;
-        break;
+    final mediaUpload = MediaUploadConfigResult.resolve(orbConfig.mediaUpload);
+    if (composerSpec?.focus == ComposerFocus.text) {
+      mode = ComposerMode.text;
+    } else if (composerSpec?.focus == ComposerFocus.file && mediaUpload.file) {
+      mode = ComposerMode.extra;
+    } else if (composerSpec?.focus == ComposerFocus.image &&
+        mediaUpload.image) {
+      mode = ComposerMode.image;
+    } else {
+      mode = ComposerMode.text;
     }
     visibility = composerSpec?.visibility;
     processedEvents[currentEvent.id] = true;
@@ -156,7 +153,11 @@ class _TextModeState extends State<TextMode> {
         children: <Widget>[
           OrbComposerIconButton(
             icon: OrbIcon(OrbIcons.extraInput),
-            onPressed: () => widget.toggleMode(ComposerMode.extra),
+            onPressed:
+                MediaUploadConfigResult.resolve(widget.orbConfig.mediaUpload)
+                        .any
+                    ? () => widget.toggleMode(ComposerMode.extra)
+                    : null,
           ),
 
           // Edit text
@@ -237,6 +238,7 @@ class ExtraMode extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mediaUpload = MediaUploadConfigResult.resolve(orbConfig.mediaUpload);
     return Container(
       child: Row(
         children: <Widget>[
@@ -245,18 +247,15 @@ class ExtraMode extends StatelessWidget {
             onPressed: () => toggleMode(ComposerMode.text),
           ),
           OrbComposerButton(
-            eventStream: eventStream,
-            connection: connection,
             icon: OrbIcon(OrbIcons.sendFile),
             text: orbConfig.composer.fileButtonText,
-            onTap: () => getFile(context),
+            onTap: mediaUpload.file ? () => getFile(context) : null,
           ),
           OrbComposerButton(
-            eventStream: eventStream,
-            connection: connection,
             icon: OrbIcon(OrbIcons.sendImage),
             text: orbConfig.composer.imageButtonText,
-            onTap: () => toggleMode(ComposerMode.image),
+            onTap:
+                mediaUpload.image ? () => toggleMode(ComposerMode.image) : null,
           ),
         ],
       ),
@@ -341,7 +340,7 @@ class ExtraMode extends StatelessWidget {
 
       if (accepted == true) {
         toggleMode(ComposerMode.text);
-        await connection.postBlobAndPublishEvent(OrbBlob.bin(File(path)));
+        await connection.postBlobAndPublishEvent(File(path));
       }
     } else {
       print("No files selected");
@@ -373,15 +372,11 @@ class ImageMode extends StatelessWidget {
             onPressed: () => toggleMode(ComposerMode.extra),
           ),
           OrbComposerButton(
-            eventStream: eventStream,
-            connection: connection,
             icon: OrbIcon(OrbIcons.camera),
             text: orbConfig.composer.cameraButtonText,
             onTap: () => getImage(context, ImageSource.camera),
           ),
           OrbComposerButton(
-            eventStream: eventStream,
-            connection: connection,
             icon: OrbIcon(OrbIcons.gallery),
             text: orbConfig.composer.galleryButtonText,
             onTap: () => getImage(context, ImageSource.gallery),
@@ -433,7 +428,7 @@ class ImageMode extends StatelessWidget {
 
       if (accepted == true) {
         toggleMode(ComposerMode.text);
-        await connection.postBlobAndPublishEvent(OrbBlob.image(image));
+        await connection.postBlobAndPublishEvent(image);
       }
     }
   }
@@ -501,7 +496,7 @@ class CollapseMode extends StatelessWidget {
 
 class OrbComposerIconButton extends StatelessWidget {
   final OrbIcon icon;
-  final Function onPressed;
+  final void Function()? onPressed;
 
   OrbComposerIconButton({
     Key? key,
@@ -514,8 +509,11 @@ class OrbComposerIconButton extends StatelessWidget {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 10.0),
       child: IconButton(
-        icon: icon,
-        onPressed: onPressed as void Function()?,
+        icon: icon.copyWith(
+            color: onPressed != null
+                ? null
+                : OrbTheme.of(context).palette.disabled),
+        onPressed: onPressed,
       ),
     );
   }
@@ -551,16 +549,12 @@ class SendTextButton extends StatelessWidget {
 }
 
 class OrbComposerButton extends StatelessWidget {
-  final OrbEventStream eventStream;
-  final OrbConnection? connection;
   final OrbIcon icon;
   final String? text;
-  final Function onTap;
+  final void Function()? onTap;
 
   OrbComposerButton({
     Key? key,
-    required this.eventStream,
-    required this.connection,
     required this.icon,
     required this.text,
     required this.onTap,
@@ -576,12 +570,22 @@ class OrbComposerButton extends StatelessWidget {
               Container(
                 margin:
                     EdgeInsets.only(right: OrbTheme.of(context).lengths.small),
-                child: icon,
+                child: icon.copyWith(
+                    color: onTap != null
+                        ? null
+                        : OrbTheme.of(context).palette.disabled),
               ),
-              Text(text!)
+              if (text != null)
+                Text(
+                  text!,
+                  style: OrbTheme.of(context).text.style.normal.copyWith(
+                      color: onTap != null
+                          ? null
+                          : OrbTheme.of(context).palette.disabled),
+                )
             ],
           ),
-          onTap: onTap as void Function()?,
+          onTap: onTap,
         ));
   }
 }

@@ -63,27 +63,21 @@ class _OrbAppState extends State<OrbApp> with WidgetsBindingObserver {
     ThemeConfigSpec theme,
     ComposerConfigSpec composer,
     SplashConfigSpec splash,
+    MediaUploadConfigSpec mediaUpload,
   ) {
-    orbConfig.update(theme: theme, composer: composer, splash: splash);
+    orbConfig.update(
+        theme: theme,
+        composer: composer,
+        splash: splash,
+        mediaUpload: mediaUpload);
   }
 
   void connect(ConnectionOptions options) {
     setState(() {
       connection?.disconnect();
       connection = OrbConnection(
-        gridUrl: options.gridUrl,
-        appId: options.appId,
-        integrationId: options.integrationId,
-        pageContext: options.pageContext,
-        userId: options.userId,
-        threadId: options.threadId,
-        sessionToken: options.sessionToken,
-        magicLinkId: options.magicLinkId,
-        url: options.url,
-        referrer: options.referrer,
-        deviceId: options.deviceId,
-        deviceToken: options.deviceToken,
-        enableCloseButton: options.enableCloseButton,
+        orbConfig: orbConfig,
+        options: options,
         deviceState: deviceState,
       );
       connection!.addOrbListener('connected', onConnected);

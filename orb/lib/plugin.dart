@@ -7,8 +7,8 @@ import 'package:orb/connection.dart';
 
 class OrbPlugin {
   static const MethodChannel channel = const MethodChannel('orb');
-  static void Function(ThemeConfigSpec, ComposerConfigSpec, SplashConfigSpec)?
-      configure;
+  static void Function(ThemeConfigSpec, ComposerConfigSpec, SplashConfigSpec,
+      MediaUploadConfigSpec)? configure;
   static void Function(ConnectionOptions)? connect;
   static void Function(bool logOut)? disconnect;
   static void Function(Map<dynamic, dynamic>?)? publishEvent;
@@ -25,6 +25,7 @@ class OrbPlugin {
           final theme = call.arguments['theme'] ?? {};
           final composer = call.arguments['composer'] ?? {};
           final splash = call.arguments['splash'] ?? {};
+          final mediaUpload = call.arguments['mediaUpload'] ?? {};
           configure!(
             ThemeConfigSpec(brandColor: theme['brandColor']),
             ComposerConfigSpec(
@@ -38,6 +39,11 @@ class OrbPlugin {
             ),
             SplashConfigSpec(
               readyText: splash['readyText'],
+            ),
+            MediaUploadConfigSpec(
+              all: mediaUpload['all'],
+              image: mediaUpload['image'],
+              file: mediaUpload['file'],
             ),
           );
         }
