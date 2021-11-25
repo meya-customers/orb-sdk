@@ -65,7 +65,7 @@ class OrbIcon extends StatelessWidget {
       );
     } else {
       throw OrbIconError(
-          "Invalid OrbIconSpec, the inco spec requires either a 'url' or "
+          "Invalid OrbIconSpec, the icon spec requires either a 'url' or "
           "'assetName'");
     }
   }

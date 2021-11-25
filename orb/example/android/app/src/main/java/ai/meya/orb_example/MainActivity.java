@@ -13,6 +13,7 @@ import java.util.Map;
 import ai.meya.orb.OrbConnectionOptions;
 import ai.meya.orb.config.OrbComposer;
 import ai.meya.orb.config.OrbConfig;
+import ai.meya.orb.config.OrbMediaUpload;
 import ai.meya.orb.config.OrbSplash;
 import ai.meya.orb.config.OrbTheme;
 import androidx.annotation.NonNull;
@@ -84,6 +85,11 @@ public class MainActivity extends FlutterActivity {
                 ),
                 new OrbSplash(
                         "Example app is ready..."
+                ),
+                new OrbMediaUpload(
+                        null,
+                        null,
+                        null
                 )
         );
 

@@ -7,63 +7,74 @@ class OrbConfig extends ChangeNotifier {
   ThemeConfigSpec theme;
   ComposerConfigSpec composer;
   SplashConfigSpec splash;
+  MediaUploadConfigSpec mediaUpload;
 
   OrbConfig._({
-    required this.orbThemeData,
+    required OrbThemeData? orbThemeData,
     required this.theme,
     required this.composer,
     required this.splash,
-  });
+    required this.mediaUpload,
+  }) : orbThemeData =
+            orbThemeData ?? OrbThemeData.fromThemeConfigSpec(theme: theme);
 
-  factory OrbConfig({
-    required ThemeConfigSpec theme,
-    required ComposerConfigSpec composer,
-    required SplashConfigSpec splash,
+  factory OrbConfig.init({
     OrbThemeData? orbThemeData,
-  }) {
-    return OrbConfig._(
-      orbThemeData:
-          orbThemeData ?? OrbThemeData.fromThemeConfigSpec(theme: theme),
-      theme: theme,
-      composer: composer,
-      splash: splash,
-    );
-  }
-
-  factory OrbConfig.init() => OrbConfig(
-        theme: ThemeConfigSpec(brandColor: '#4989EA'),
-        composer: ComposerConfigSpec(
-          placeholderText: 'Type a message',
-          collapsePlaceholderText: 'Have something else to say?',
-          fileButtonText: 'File',
-          fileSendText: 'Send ',
-          imageButtonText: 'Photo',
-          cameraButtonText: 'Camera',
-          galleryButtonText: 'Gallery',
-        ),
-        splash: SplashConfigSpec(readyText: 'Ready to start'),
+    ThemeConfigSpec? theme,
+    ComposerConfigSpec? composer,
+    SplashConfigSpec? splash,
+    MediaUploadConfigSpec? mediaUpload,
+  }) =>
+      OrbConfig._(
+        orbThemeData: orbThemeData,
+        theme: theme ?? ThemeConfigSpec(brandColor: '#4989EA'),
+        composer: composer ??
+            ComposerConfigSpec(
+              placeholderText: 'Type a message',
+              collapsePlaceholderText: 'Have something else to say?',
+              fileButtonText: 'File',
+              fileSendText: 'Send ',
+              imageButtonText: 'Photo',
+              cameraButtonText: 'Camera',
+              galleryButtonText: 'Gallery',
+            ),
+        splash: splash ?? SplashConfigSpec(readyText: 'Ready to start'),
+        mediaUpload: mediaUpload ?? MediaUploadConfigSpec(),
       );
 
   void update({
-    required ThemeConfigSpec theme,
-    required ComposerConfigSpec composer,
-    required SplashConfigSpec splash,
+    ThemeConfigSpec? theme,
+    ComposerConfigSpec? composer,
+    SplashConfigSpec? splash,
+    MediaUploadConfigSpec? mediaUpload,
   }) {
-    theme = theme.copyWith(
-      brandColor: theme.brandColor,
-      backgroundTranslucency: theme.backgroundTranslucency,
-    );
-    composer = composer.copyWith(
-      placeholderText: composer.placeholderText,
-      collapsePlaceholderText: composer.collapsePlaceholderText,
-      fileButtonText: composer.fileButtonText,
-      fileSendText: composer.fileSendText,
-      imageButtonText: composer.imageButtonText,
-      cameraButtonText: composer.cameraButtonText,
-      galleryButtonText: composer.galleryButtonText,
-    );
-    splash = splash.copyWith(readyText: splash.readyText);
-    orbThemeData = OrbThemeData.fromThemeConfigSpec(theme: theme);
+    if (theme != null) {
+      this.theme = theme.copyWith(
+        brandColor: theme.brandColor,
+        backgroundTranslucency: theme.backgroundTranslucency,
+      );
+    }
+    if (composer != null) {
+      this.composer = composer.copyWith(
+        placeholderText: composer.placeholderText,
+        collapsePlaceholderText: composer.collapsePlaceholderText,
+        fileButtonText: composer.fileButtonText,
+        fileSendText: composer.fileSendText,
+        imageButtonText: composer.imageButtonText,
+        cameraButtonText: composer.cameraButtonText,
+        galleryButtonText: composer.galleryButtonText,
+      );
+    }
+    if (splash != null) {
+      this.splash = splash.copyWith(readyText: splash.readyText);
+    }
+    if (mediaUpload != null) {
+      this.mediaUpload = mediaUpload.copyWith(
+          all: mediaUpload.all,
+          image: mediaUpload.image,
+          file: mediaUpload.file);
+    }
+    orbThemeData = OrbThemeData.fromThemeConfigSpec(theme: this.theme);
     notifyListeners();
   }
 }
@@ -135,4 +146,34 @@ class SplashConfigSpec {
 
   SplashConfigSpec copyWith({String? readyText}) =>
       SplashConfigSpec(readyText: readyText ?? this.readyText);
+}
+
+class MediaUploadConfigSpec {
+  final bool? all;
+  final bool? file;
+  final bool? image;
+
+  MediaUploadConfigSpec({this.all, this.file, this.image});
+
+  MediaUploadConfigSpec copyWith({bool? all, bool? file, bool? image}) =>
+      MediaUploadConfigSpec(
+          all: all ?? this.all,
+          file: file ?? this.file,
+          image: image ?? this.image);
+}
+
+class MediaUploadConfigResult {
+  final bool any;
+  final bool file;
+  final bool image;
+
+  MediaUploadConfigResult._(
+      {required this.any, required this.file, required this.image});
+
+  factory MediaUploadConfigResult.resolve(MediaUploadConfigSpec mediaUpload) {
+    final image = mediaUpload.image ?? mediaUpload.all ?? true;
+    final file = mediaUpload.file ?? mediaUpload.all ?? true;
+    final any = image || file;
+    return MediaUploadConfigResult._(any: any, file: file, image: image);
+  }
 }
