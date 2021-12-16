@@ -135,8 +135,9 @@ class OrbConnection extends ChangeNotifier {
       _eventEmitter.off(type, listener);
 
   Future<void> connect() async {
-    userId = await _storage.read(key: "orbUserId");
-    threadId = await _storage.read(key: "orbThreadId") ??
+    userId = userId ?? await _storage.read(key: "orbUserId");
+    threadId = threadId ??
+        await _storage.read(key: "orbThreadId") ??
         OrbUtil.generateOrbIntegrationId();
     sessionToken = await _storage.read(key: "orbSessionToken");
 
