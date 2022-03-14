@@ -26,6 +26,7 @@ dependencies:
   msgpack_dart: ^1.0.0
   package_info_plus: ^1.0.0
   path: ^1.8.0
+  platform: ^3.1.0
   provider: ^5.0.0
   separated_column: ^2.0.0
   separated_row: ^2.0.0
