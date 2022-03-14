@@ -80,10 +80,7 @@ class OrbIcon extends StatelessWidget {
     );
   }
 
-  Icon get placeholderIcon => Icon(
-        Icons.check_box_outline_blank,
-        color: color,
-      );
+  Icon get placeholderIcon => Icon(Icons.check_box_outline_blank, color: color);
 
   OrbIcon copyWith({
     OrbIconSpec? src,

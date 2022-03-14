@@ -17,6 +17,10 @@ class OrbAskForm extends StatelessWidget {
     required this.userAvatar,
   });
 
+  static bool isVisible(OrbEvent event) {
+    return event.data["fields"].length > 0;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -29,15 +33,14 @@ class OrbAskForm extends StatelessWidget {
         ),
         Flexible(
           child: Column(
-            children:
-                buildFields(context, event.data['fields']) as List<Widget>,
+            children: buildFields(context, event.data['fields']),
           ),
         ),
       ],
     );
   }
 
-  List buildFields(BuildContext context, List<dynamic> fields) {
+  List<Widget> buildFields(BuildContext context, List<dynamic> fields) {
     return fields.map((field) {
       switch (field['type']) {
         default:
@@ -106,7 +109,7 @@ class _OrbInputFieldState extends State<OrbInputField> {
     final eventStream = widget.connection!.getEventStream();
     final form = eventStream.forms[widget.event.data['form_id']]!;
     return (form.errorEvent != null &&
-        eventStream.isActiveEvent(form.errorEvent));
+        eventStream.isActiveEvent(form.errorEvent!));
   }
 
   bool get isDisabled {
@@ -138,7 +141,7 @@ class _OrbInputFieldState extends State<OrbInputField> {
           ),
           child: Text(
             (widget.field['label'] as String).toUpperCase(),
-            style: labelStyle(context, disabled!, ok),
+            style: labelStyle(context, disabled!),
           ),
         ),
         Container(
@@ -155,7 +158,7 @@ class _OrbInputFieldState extends State<OrbInputField> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              buildIcon(context, disabled!, ok),
+              buildIcon(context, disabled!),
               buildText(context, disabled!),
               buildSubmit(context, disabled, ok),
             ],
@@ -181,39 +184,36 @@ class _OrbInputFieldState extends State<OrbInputField> {
     );
   }
 
-  Widget buildIcon(BuildContext context, bool disabled, bool ok) {
-    final color = disabled && !ok
-        ? OrbTheme.of(context).palette.disabledDark
+  Widget buildIcon(BuildContext context, bool disabled) {
+    final color = disabled
+        ? OrbTheme.of(context).palette.disabled
         : OrbTheme.of(context).palette.normal;
-    OrbIcon icon;
+    OrbIconSpec iconSpec;
     if (widget.field.containsKey('icon')) {
-      icon = OrbIcon(
-        OrbIconSpec(
-          url: widget.field['icon']['url'],
-          color: widget.field['icon']['color'],
-        ),
-        color: color,
+      iconSpec = OrbIconSpec(
+        url: widget.field['icon']['url'],
+        color: widget.field['icon']['color'],
       );
     } else {
       if (widget.field['type'] == 'email') {
-        icon = OrbIcon(OrbIcons.emailAddress);
+        iconSpec = OrbIcons.emailAddress;
       } else if (widget.field['type'] == 'tel') {
-        icon = OrbIcon(OrbIcons.phone);
+        iconSpec = OrbIcons.phone;
       } else if ((widget.field['autocomplete'] as String).indexOf('country') !=
           -1) {
-        icon = OrbIcon(OrbIcons.flag);
+        iconSpec = OrbIcons.flag;
       } else if ((widget.field['autocomplete'] as String).indexOf('name') !=
           -1) {
-        icon = OrbIcon(OrbIcons.user);
+        iconSpec = OrbIcons.user;
       } else {
-        icon = OrbIcon(OrbIcons.pencil);
+        iconSpec = OrbIcons.pencil;
       }
     }
     return Container(
       padding: EdgeInsets.only(
         left: OrbTheme.of(context).lengths.mediumSmall,
       ),
-      child: icon,
+      child: OrbIcon(iconSpec, color: color),
     );
   }
 
@@ -246,7 +246,11 @@ class _OrbInputFieldState extends State<OrbInputField> {
             padding: EdgeInsets.all(OrbTheme.of(context).lengths.small),
             child: Text(
               inputText,
-              style: OrbTheme.of(context).text.size.medium,
+              style: OrbTheme.of(context)
+                  .text
+                  .size
+                  .medium
+                  .copyWith(color: OrbTheme.of(context).palette.disabledDark),
               overflow: TextOverflow.fade,
               softWrap: false,
             ),
@@ -286,8 +290,8 @@ class _OrbInputFieldState extends State<OrbInputField> {
   }
 
   Widget buildSubmitButton(BuildContext context, bool disabled) {
-    Color? color;
-    Color? borderColor;
+    final Color color;
+    final Color borderColor;
     if (disabled) {
       color = borderColor = OrbTheme.of(context).palette.neutral;
     } else if (invalid && !focus) {
@@ -303,7 +307,7 @@ class _OrbInputFieldState extends State<OrbInputField> {
       ),
       decoration: BoxDecoration(
         color: color,
-        border: OrbTheme.of(context).innerBorder.thick(borderColor!),
+        border: OrbTheme.of(context).innerBorder.thick(borderColor),
         borderRadius: BorderRadius.only(
           // TODO: Find a better way to adjust the inner border radius to the outer
           topRight:
@@ -315,10 +319,10 @@ class _OrbInputFieldState extends State<OrbInputField> {
     );
   }
 
-  TextStyle labelStyle(BuildContext context, bool disabled, bool ok) {
+  TextStyle labelStyle(BuildContext context, bool disabled) {
     Color color;
-    if (disabled && !ok) {
-      color = OrbTheme.of(context).palette.disabledDark;
+    if (disabled) {
+      color = OrbTheme.of(context).palette.disabled;
     } else if (!invalid && !focus) {
       color = OrbTheme.of(context).palette.normal;
     } else if (invalid && !focus) {
@@ -336,20 +340,20 @@ class _OrbInputFieldState extends State<OrbInputField> {
   }
 
   Border border(BuildContext context, bool? disabled, bool ok) {
-    Color? color;
-    if (focus) {
-      color = disabled!
-          ? OrbTheme.of(context).palette.disabled
-          : OrbTheme.of(context).palette.brand;
-    } else if (invalid) {
+    final Color color;
+    if (disabled!) {
+      color = OrbTheme.of(context).palette.disabled;
+    } else if (widget.event.data["error"] != null) {
       color = OrbTheme.of(context).palette.error;
+    } else if (focus) {
+      color = OrbTheme.of(context).palette.brand;
     } else {
       color = OrbTheme.of(context).palette.neutral;
     }
     if (ok) {
-      return OrbTheme.of(context).innerBorder.thin(color!);
+      return OrbTheme.of(context).innerBorder.thin(color);
     } else {
-      return OrbTheme.of(context).innerBorder.thick(color!);
+      return OrbTheme.of(context).innerBorder.thick(color);
     }
   }
 
@@ -405,7 +409,7 @@ class _OrbInputFieldState extends State<OrbInputField> {
     if (form.errorEvent == null) {
       // No event
       return;
-    } else if (!eventStream.isActiveEvent(form.errorEvent)) {
+    } else if (!eventStream.isActiveEvent(form.errorEvent!)) {
       // Event not relevant
       return;
     } else if (processedEvents[form.errorEvent!.id] == true) {

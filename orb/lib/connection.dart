@@ -144,14 +144,14 @@ class OrbConnection extends ChangeNotifier {
     Uri url = Uri.parse('$gridUrl/gateway/v2/orb/$appId/$integrationId');
     Map<String, dynamic> queryParams = {};
     if (userId != null) {
-      queryParams['user_id'] = userId;
+      queryParams['user_id'] = userId!;
     }
     queryParams['thread_id'] = threadId;
     if (sessionToken != null) {
-      queryParams['session_token'] = sessionToken;
+      queryParams['session_token'] = sessionToken!;
     }
     if (magicLinkId != null && firstConnect) {
-      queryParams['magic_link_id'] = magicLinkId;
+      queryParams['magic_link_id'] = magicLinkId!;
     }
     queryParams['version'] = await version();
     url = url.replace(

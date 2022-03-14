@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'package:url_launcher/url_launcher.dart';
-
 import 'package:orb/connection.dart';
 import 'package:orb/event.dart';
-import 'package:orb/ui/card/text.dart';
+import 'package:orb/ui/card/util/url.dart';
 import 'package:orb/ui/design.dart';
 import 'package:orb/ui/icon.dart';
 import 'package:orb/ui/presence/user_avatar.dart';
@@ -20,36 +18,21 @@ class OrbAskTiles extends StatelessWidget {
     required this.userAvatar,
   });
 
+  static bool isVisible(OrbEvent event) {
+    return event.data["tiles"].length > 0;
+  }
+
   String get buttonStyle => event.data['button_style'] ?? 'action';
 
   @override
   Widget build(BuildContext context) {
     final layout = event.data['layout'];
-    return Stack(
-      alignment: Alignment.bottomLeft,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         OrbUserAvatar.avatarOrPlaceholder(context, avatar: userAvatar),
-        ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width * 0.95,
-          ),
-          child: Column(
-            children: [
-              if (event.data['text'] != null)
-                Row(
-                  children: [
-                    OrbUserAvatar.avatarOrPlaceholder(context),
-                    Flexible(
-                      child: OrbTextOther.container(
-                        event: event,
-                        text: event.data['text'],
-                      ),
-                    ),
-                  ],
-                ),
-              layout == 'column' ? buildColumn(context) : buildRow(context),
-            ],
-          ),
+        Expanded(
+          child: layout == 'column' ? buildColumn(context) : buildRow(context),
         ),
       ],
     );
@@ -115,12 +98,8 @@ class _TilesRowState extends State<TilesRow> {
       ),
       scrollDirection: Axis.horizontal,
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          OrbUserAvatar.avatarOrPlaceholder(context),
-          ...[for (final tile in tiles) buildRowTile(context, tile)]
-        ],
-      ),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [for (final tile in tiles) buildRowTile(context, tile)]),
     );
   }
 
@@ -230,7 +209,7 @@ class _TilesRowState extends State<TilesRow> {
     }
   }
 
-  void onButtonTap(String? buttonId) {
+  void onButtonTap(String buttonId) {
     widget.connection.publishEvent(OrbEvent.createButtonClickEvent(buttonId));
     setState(() {
       disabled = true;
@@ -329,7 +308,7 @@ class RowTileButton extends RowTile {
 class RowActionButton extends StatelessWidget {
   final OrbIcon? icon;
   final String? text;
-  final Function? onTap;
+  final void Function()? onTap;
   final bool? disabled;
   final bool selected;
 
@@ -377,7 +356,7 @@ class RowActionButton extends StatelessWidget {
                     ? selected
                         ? OrbTheme.of(context).palette.normal
                         : OrbTheme.of(context).palette.disabled
-                    : OrbTheme.of(context).palette.brand!,
+                    : OrbTheme.of(context).palette.brand,
               ),
           borderRadius:
               BorderRadius.all(OrbTheme.of(context).borderRadius.small)),
@@ -437,7 +416,7 @@ class RowActionButton extends StatelessWidget {
     );
   }
 
-  void processOnTap(BuildContext context) {
+  Future<void> processOnTap(BuildContext context) async {
     if (onTap != null) {
       onTap!();
     }
@@ -445,7 +424,7 @@ class RowActionButton extends StatelessWidget {
 }
 
 class RowActionLinkButton extends RowActionButton {
-  final String? url;
+  final String url;
 
   RowActionLinkButton({required this.url, OrbIcon? icon, required String? text})
       : super(icon: icon, text: text, disabled: false, selected: false);
@@ -473,14 +452,8 @@ class RowActionLinkButton extends RowActionButton {
   }
 
   @override
-  void processOnTap(BuildContext context) async {
-    if (await canLaunch(url!)) {
-      await launch(url!);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("Could not open '$url'"),
-          duration: Duration(milliseconds: 2000)));
-    }
+  Future<void> processOnTap(BuildContext context) async {
+    await OrbUrl(url).tryLaunch(context);
   }
 }
 
@@ -488,7 +461,7 @@ class RadioButton extends RowActionButton {
   RadioButton({
     OrbIcon? icon,
     required String? text,
-    Function? onTap,
+    void Function()? onTap,
     required bool? disabled,
     required bool selected,
   }) : super(

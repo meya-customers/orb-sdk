@@ -6,6 +6,7 @@ import 'package:orb/ui/composer.dart';
 import 'package:orb/ui/design.dart';
 import 'package:orb/ui/header.dart';
 import 'package:orb/ui/history.dart';
+import 'package:orb/ui/page.dart';
 
 class OrbChat extends StatelessWidget {
   final OrbEventStream eventStream;
@@ -29,10 +30,16 @@ class OrbChat extends StatelessWidget {
                 connection: connection,
               ),
               Flexible(
-                child: OrbHistory(
-                  eventStream: eventStream,
-                  connection: connection,
-                ),
+                child: eventStream.pageEvent == null
+                    ? OrbHistory(
+                        eventStream: eventStream,
+                        connection: connection,
+                      )
+                    : OrbPage(
+                        key: Key(eventStream.pageEvent!.data["page_id"]),
+                        eventStream: eventStream,
+                        connection: connection,
+                      ),
               ),
               OrbComposer(eventStream: eventStream, connection: connection)
             ],

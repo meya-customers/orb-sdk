@@ -102,7 +102,7 @@ class OrbUserAvatar extends StatelessWidget {
 
   static Widget avatarOrPlaceholder(
     BuildContext context, {
-    OrbUserAvatar? avatar,
+    required OrbUserAvatar? avatar,
   }) {
     return Container(
       margin: OrbUserAvatar.defaultMargin(context),

@@ -14,10 +14,13 @@ import 'package:orb/ui/card/quick_replies.dart';
 import 'package:orb/ui/card/rating.dart';
 import 'package:orb/ui/card/status.dart';
 import 'package:orb/ui/card/text.dart';
+import 'package:orb/ui/card/text_input.dart';
 import 'package:orb/ui/card/typing_indicator.dart';
+import 'package:orb/ui/card/widget_mode.dart';
 import 'package:orb/ui/design.dart';
 import 'package:orb/ui/presence/user_avatar.dart';
 import 'package:orb/ui/presence/user_name.dart';
+import 'card/choice_input.dart';
 
 class OrbHistory extends StatefulWidget {
   final OrbEventStream eventStream;
@@ -41,6 +44,7 @@ class _OrbHistoryState extends State<OrbHistory> {
 
   @override
   Widget build(BuildContext context) {
+    // TODO Keep children alive during scrolling and event stream updates
     return ListView.builder(
       padding: EdgeInsets.symmetric(
         vertical: OrbTheme.of(context).lengths.medium,
@@ -58,15 +62,16 @@ class _OrbHistoryState extends State<OrbHistory> {
       return buildStaticWidget();
     }
     final event = widget.eventStream.events[index - 1];
-    return buildEvent(
-      event: event,
-      userAvatar: (event.showAvatar
-          ? OrbUserAvatar.fromEvent(
-              eventStream: widget.eventStream,
-              event: event,
-            )
-          : null),
-    );
+    final isVisible = widget.eventStream.isVisibleEvent(event);
+    if (!isVisible) {
+      return SizedBox.shrink();
+    } else {
+      return Column(children: [
+        if (event.isFirstInGroup) buildUserName(event),
+        ...[...buildWidgetMode(event, widget.eventStream, widget.connection)]
+            .reversed
+      ]);
+    }
   }
 
   Widget buildStaticWidget() {
@@ -75,7 +80,11 @@ class _OrbHistoryState extends State<OrbHistory> {
       children: [
         if (widget.eventStream.quickRepliesEvent != null)
           OrbQuickReplies(
+            key: Key(
+              'quick_replies_${widget.eventStream.quickRepliesEvent!.id}',
+            ),
             connection: widget.connection,
+            event: widget.eventStream.quickRepliesEvent!,
           ),
         if (widget.eventStream.typingOnEvent != null &&
             widget.eventStream.typingOnEvent!.id != hideTypingEventId)
@@ -124,116 +133,6 @@ class _OrbHistoryState extends State<OrbHistory> {
 
   Duration getTypingOffInterval() => Duration(milliseconds: 100);
 
-  Widget buildEvent({
-    required OrbEvent event,
-    OrbUserAvatar? userAvatar,
-  }) {
-    // TODO: Consolidate this with eventMap
-    switch (event.type) {
-      case 'meya.button.event.ask':
-        return buildAskButtons(event, userAvatar);
-      case 'meya.form.event.ask':
-        return buildAskForm(event, userAvatar);
-      case 'meya.tile.event.ask':
-        return buildAskTiles(event, userAvatar);
-      case 'meya.file.event':
-        return buildFile(event, userAvatar);
-      case 'meya.image.event':
-        return buildImage(event, userAvatar);
-      case 'meya.tile.event.rating':
-        return buildRating(event, userAvatar);
-      case 'meya.text.event.status':
-        return buildStatus(event);
-      case 'virtual.orb.event.user_name':
-        return buildUserName(event);
-      default:
-        return buildText(event, userAvatar);
-    }
-  }
-
-  Widget buildAskForm(
-    OrbEvent event,
-    OrbUserAvatar? userAvatar,
-  ) {
-    return OrbAskForm(
-      event: event,
-      connection: widget.connection,
-      userAvatar: userAvatar,
-    );
-  }
-
-  Widget buildAskTiles(
-    OrbEvent event,
-    OrbUserAvatar? userAvatar,
-  ) {
-    return OrbAskTiles(
-      event: event,
-      connection: widget.connection,
-      userAvatar: userAvatar,
-    );
-  }
-
-  Widget buildAskButtons(
-    OrbEvent event,
-    OrbUserAvatar? userAvatar,
-  ) {
-    return OrbAskButtons(
-      event: event,
-      connection: widget.connection,
-      userAvatar: userAvatar,
-    );
-  }
-
-  Widget buildImage(
-    OrbEvent event,
-    OrbUserAvatar? userAvatar,
-  ) {
-    final url = event.data['url'];
-    if (url == null || url == '') {
-      return SizedBox.shrink();
-    } else {
-      return OrbImage(
-        event: event,
-        isSelfEvent: widget.eventStream.isSelfEvent(event),
-        userAvatar: userAvatar,
-      );
-    }
-  }
-
-  Widget buildRating(
-    OrbEvent event,
-    OrbUserAvatar? userAvatar,
-  ) {
-    return OrbRating(
-      event: event,
-      connection: widget.connection,
-      userAvatar: userAvatar,
-    );
-  }
-
-  Widget buildStatus(OrbEvent event) {
-    return OrbStatus(
-      event: event,
-      isActiveEvent: widget.eventStream.isActiveEvent(event),
-    );
-  }
-
-  Widget buildFile(
-    OrbEvent event,
-    OrbUserAvatar? userAvatar,
-  ) {
-    final url = event.data['url'];
-    if (url == null || url == '') {
-      return SizedBox.shrink();
-    } else {
-      return OrbFile(
-        event: event,
-        isSelfEvent: widget.eventStream.isSelfEvent(event),
-        userAvatar: userAvatar,
-      );
-    }
-  }
-
   Widget buildUserName(OrbEvent event) {
     final userId = event.data['user_id'];
     return OrbUserName(
@@ -243,27 +142,119 @@ class _OrbHistoryState extends State<OrbHistory> {
     );
   }
 
-  Widget buildText(
-    OrbEvent event,
-    OrbUserAvatar? userAvatar,
-  ) {
-    final text = event.data['text'];
-    if (text == null || text == '') {
-      return SizedBox.shrink();
-    } else {
-      return OrbText(
-        event: event,
-        isSelfEvent: widget.eventStream.isSelfEvent(event),
-        userAvatar: userAvatar,
-      );
-    }
-  }
-
   void scroll() {
     widget.listScrollController.animateTo(
       0.0,
       duration: Duration(milliseconds: 300),
       curve: Curves.easeOut,
+    );
+  }
+}
+
+Iterable<Widget> buildWidgetMode(
+  OrbEvent event,
+  OrbEventStream eventStream,
+  OrbConnection connection,
+) sync* {
+  if (!eventStream.isVisibleEvent(event)) {
+    return;
+  }
+
+  var onlyText = false;
+  final text = eventStream.getEventText(event) ?? '';
+  var userAvatar = (event.showAvatar
+      ? OrbUserAvatar.fromEvent(
+          eventStream: eventStream,
+          event: event,
+        )
+      : null);
+
+  switch (event.type) {
+    case 'meya.button.event.ask':
+      yield OrbAskButtons(
+          event: event,
+          connection: connection,
+          userAvatar: userAvatar,
+          mode: OrbWidgetMode.standalone,
+          controller: null,
+          disabled: null);
+      break;
+    case 'meya.form.event.ask':
+      yield OrbAskForm(
+        event: event,
+        connection: connection,
+        userAvatar: userAvatar,
+      );
+      break;
+    case 'meya.tile.event.ask':
+      yield OrbAskTiles(
+        event: event,
+        connection: connection,
+        userAvatar: userAvatar,
+      );
+      break;
+    case "meya.tile.event.choice":
+      yield OrbChoiceInput(
+        event: event,
+        connection: connection,
+        userAvatar: userAvatar,
+        mode: OrbWidgetMode.standalone,
+        controller: null,
+        disabled: null,
+      );
+      break;
+    case 'meya.file.event':
+      yield OrbFile(
+        event: event,
+        isSelfEvent: eventStream.isSelfEvent(event),
+        userAvatar: userAvatar,
+        mode: OrbWidgetMode.standalone,
+      );
+      break;
+    case 'meya.image.event':
+      yield OrbImage(
+        event: event,
+        isSelfEvent: eventStream.isSelfEvent(event),
+        userAvatar: userAvatar,
+        mode: OrbWidgetMode.standalone,
+      );
+      break;
+    case 'meya.tile.event.rating':
+      yield OrbRating(
+        event: event,
+        connection: connection,
+        userAvatar: userAvatar,
+      );
+      break;
+    case 'meya.text.event.info':
+      yield OrbTextInfo(event: event, markdown: event.data["markdown"]);
+      break;
+    case 'meya.text.event.input':
+      yield OrbTextInput(
+        event: event,
+        connection: connection,
+        userAvatar: userAvatar,
+        mode: OrbWidgetMode.standalone,
+        controller: null,
+        disabled: null,
+      );
+      break;
+    case 'meya.text.event.status':
+      yield OrbStatus(
+        event: event,
+        isActiveEvent: eventStream.isActiveEvent(event),
+      );
+      break;
+    default:
+      onlyText = true;
+  }
+
+  if (text != '') {
+    yield OrbText(
+      event: event,
+      text: text,
+      isSelfEvent: eventStream.isSelfEvent(event),
+      userAvatar: onlyText ? userAvatar : null,
     );
   }
 }

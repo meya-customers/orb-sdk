@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
 import 'package:path/path.dart' as p;
-import 'package:url_launcher/url_launcher.dart';
 
 import 'package:orb/event.dart';
+import 'package:orb/ui/card/util/url.dart';
+import 'package:orb/ui/card/widget_mode.dart';
 import 'package:orb/ui/design.dart';
 import 'package:orb/ui/icon.dart';
 import 'package:orb/ui/presence/user_avatar.dart';
@@ -27,6 +28,7 @@ abstract class OrbFile extends StatelessWidget {
     required OrbEvent event,
     required bool isSelfEvent,
     required OrbUserAvatar? userAvatar,
+    required OrbWidgetMode mode,
   }) {
     final filename = event.data['filename'];
     final url = event.data['url'];
@@ -46,8 +48,13 @@ abstract class OrbFile extends StatelessWidget {
         url: url,
         isSelfEvent: isSelfEvent,
         userAvatar: userAvatar,
+        mode: mode,
       );
     }
+  }
+
+  static bool isVisible(OrbEvent event) {
+    return (event.data['url'] ?? '') != "";
   }
 
   Widget buildContainer(BuildContext context) {
@@ -95,13 +102,7 @@ abstract class OrbFile extends StatelessWidget {
                   .copyWith(color: OrbTheme.of(context).palette.brand),
             ),
             onTap: () async {
-              if (await canLaunch(url)) {
-                await launch(url);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text("Could not open '$url'"),
-                    duration: Duration(milliseconds: 2000)));
-              }
+              await OrbUrl(url).tryLaunch(context);
             },
           ),
         ),
@@ -153,12 +154,15 @@ class OrbFileSelf extends OrbFile {
 }
 
 class OrbFileOther extends OrbFile {
+  final OrbWidgetMode mode;
+
   OrbFileOther._({
     required OrbEvent event,
     required String filename,
     required String url,
     required bool isSelfEvent,
     required OrbUserAvatar? userAvatar,
+    required this.mode,
   }) : super._(
           event: event,
           filename: filename,
@@ -169,14 +173,21 @@ class OrbFileOther extends OrbFile {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        OrbUserAvatar.avatarOrPlaceholder(
-          context,
-          avatar: userAvatar,
-        ),
-        buildContainer(context),
-      ],
-    );
+    return mode == OrbWidgetMode.standalone
+        ? Row(
+            children: [
+              OrbUserAvatar.avatarOrPlaceholder(
+                context,
+                avatar: userAvatar,
+              ),
+              buildContainer(context),
+            ],
+          )
+        : Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              buildContainer(context),
+            ],
+          );
   }
 }
