@@ -1,0 +1,1 @@
+enum OrbWidgetMode { standalone, page }

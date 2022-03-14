@@ -18,6 +18,10 @@ class OrbRating extends StatefulWidget {
     required this.userAvatar,
   });
 
+  static bool isVisible(OrbEvent event) {
+    return event.data["options"].length > 0;
+  }
+
   @override
   _OrbRatingState createState() => _OrbRatingState();
 }

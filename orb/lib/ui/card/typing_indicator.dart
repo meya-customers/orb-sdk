@@ -16,7 +16,6 @@ class OrbTypingIndicator extends OrbTextOther {
           text: 'Typing',
           isSelfEvent: false,
           userAvatar: userAvatar,
-          containerOnly: false,
         );
 
   @override

@@ -113,7 +113,7 @@ class OrbThemePalette {
 
   Color get outline => Color(0xFFB7B7B7);
 
-  Color? get brand => _brandColor;
+  Color get brand => _brandColor;
 
   Color get brandTranslucent =>
       Color.lerp(blank, _brandColor, 0.2)!.withOpacity(_backgroundTranslucency);
@@ -278,22 +278,22 @@ class OrbThemeTextSize {
 
   TextStyle get medium => TextStyle(
         fontSize: 16,
-        height: 22 / 16,
+        height: 24 / 16,
       );
 
   TextStyle get mediumLarge => TextStyle(
         fontSize: 20,
-        height: 24 / 20,
+        height: 28 / 20,
       );
 
   TextStyle get large => TextStyle(
         fontSize: 24,
-        height: 28 / 24,
+        height: 32 / 24,
       );
 
   TextStyle get huge => TextStyle(
         fontSize: 32,
-        height: 36 / 32,
+        height: 40 / 32,
       );
 }
 
@@ -448,13 +448,14 @@ class OrbMarkdownStyleSheet extends MarkdownStyleSheet {
           horizontal: 18,
         ),
         blockquoteDecoration: BoxDecoration(
-            color: palette.blank,
-            border: Border(
-              left: BorderSide(
-                color: palette.disabled,
-                width: 4.0,
-              ),
-            )),
+          color: palette.blank,
+          border: Border(
+            left: BorderSide(
+              color: palette.disabled,
+              width: 4.0,
+            ),
+          ),
+        ),
         codeblockPadding: const EdgeInsets.all(8.0),
         codeblockDecoration: BoxDecoration(
           color: palette.blank,

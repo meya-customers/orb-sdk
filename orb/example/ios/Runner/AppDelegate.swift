@@ -121,8 +121,8 @@ import UserNotifications
         
         let platformVersion = "iOS " + UIDevice.current.systemVersion
         let connectionOptions = OrbConnectionOptions(
-            gridUrl: "https://grid.meya.ai",
-            appId: "app-73c6d31d4f544a72941e21fb518b5737",
+            gridUrl: Params.gridUrl,
+            appId: Params.appId,
             integrationId: "integration.orb.mobile",
             pageContext: [
                 "platform_version": platformVersion,

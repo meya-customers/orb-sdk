@@ -64,8 +64,8 @@ public class MainActivity extends FlutterActivity {
         pageContext.put("data", data);
 
         OrbConnectionOptions connectionOptions = new OrbConnectionOptions(
-                "https://grid.meya.ai",
-                "app-73c6d31d4f544a72941e21fb518b5737",
+                Params.GRID_URL,
+                Params.APP_ID,
                 "integration.orb.mobile",
                 pageContext
         );

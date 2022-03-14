@@ -6,10 +6,9 @@ import 'package:flutter/material.dart';
 class OrbEvent implements Comparable<OrbEvent> {
   String? id;
   String type;
-  Map data;
+  Map<dynamic, dynamic> data;
   bool showAvatar = false;
   bool isFirstInGroup = false;
-  bool isLastInGroup = false;
 
   OrbEvent({this.id, required this.type, required this.data});
 
@@ -125,7 +124,7 @@ class OrbEvent implements Comparable<OrbEvent> {
   }
 
   factory OrbEvent.createButtonClickEvent(
-    String? buttonId, {
+    String buttonId, {
     String? text,
     Map<dynamic, dynamic>? context,
   }) {
@@ -134,6 +133,44 @@ class OrbEvent implements Comparable<OrbEvent> {
       data: {
         'context': context ?? {},
         'button_id': buttonId,
+        'text': text,
+      },
+    );
+  }
+
+  factory OrbEvent.createPageButtonClickEvent(
+    String pageId,
+    String buttonId,
+    List<dynamic> inputData, {
+    String? text,
+    Map<dynamic, dynamic>? context,
+  }) {
+    return OrbEvent(
+      type: 'meya.widget.event.page.button_click',
+      data: {
+        'context': context ?? {},
+        'page_id': pageId,
+        'button_id': buttonId,
+        'input_data': inputData,
+        'text': text,
+      },
+    );
+  }
+
+  factory OrbEvent.createFieldButtonClickEvent(
+    String fieldId,
+    String buttonId,
+    dynamic inputData, {
+    String? text,
+    Map<dynamic, dynamic>? context,
+  }) {
+    return OrbEvent(
+      type: 'meya.widget.event.field.button_click',
+      data: {
+        'context': context ?? {},
+        'field_id': fieldId,
+        'button_id': buttonId,
+        'input_data': inputData,
         'text': text,
       },
     );
@@ -181,11 +218,6 @@ class OrbEvent implements Comparable<OrbEvent> {
     return OrbEvent(
         type: 'meya.form.event.submit',
         data: {'fields': fields, 'form_id': formId});
-  }
-
-  factory OrbEvent.createVirtualUserNameEvent(String id, String? userId) {
-    return OrbEvent(
-        id: id, type: 'virtual.orb.event.user_name', data: {'user_id': userId});
   }
 }
 
