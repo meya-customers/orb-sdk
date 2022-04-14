@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 
-import 'package:orb/ui/design.dart';
+import 'package:orb/design.dart';
 
-class Error extends StatelessWidget {
+class OrbError extends StatelessWidget {
   final String error;
 
-  Error({
+  const OrbError({
     required this.error,
-  });
+    Key? key,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

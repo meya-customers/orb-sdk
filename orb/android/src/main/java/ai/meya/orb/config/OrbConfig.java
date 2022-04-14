@@ -4,16 +4,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class OrbConfig {
-    public OrbTheme theme;
-    public OrbComposer composer;
-    public OrbSplash splash;
-    public OrbMediaUpload mediaUpload;
+    public OrbTheme theme = null;
+    public OrbComposer composer = null;
+    public OrbHeader header = null;
+    public OrbMenu menu = null;
+    public OrbSplash splash = null;
+    public OrbMediaUpload mediaUpload = null;
 
     public OrbConfig(OrbTheme theme, OrbComposer composer, OrbSplash splash) {
         this.theme = theme;
         this.composer = composer;
         this.splash = splash;
-        this.mediaUpload = new OrbMediaUpload(null, null, null);
     }
 
     public OrbConfig(OrbTheme theme, OrbComposer composer, OrbSplash splash, OrbMediaUpload mediaUpload) {
@@ -23,12 +24,23 @@ public class OrbConfig {
         this.mediaUpload = mediaUpload;
     }
 
+    public OrbConfig(OrbTheme theme, OrbComposer composer, OrbHeader header, OrbMenu menu, OrbSplash splash, OrbMediaUpload mediaUpload) {
+        this.theme = theme;
+        this.composer = composer;
+        this.header = header;
+        this.menu = menu;
+        this.splash = splash;
+        this.mediaUpload = mediaUpload;
+    }
+
     public Map<String, Object> toMap() {
         HashMap<String, Object> config = new HashMap<>();
-        config.put("theme", theme.toMap());
-        config.put("composer", composer.toMap());
-        config.put("splash", splash.toMap());
-        config.put("mediaUpload", mediaUpload.toMap());
+        config.put("theme", theme != null ? theme.toMap() : null);
+        config.put("composer", composer != null ? composer.toMap() : null);
+        config.put("header", header != null ? header.toMap() : null);
+        config.put("menu", menu != null ? menu.toMap() : null);
+        config.put("splash", splash != null ? splash.toMap() : null);
+        config.put("mediaUpload", mediaUpload != null ? mediaUpload.toMap() : null);
         return config;
     }
 }

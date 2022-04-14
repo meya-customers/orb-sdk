@@ -1,124 +1,71 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 
-import 'package:orb/ui/design.dart';
+import 'package:orb/config_provider.dart';
+import 'package:orb/design.dart';
+import 'package:orb/event.dart';
 
-class OrbConfig extends ChangeNotifier {
-  OrbThemeData orbThemeData;
-  ThemeConfigSpec theme;
-  ComposerConfigSpec composer;
-  SplashConfigSpec splash;
-  MediaUploadConfigSpec mediaUpload;
+class OrbUiConfigSpec {
+  final bool visible;
 
-  OrbConfig._({
-    required OrbThemeData? orbThemeData,
-    required this.theme,
-    required this.composer,
-    required this.splash,
-    required this.mediaUpload,
-  }) : orbThemeData =
-            orbThemeData ?? OrbThemeData.fromThemeConfigSpec(theme: theme);
-
-  factory OrbConfig.init({
-    OrbThemeData? orbThemeData,
-    ThemeConfigSpec? theme,
-    ComposerConfigSpec? composer,
-    SplashConfigSpec? splash,
-    MediaUploadConfigSpec? mediaUpload,
-  }) =>
-      OrbConfig._(
-        orbThemeData: orbThemeData,
-        theme: theme ?? ThemeConfigSpec(brandColor: '#4989EA'),
-        composer: composer ??
-            ComposerConfigSpec(
-              placeholderText: 'Type a message',
-              collapsePlaceholderText: 'Have something else to say?',
-              fileButtonText: 'File',
-              fileSendText: 'Send ',
-              imageButtonText: 'Photo',
-              cameraButtonText: 'Camera',
-              galleryButtonText: 'Gallery',
-            ),
-        splash: splash ?? SplashConfigSpec(readyText: 'Ready to start'),
-        mediaUpload: mediaUpload ?? MediaUploadConfigSpec(),
-      );
-
-  void update({
-    ThemeConfigSpec? theme,
-    ComposerConfigSpec? composer,
-    SplashConfigSpec? splash,
-    MediaUploadConfigSpec? mediaUpload,
-  }) {
-    if (theme != null) {
-      this.theme = theme.copyWith(
-        brandColor: theme.brandColor,
-        backgroundTranslucency: theme.backgroundTranslucency,
-      );
-    }
-    if (composer != null) {
-      this.composer = composer.copyWith(
-        placeholderText: composer.placeholderText,
-        collapsePlaceholderText: composer.collapsePlaceholderText,
-        fileButtonText: composer.fileButtonText,
-        fileSendText: composer.fileSendText,
-        imageButtonText: composer.imageButtonText,
-        cameraButtonText: composer.cameraButtonText,
-        galleryButtonText: composer.galleryButtonText,
-      );
-    }
-    if (splash != null) {
-      this.splash = splash.copyWith(readyText: splash.readyText);
-    }
-    if (mediaUpload != null) {
-      this.mediaUpload = mediaUpload.copyWith(
-          all: mediaUpload.all,
-          image: mediaUpload.image,
-          file: mediaUpload.file);
-    }
-    orbThemeData = OrbThemeData.fromThemeConfigSpec(theme: this.theme);
-    notifyListeners();
-  }
-}
-
-class ThemeConfigSpec {
-  final String? brandColor;
-  final double? backgroundTranslucency;
-
-  ThemeConfigSpec({
-    this.brandColor,
-    this.backgroundTranslucency,
+  const OrbUiConfigSpec({
+    required this.visible,
   });
 
-  ThemeConfigSpec copyWith({
-    String? brandColor,
-    double? backgroundTranslucency,
+  const OrbUiConfigSpec.init() : visible = false;
+
+  OrbUiConfigSpec copyWith({
+    bool? visible,
   }) =>
-      ThemeConfigSpec(
-        brandColor: brandColor ?? this.brandColor,
-        backgroundTranslucency:
-            backgroundTranslucency ?? this.backgroundTranslucency,
+      OrbUiConfigSpec(
+        visible: visible ?? this.visible,
       );
 }
 
-class ComposerConfigSpec {
-  final String? placeholderText;
-  final String? collapsePlaceholderText;
-  final String? fileButtonText;
-  final String? fileSendText;
-  final String? imageButtonText;
-  final String? cameraButtonText;
-  final String? galleryButtonText;
+class OrbComposerConfigSpec {
+  final OrbComposerFocus? focus;
+  final String? placeholder;
+  final String? collapsePlaceholder;
+  final OrbComposerVisibility? visibility;
+  final String placeholderText;
+  final String collapsePlaceholderText;
+  final String fileButtonText;
+  final String fileSendText;
+  final String imageButtonText;
+  final String cameraButtonText;
+  final String galleryButtonText;
 
-  ComposerConfigSpec({
-    this.placeholderText,
-    this.collapsePlaceholderText,
-    this.fileButtonText,
-    this.fileSendText,
-    this.imageButtonText,
-    this.cameraButtonText,
-    this.galleryButtonText,
+  const OrbComposerConfigSpec({
+    required this.focus,
+    required this.placeholder,
+    required this.collapsePlaceholder,
+    required this.visibility,
+    required this.placeholderText,
+    required this.collapsePlaceholderText,
+    required this.fileButtonText,
+    required this.fileSendText,
+    required this.imageButtonText,
+    required this.cameraButtonText,
+    required this.galleryButtonText,
   });
 
-  ComposerConfigSpec copyWith({
+  const OrbComposerConfigSpec.init()
+      : focus = null,
+        placeholder = null,
+        collapsePlaceholder = null,
+        visibility = null,
+        placeholderText = 'Type a message',
+        collapsePlaceholderText = 'Have something else to say?',
+        fileButtonText = 'File',
+        fileSendText = 'Send ',
+        imageButtonText = 'Photo',
+        cameraButtonText = 'Camera',
+        galleryButtonText = 'Gallery';
+
+  OrbComposerConfigSpec copyWith({
+    OrbComposerFocus? focus,
+    String? placeholder,
+    String? collapsePlaceholder,
+    OrbComposerVisibility? visibility,
     String? placeholderText,
     String? collapsePlaceholderText,
     String? fileButtonText,
@@ -127,7 +74,11 @@ class ComposerConfigSpec {
     String? cameraButtonText,
     String? galleryButtonText,
   }) =>
-      ComposerConfigSpec(
+      OrbComposerConfigSpec(
+        focus: focus ?? this.focus,
+        placeholder: placeholder ?? this.placeholder,
+        collapsePlaceholder: collapsePlaceholder ?? this.collapsePlaceholder,
+        visibility: visibility ?? this.visibility,
         placeholderText: placeholderText ?? this.placeholderText,
         collapsePlaceholderText:
             collapsePlaceholderText ?? this.collapsePlaceholderText,
@@ -139,41 +90,167 @@ class ComposerConfigSpec {
       );
 }
 
-class SplashConfigSpec {
-  final String? readyText;
+class OrbHeaderConfigSpec {
+  final List<dynamic> buttons;
+  final OrbHeaderTitleEventSpec title;
+  final OrbHeaderProgressEventSpec progress;
+  final List<dynamic> milestones;
+  final List<dynamic> extraButtons;
 
-  SplashConfigSpec({this.readyText});
+  const OrbHeaderConfigSpec({
+    required this.buttons,
+    required this.title,
+    required this.progress,
+    required this.milestones,
+    required this.extraButtons,
+  });
 
-  SplashConfigSpec copyWith({String? readyText}) =>
-      SplashConfigSpec(readyText: readyText ?? this.readyText);
+  const OrbHeaderConfigSpec.init()
+      : buttons = const [],
+        title = const OrbHeaderTitleEventSpec(),
+        progress = const OrbHeaderProgressEventSpec(),
+        milestones = const [],
+        extraButtons = const [];
+
+  OrbHeaderConfigSpec copyWith({
+    List<dynamic>? buttons,
+    OrbHeaderTitleEventSpec? title,
+    OrbHeaderProgressEventSpec? progress,
+    List<dynamic>? milestones,
+    List<dynamic>? extraButtons,
+  }) =>
+      OrbHeaderConfigSpec(
+        buttons: buttons ?? this.buttons,
+        title: title ?? this.title,
+        progress: progress ?? this.progress,
+        milestones: milestones ?? this.milestones,
+        extraButtons: extraButtons ?? this.extraButtons,
+      );
 }
 
-class MediaUploadConfigSpec {
+class OrbMenuConfigSpec {
+  final String closeText;
+  final String backText;
+
+  const OrbMenuConfigSpec({required this.closeText, required this.backText});
+
+  const OrbMenuConfigSpec.init()
+      : closeText = 'Close',
+        backText = 'Back';
+
+  OrbMenuConfigSpec copyWith({String? closeText, String? backText}) =>
+      OrbMenuConfigSpec(
+        closeText: closeText ?? this.closeText,
+        backText: backText ?? this.backText,
+      );
+}
+
+class OrbSplashConfigSpec {
+  final String readyText;
+
+  const OrbSplashConfigSpec({required this.readyText});
+
+  const OrbSplashConfigSpec.init() : readyText = 'Loading, please wait...';
+
+  OrbSplashConfigSpec copyWith({String? readyText}) =>
+      OrbSplashConfigSpec(readyText: readyText ?? this.readyText);
+}
+
+class OrbMediaUploadConfigSpec {
   final bool? all;
   final bool? file;
   final bool? image;
 
-  MediaUploadConfigSpec({this.all, this.file, this.image});
+  const OrbMediaUploadConfigSpec({
+    required this.all,
+    required this.file,
+    required this.image,
+  });
 
-  MediaUploadConfigSpec copyWith({bool? all, bool? file, bool? image}) =>
-      MediaUploadConfigSpec(
-          all: all ?? this.all,
-          file: file ?? this.file,
-          image: image ?? this.image);
+  const OrbMediaUploadConfigSpec.init()
+      : all = null,
+        file = null,
+        image = null;
+
+  OrbMediaUploadConfigSpec copyWith({bool? all, bool? file, bool? image}) =>
+      OrbMediaUploadConfigSpec(
+        all: all ?? this.all,
+        file: file ?? this.file,
+        image: image ?? this.image,
+      );
 }
 
-class MediaUploadConfigResult {
+class OrbMediaUploadConfigResult {
   final bool any;
   final bool file;
   final bool image;
 
-  MediaUploadConfigResult._(
-      {required this.any, required this.file, required this.image});
+  const OrbMediaUploadConfigResult._({
+    required this.any,
+    required this.file,
+    required this.image,
+  });
 
-  factory MediaUploadConfigResult.resolve(MediaUploadConfigSpec mediaUpload) {
+  factory OrbMediaUploadConfigResult.resolve(
+    OrbMediaUploadConfigSpec mediaUpload,
+  ) {
     final image = mediaUpload.image ?? mediaUpload.all ?? true;
     final file = mediaUpload.file ?? mediaUpload.all ?? true;
     final any = image || file;
-    return MediaUploadConfigResult._(any: any, file: file, image: image);
+    return OrbMediaUploadConfigResult._(any: any, file: file, image: image);
+  }
+}
+
+class OrbConfig {
+  final OrbThemeConfigSpec theme;
+  final OrbUiConfigSpec ui;
+  final OrbComposerConfigSpec composer;
+  final OrbHeaderConfigSpec header;
+  final OrbMenuConfigSpec menu;
+  final OrbSplashConfigSpec splash;
+  final OrbMediaUploadConfigSpec mediaUpload;
+
+  const OrbConfig({
+    required this.theme,
+    required this.ui,
+    required this.composer,
+    required this.header,
+    required this.menu,
+    required this.splash,
+    required this.mediaUpload,
+  });
+
+  const OrbConfig.init()
+      : theme = const OrbThemeConfigSpec.init(),
+        ui = const OrbUiConfigSpec.init(),
+        composer = const OrbComposerConfigSpec.init(),
+        header = const OrbHeaderConfigSpec.init(),
+        menu = const OrbMenuConfigSpec.init(),
+        splash = const OrbSplashConfigSpec.init(),
+        mediaUpload = const OrbMediaUploadConfigSpec.init();
+
+  OrbConfig copyWith({
+    OrbThemeConfigSpec? theme,
+    OrbUiConfigSpec? ui,
+    OrbComposerConfigSpec? composer,
+    OrbHeaderConfigSpec? header,
+    OrbMenuConfigSpec? menu,
+    OrbSplashConfigSpec? splash,
+    OrbMediaUploadConfigSpec? mediaUpload,
+  }) =>
+      OrbConfig(
+        theme: theme ?? this.theme,
+        ui: ui ?? this.ui,
+        composer: composer ?? this.composer,
+        header: header ?? this.header,
+        menu: menu ?? this.menu,
+        splash: splash ?? this.splash,
+        mediaUpload: mediaUpload ?? this.mediaUpload,
+      );
+
+  static OrbConfig of(BuildContext context) {
+    return context
+        .dependOnInheritedWidgetOfExactType<OrbConfigInherited>()!
+        .config;
   }
 }

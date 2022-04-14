@@ -1,23 +1,23 @@
 class EventEmitter {
-  final Map<String, List<Function(Map<String, dynamic>)>> _listeners = {};
+  final Map<String, List<Function>> _listeners = {};
 
-  void on(String type, Function(Map<String, dynamic>) listener) {
+  void on(String type, Function callback) {
     final listeners = _listeners[type] ?? [];
-    listeners.add(listener);
+    listeners.add(callback);
     _listeners[type] = listeners;
   }
 
-  void off(String type, Function(Map<String, dynamic>) callback) {
+  void off(String type, Function callback) {
     final listeners = _listeners[type] ?? [];
     listeners.remove(callback);
-    if (listeners.isEmpty) _listeners.remove(type);
+    if (listeners.isEmpty) {
+      _listeners.remove(type);
+    }
   }
 
-  void emit(String type, Map<String, dynamic> event) {
-    if (!_listeners.containsKey(type)) return;
-
-    for (final listener in _listeners[type]!) {
-      listener(event);
+  void emit(String type, Map<Symbol, dynamic> event) {
+    for (final listener in _listeners[type] ?? []) {
+      Function.apply(listener, [], event);
     }
   }
 }

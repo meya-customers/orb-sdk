@@ -123,7 +123,7 @@ import UserNotifications
         let connectionOptions = OrbConnectionOptions(
             gridUrl: Params.gridUrl,
             appId: Params.appId,
-            integrationId: "integration.orb.mobile",
+            integrationId: Params.integrationId,
             pageContext: [
                 "platform_version": platformVersion,
                 "a": 1234,
@@ -136,7 +136,8 @@ import UserNotifications
         )
         let config = OrbConfig(
             theme: OrbTheme(
-                brandColor: "#691ac9"
+                brandColor: nil,
+                backgroundTranslucency: nil
             ),
             composer: OrbComposer(
                 placeholderText: "Enter text here...",
@@ -147,8 +148,19 @@ import UserNotifications
                 cameraButtonText: "Camera",
                 galleryButtonText: "Gallery"
             ),
+            header: OrbHeader(
+                buttons: nil,
+                title: nil,
+                progress: nil,
+                milestones: nil,
+                extraButtons: nil
+            ),
+            menu: OrbMenu(
+                closeText: nil,
+                backText: nil
+            ),
             splash: OrbSplash(
-                readyText: "Example app is ready..."
+                readyText: nil
             ),
             mediaUpload: OrbMediaUpload(
                 all: nil,

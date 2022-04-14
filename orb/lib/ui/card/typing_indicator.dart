@@ -2,16 +2,18 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import 'package:orb/design.dart';
 import 'package:orb/event.dart';
 import 'package:orb/ui/card/text.dart';
-import 'package:orb/ui/design.dart';
 import 'package:orb/ui/presence/user_avatar.dart';
 
 class OrbTypingIndicator extends OrbTextOther {
-  OrbTypingIndicator({
+  const OrbTypingIndicator({
     required OrbEvent event,
     required OrbUserAvatar userAvatar,
+    Key? key,
   }) : super(
+          key: key,
           event: event,
           text: 'Typing',
           isSelfEvent: false,
@@ -29,6 +31,16 @@ class OrbTypingIndicator extends OrbTextOther {
         ),
         buildContainer(context),
       ],
+    );
+  }
+
+  @override
+  Widget buildContainer(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.only(top: OrbTheme.of(context).lengths.large),
+      padding: buildPadding(context),
+      decoration: buildBoxDecoration(context),
+      child: buildText(context),
     );
   }
 
@@ -52,7 +64,7 @@ class _TypingIndicatorState extends State<_TypingIndicator>
     super.initState();
 
     _animationController = AnimationController(
-      duration: Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 1500),
       vsync: this,
     )..repeat();
   }
@@ -67,17 +79,17 @@ class _TypingIndicatorState extends State<_TypingIndicator>
   Widget build(BuildContext context) {
     return Row(
       children: [
-        buildCircle(0.0),
-        buildCircle(0.3),
-        buildCircle(0.6),
+        buildCircle(context, 0.0),
+        buildCircle(context, 0.3),
+        buildCircle(context, 0.6),
       ],
     );
   }
 
-  Widget buildCircle(double delay) {
+  Widget buildCircle(BuildContext context, double delay) {
     return FadeTransition(
       child: Container(
-        margin: EdgeInsets.only(right: 2),
+        margin: const EdgeInsets.only(right: 2),
         width: 10,
         height: 10,
         decoration: BoxDecoration(

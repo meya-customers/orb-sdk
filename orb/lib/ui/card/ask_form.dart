@@ -1,24 +1,28 @@
 import 'package:flutter/material.dart';
 
 import 'package:orb/connection.dart';
+import 'package:orb/design.dart';
 import 'package:orb/event.dart';
-import 'package:orb/ui/design.dart';
+import 'package:orb/event_stream.dart';
 import 'package:orb/ui/icon.dart';
 import 'package:orb/ui/presence/user_avatar.dart';
 
 class OrbAskForm extends StatelessWidget {
   final OrbEvent event;
+  final OrbEventStream eventStream;
   final OrbConnection connection;
   final OrbUserAvatar? userAvatar;
 
-  OrbAskForm({
+  const OrbAskForm({
     required this.event,
+    required this.eventStream,
     required this.connection,
     required this.userAvatar,
-  });
+    Key? key,
+  }) : super(key: key);
 
   static bool isVisible(OrbEvent event) {
-    return event.data["fields"].length > 0;
+    return (event.data['fields'] as List<dynamic>).isNotEmpty;
   }
 
   @override
@@ -41,11 +45,12 @@ class OrbAskForm extends StatelessWidget {
   }
 
   List<Widget> buildFields(BuildContext context, List<dynamic> fields) {
-    return fields.map((field) {
+    return fields.cast<Map<dynamic, dynamic>>().map((field) {
       switch (field['type']) {
         default:
-          return OrbInputField(
+          return _OrbInputField(
             event: event,
+            eventStream: eventStream,
             connection: connection,
             field: field,
           );
@@ -54,24 +59,30 @@ class OrbAskForm extends StatelessWidget {
   }
 }
 
-class OrbInputField extends StatefulWidget {
+class _OrbInputField extends StatefulWidget {
   final OrbEvent event;
-  final OrbConnection? connection;
+  final OrbEventStream eventStream;
+  final OrbConnection connection;
   final Map<dynamic, dynamic> field;
 
-  OrbInputField(
-      {required this.event, required this.connection, required this.field});
+  const _OrbInputField({
+    required this.event,
+    required this.eventStream,
+    required this.connection,
+    required this.field,
+    Key? key,
+  }) : super(key: key);
 
   @override
   _OrbInputFieldState createState() => _OrbInputFieldState();
 }
 
-class _OrbInputFieldState extends State<OrbInputField> {
+class _OrbInputFieldState extends State<_OrbInputField> {
   final TextEditingController textEditingController = TextEditingController();
 
   FocusNode? focusNode;
   late FocusAttachment nodeAttachment;
-  bool? disabled;
+  late bool disabled;
   bool focus = false;
   bool invalid = false;
   Map<String?, bool> processedEvents = {};
@@ -106,22 +117,19 @@ class _OrbInputFieldState extends State<OrbInputField> {
   }
 
   bool get isActiveError {
-    final eventStream = widget.connection!.getEventStream();
-    final form = eventStream.forms[widget.event.data['form_id']]!;
-    return (form.errorEvent != null &&
-        eventStream.isActiveEvent(form.errorEvent!));
+    final form = widget.eventStream.forms[widget.event.data['form_id']]!;
+    return form.errorEvent != null &&
+        widget.eventStream.isActiveEvent(form.errorEvent!);
   }
 
   bool get isDisabled {
-    final eventStream = widget.connection!.getEventStream();
-    return !(eventStream.isActiveEvent(widget.event) || isActiveError);
+    return !(widget.eventStream.isActiveEvent(widget.event) || isActiveError);
   }
 
   @override
   Widget build(BuildContext context) {
     nodeAttachment.reparent();
-    final eventStream = widget.connection!.getEventStream();
-    final form = eventStream.forms[widget.event.data['form_id']];
+    final form = widget.eventStream.forms[widget.event.data['form_id']];
     final ok = form?.okEvent != null;
     if (isActiveError && !invalid) {
       setState(() {
@@ -135,13 +143,12 @@ class _OrbInputFieldState extends State<OrbInputField> {
       children: [
         Container(
           margin: EdgeInsets.only(
-            top: OrbTheme.of(context).lengths.small,
             left: OrbTheme.of(context).lengths.small,
             bottom: OrbTheme.of(context).lengths.tiny,
           ),
           child: Text(
             (widget.field['label'] as String).toUpperCase(),
-            style: labelStyle(context, disabled!),
+            style: labelStyle(context, disabled: disabled),
           ),
         ),
         Container(
@@ -150,7 +157,7 @@ class _OrbInputFieldState extends State<OrbInputField> {
           ),
           decoration: BoxDecoration(
             boxShadow: [OrbTheme.of(context).outerShadow.tiny],
-            border: border(context, disabled, ok),
+            border: border(context, disabled: disabled, ok: ok),
             color: OrbTheme.of(context).palette.blank,
             borderRadius:
                 BorderRadius.all(OrbTheme.of(context).borderRadius.small),
@@ -158,9 +165,9 @@ class _OrbInputFieldState extends State<OrbInputField> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              buildIcon(context, disabled!),
-              buildText(context, disabled!),
-              buildSubmit(context, disabled, ok),
+              buildIcon(context, disabled: disabled),
+              buildText(context, disabled: disabled),
+              buildSubmit(context, disabled: disabled, ok: ok),
             ],
           ),
         ),
@@ -179,31 +186,27 @@ class _OrbInputFieldState extends State<OrbInputField> {
                       .copyWith(color: OrbTheme.of(context).palette.error),
                 ),
               )
-            : SizedBox.shrink()
+            : const SizedBox.shrink()
       ],
     );
   }
 
-  Widget buildIcon(BuildContext context, bool disabled) {
+  Widget buildIcon(
+    BuildContext context, {
+    required bool disabled,
+  }) {
     final color = disabled
         ? OrbTheme.of(context).palette.disabled
         : OrbTheme.of(context).palette.normal;
-    OrbIconSpec iconSpec;
-    if (widget.field.containsKey('icon')) {
-      iconSpec = OrbIconSpec(
-        url: widget.field['icon']['url'],
-        color: widget.field['icon']['color'],
-      );
-    } else {
+    var iconSpec = OrbIconSpec.fromMap(widget.field['icon']);
+    if (iconSpec == null) {
       if (widget.field['type'] == 'email') {
         iconSpec = OrbIcons.emailAddress;
       } else if (widget.field['type'] == 'tel') {
         iconSpec = OrbIcons.phone;
-      } else if ((widget.field['autocomplete'] as String).indexOf('country') !=
-          -1) {
+      } else if ((widget.field['autocomplete'] as String).contains('country')) {
         iconSpec = OrbIcons.flag;
-      } else if ((widget.field['autocomplete'] as String).indexOf('name') !=
-          -1) {
+      } else if ((widget.field['autocomplete'] as String).contains('name')) {
         iconSpec = OrbIcons.user;
       } else {
         iconSpec = OrbIcons.pencil;
@@ -213,16 +216,20 @@ class _OrbInputFieldState extends State<OrbInputField> {
       padding: EdgeInsets.only(
         left: OrbTheme.of(context).lengths.mediumSmall,
       ),
-      child: OrbIcon(iconSpec, color: color),
+      child: OrbIcon(
+        iconSpec,
+        size: OrbTheme.of(context).size.icon.medium,
+        color: color,
+      ),
     );
   }
 
-  Widget buildText(BuildContext context, bool disabled) {
-    double minWidth = 240;
+  Widget buildText(BuildContext context, {required bool disabled}) {
+    const double minWidth = 240;
     if (!disabled) {
       return Flexible(
         child: ConstrainedBox(
-          constraints: BoxConstraints(minWidth: minWidth),
+          constraints: const BoxConstraints(minWidth: minWidth),
           child: Container(
             padding: EdgeInsets.all(OrbTheme.of(context).lengths.small),
             child: TextField(
@@ -231,9 +238,10 @@ class _OrbInputFieldState extends State<OrbInputField> {
               autofocus: false,
               cursorColor: OrbTheme.of(context).palette.brand,
               decoration: InputDecoration.collapsed(
-                  hintText: widget.field['placeholder'],
-                  hintStyle:
-                      TextStyle(color: OrbTheme.of(context).palette.support)),
+                hintText: widget.field['placeholder'],
+                hintStyle:
+                    TextStyle(color: OrbTheme.of(context).palette.support),
+              ),
             ),
           ),
         ),
@@ -241,7 +249,7 @@ class _OrbInputFieldState extends State<OrbInputField> {
     } else {
       return Flexible(
         child: ConstrainedBox(
-          constraints: BoxConstraints(minWidth: minWidth),
+          constraints: const BoxConstraints(minWidth: minWidth),
           child: Container(
             padding: EdgeInsets.all(OrbTheme.of(context).lengths.small),
             child: Text(
@@ -260,40 +268,45 @@ class _OrbInputFieldState extends State<OrbInputField> {
     }
   }
 
-  Widget buildSubmit(BuildContext context, bool? disabled, bool ok) {
+  Widget buildSubmit(
+    BuildContext context, {
+    required bool disabled,
+    required bool ok,
+  }) {
     if (!ok) {
-      return disabled!
-          ? buildSubmitButton(context, disabled)
+      return disabled
+          ? buildSubmitButton(context, disabled: disabled)
           : InkWell(
               onTap: submitForm,
-              child: buildSubmitButton(context, disabled),
+              child: buildSubmitButton(context, disabled: disabled),
             );
     } else {
       return Container(
         padding: EdgeInsets.all(OrbTheme.of(context).lengths.mediumSmall),
         child: OrbIcon(
           OrbIcons.check,
+          size: OrbTheme.of(context).size.icon.medium,
           color: OrbTheme.of(context).palette.disabledDark,
         ),
         decoration: BoxDecoration(
           color: OrbTheme.of(context).palette.blank,
           borderRadius: BorderRadius.only(
             // TODO: Find a better way to adjust the in border radius to the outer
-            topRight:
-                OrbTheme.of(context).borderRadius.small - Radius.circular(2.1),
-            bottomRight:
-                OrbTheme.of(context).borderRadius.small - Radius.circular(2.1),
+            topRight: OrbTheme.of(context).borderRadius.small -
+                const Radius.circular(2.1),
+            bottomRight: OrbTheme.of(context).borderRadius.small -
+                const Radius.circular(2.1),
           ),
         ),
       );
     }
   }
 
-  Widget buildSubmitButton(BuildContext context, bool disabled) {
+  Widget buildSubmitButton(BuildContext context, {required bool disabled}) {
     final Color color;
     final Color borderColor;
     if (disabled) {
-      color = borderColor = OrbTheme.of(context).palette.neutral;
+      color = borderColor = OrbTheme.of(context).palette.disabled;
     } else if (invalid && !focus) {
       color = borderColor = OrbTheme.of(context).palette.error;
     } else {
@@ -303,6 +316,7 @@ class _OrbInputFieldState extends State<OrbInputField> {
       padding: EdgeInsets.all(OrbTheme.of(context).lengths.small),
       child: OrbIcon(
         OrbIcons.right,
+        size: OrbTheme.of(context).size.icon.medium,
         color: OrbTheme.of(context).palette.blank,
       ),
       decoration: BoxDecoration(
@@ -310,16 +324,16 @@ class _OrbInputFieldState extends State<OrbInputField> {
         border: OrbTheme.of(context).innerBorder.thick(borderColor),
         borderRadius: BorderRadius.only(
           // TODO: Find a better way to adjust the inner border radius to the outer
-          topRight:
-              OrbTheme.of(context).borderRadius.small - Radius.circular(2.1),
-          bottomRight:
-              OrbTheme.of(context).borderRadius.small - Radius.circular(2.1),
+          topRight: OrbTheme.of(context).borderRadius.small -
+              const Radius.circular(2.1),
+          bottomRight: OrbTheme.of(context).borderRadius.small -
+              const Radius.circular(2.1),
         ),
       ),
     );
   }
 
-  TextStyle labelStyle(BuildContext context, bool disabled) {
+  TextStyle labelStyle(BuildContext context, {required bool disabled}) {
     Color color;
     if (disabled) {
       color = OrbTheme.of(context).palette.disabled;
@@ -339,16 +353,20 @@ class _OrbInputFieldState extends State<OrbInputField> {
         .copyWith(color: color);
   }
 
-  Border border(BuildContext context, bool? disabled, bool ok) {
+  Border border(
+    BuildContext context, {
+    required bool disabled,
+    required bool ok,
+  }) {
     final Color color;
-    if (disabled!) {
+    if (disabled) {
       color = OrbTheme.of(context).palette.disabled;
-    } else if (widget.event.data["error"] != null) {
+    } else if (widget.event.data['error'] != null) {
       color = OrbTheme.of(context).palette.error;
     } else if (focus) {
       color = OrbTheme.of(context).palette.brand;
     } else {
-      color = OrbTheme.of(context).palette.neutral;
+      color = OrbTheme.of(context).palette.brandNeutral;
     }
     if (ok) {
       return OrbTheme.of(context).innerBorder.thin(color);
@@ -364,13 +382,15 @@ class _OrbInputFieldState extends State<OrbInputField> {
   }
 
   void processAsk() {
-    if (!widget.connection!.getEventStream().isActiveEvent(widget.event)) {
+    if (!widget.eventStream.isActiveEvent(widget.event)) {
       // Event not relevant
       return;
     } else if (processedEvents[widget.event.id] == true) {
       // Event already processed
       return;
-    } else if ((widget.event.data['composer'] ?? {})['focus'] != 'blur') {
+    } else if ((widget.event.data['composer'] as Map<dynamic, dynamic>? ??
+            {})['focus'] !=
+        'blur') {
       // Not blurring composer focus, so don't take it
       return;
     }
@@ -381,9 +401,7 @@ class _OrbInputFieldState extends State<OrbInputField> {
   }
 
   void processSubmit() {
-    final form = widget.connection!
-        .getEventStream()
-        .forms[widget.event.data['form_id']]!;
+    final form = widget.eventStream.forms[widget.event.data['form_id']]!;
     if (form.submitEvent == null) {
       // No event
       return;
@@ -404,12 +422,11 @@ class _OrbInputFieldState extends State<OrbInputField> {
   }
 
   void processError() {
-    final eventStream = widget.connection!.getEventStream();
-    final form = eventStream.forms[widget.event.data['form_id']]!;
+    final form = widget.eventStream.forms[widget.event.data['form_id']]!;
     if (form.errorEvent == null) {
       // No event
       return;
-    } else if (!eventStream.isActiveEvent(form.errorEvent!)) {
+    } else if (!widget.eventStream.isActiveEvent(form.errorEvent!)) {
       // Event not relevant
       return;
     } else if (processedEvents[form.errorEvent!.id] == true) {
@@ -426,11 +443,14 @@ class _OrbInputFieldState extends State<OrbInputField> {
   }
 
   void submitForm() {
-    final field = widget.event.data['fields'][0];
-    widget.connection!.publishEvent(OrbEvent.createFormSubmitEvent(
-      widget.event.data['form_id'],
-      {field['name']: textEditingController.text},
-    ));
+    final Map<dynamic, dynamic> field =
+        (widget.event.data['fields'] as List<dynamic>)[0];
+    widget.connection.publishEvent(
+      OrbEvent.createFormSubmitEvent(
+        widget.event.data['form_id'],
+        {field['name']: textEditingController.text},
+      ),
+    );
     setState(() {
       inputText = textEditingController.text;
       disabled = true;

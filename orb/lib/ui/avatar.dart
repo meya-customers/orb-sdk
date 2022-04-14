@@ -23,7 +23,9 @@ class OrbAvatar {
   });
 
   static OrbAvatar? fromMap(Map<dynamic, dynamic>? map) {
-    if (map == null) return null;
+    if (map == null) {
+      return null;
+    }
     return OrbAvatar(
       image: map['image'],
       crop: OrbAvatarCropExtension.fromString(map['crop']),

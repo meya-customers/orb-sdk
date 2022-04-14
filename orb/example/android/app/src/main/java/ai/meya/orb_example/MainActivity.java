@@ -13,7 +13,9 @@ import java.util.Map;
 import ai.meya.orb.OrbConnectionOptions;
 import ai.meya.orb.config.OrbComposer;
 import ai.meya.orb.config.OrbConfig;
+import ai.meya.orb.config.OrbHeader;
 import ai.meya.orb.config.OrbMediaUpload;
+import ai.meya.orb.config.OrbMenu;
 import ai.meya.orb.config.OrbSplash;
 import ai.meya.orb.config.OrbTheme;
 import androidx.annotation.NonNull;
@@ -66,13 +68,14 @@ public class MainActivity extends FlutterActivity {
         OrbConnectionOptions connectionOptions = new OrbConnectionOptions(
                 Params.GRID_URL,
                 Params.APP_ID,
-                "integration.orb.mobile",
+                Params.INTEGRATION_ID,
                 pageContext
         );
 
         OrbConfig config = new OrbConfig(
                 new OrbTheme(
-                        "#691ac9"
+                        null,
+                        null
                 ),
                 new OrbComposer(
                         "Enter text here...",
@@ -83,8 +86,19 @@ public class MainActivity extends FlutterActivity {
                         "Camera",
                         "Gallery"
                 ),
+                new OrbHeader(
+                        null,
+                        null,
+                        null,
+                        null,
+                        null
+                ),
+                new OrbMenu(
+                        null,
+                        null
+                ),
                 new OrbSplash(
-                        "Example app is ready..."
+                        null
                 ),
                 new OrbMediaUpload(
                         null,

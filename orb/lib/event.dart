@@ -3,6 +3,8 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import 'package:orb/ui/icon.dart';
+
 class OrbEvent implements Comparable<OrbEvent> {
   String? id;
   String type;
@@ -10,7 +12,7 @@ class OrbEvent implements Comparable<OrbEvent> {
   bool showAvatar = false;
   bool isFirstInGroup = false;
 
-  OrbEvent({this.id, required this.type, required this.data});
+  OrbEvent({required this.type, required this.data, this.id});
 
   @override
   int compareTo(OrbEvent other) {
@@ -46,11 +48,10 @@ class OrbEvent implements Comparable<OrbEvent> {
         'data': data,
       };
 
-  factory OrbEvent.fromEventMap(Map<dynamic, dynamic>? eventMap) {
-    if (eventMap == null)
-      throw Exception('Cannot create an OrbEvent from \'null\'.');
-    if (eventMap['type'] == null)
+  factory OrbEvent.fromEventMap(Map<dynamic, dynamic> eventMap) {
+    if (eventMap['type'] == null) {
       throw Exception('Cannot create an OrbEvent with an empty \'type\'.');
+    }
     return OrbEvent(
       id: eventMap['id'],
       type: eventMap['type'],
@@ -112,8 +113,10 @@ class OrbEvent implements Comparable<OrbEvent> {
     );
   }
 
-  factory OrbEvent.createSayEvent(String? text,
-      {Map<dynamic, dynamic>? context}) {
+  factory OrbEvent.createSayEvent(
+    String? text, {
+    Map<dynamic, dynamic>? context,
+  }) {
     return OrbEvent(
       type: 'meya.text.event.say',
       data: {
@@ -178,10 +181,10 @@ class OrbEvent implements Comparable<OrbEvent> {
 
   factory OrbEvent.createPageOpenEvent(
     String? url,
-    String? referrer,
+    String? referrer, {
     bool? magicLinkOk,
     Map<dynamic, dynamic>? pageContext,
-  ) {
+  }) {
     return OrbEvent(
       type: 'meya.session.event.page.open',
       data: {
@@ -214,73 +217,158 @@ class OrbEvent implements Comparable<OrbEvent> {
   }
 
   factory OrbEvent.createFormSubmitEvent(
-      String? formId, Map<String?, String> fields) {
+    String? formId,
+    Map<String?, String> fields,
+  ) {
     return OrbEvent(
-        type: 'meya.form.event.submit',
-        data: {'fields': fields, 'form_id': formId});
-  }
-}
-
-enum ComposerFocus { file, image, text, blur }
-
-extension ComposerFocusExtension on ComposerFocus {
-  static ComposerFocus fromString(String? focus) {
-    switch (focus) {
-      case 'file':
-        return ComposerFocus.file;
-      case 'image':
-        return ComposerFocus.image;
-      case 'blur':
-        return ComposerFocus.blur;
-      default:
-        return ComposerFocus.text;
-    }
-  }
-}
-
-enum ComposerVisibility { collapse, hide, show }
-
-extension ComposerVisibilityExtension on ComposerVisibility {
-  static ComposerVisibility fromString(String? focus) {
-    switch (focus) {
-      case 'collapse':
-        return ComposerVisibility.collapse;
-      case 'hide':
-        return ComposerVisibility.hide;
-      default:
-        return ComposerVisibility.show;
-    }
-  }
-}
-
-class ComposerEventSpec {
-  final ComposerFocus? focus;
-  final String? placeholder;
-  final ComposerVisibility? visibility;
-
-  ComposerEventSpec({this.focus, this.placeholder, this.visibility});
-
-  static ComposerEventSpec? fromMap(Map? map) {
-    if (map == null) return null;
-    return ComposerEventSpec(
-      focus: ComposerFocusExtension.fromString(map['focus']),
-      placeholder: map['placeholder'],
-      visibility: ComposerVisibilityExtension.fromString(map['visibility']),
+      type: 'meya.form.event.submit',
+      data: {'fields': fields, 'form_id': formId},
     );
   }
 }
 
-extension DeviceState on AppLifecycleState? {
+enum OrbComposerFocus { file, image, text, blur }
+
+extension OrbComposerFocusExtension on OrbComposerFocus {
+  static OrbComposerFocus? fromString(String? focus) {
+    switch (focus) {
+      case 'file':
+        return OrbComposerFocus.file;
+      case 'image':
+        return OrbComposerFocus.image;
+      case 'blur':
+        return OrbComposerFocus.blur;
+      case 'text':
+        return OrbComposerFocus.text;
+      default:
+        return null;
+    }
+  }
+}
+
+enum OrbComposerVisibility { collapse, hide, show }
+
+extension OrbComposerVisibilityExtension on OrbComposerVisibility {
+  static OrbComposerVisibility? fromString(String? visibility) {
+    switch (visibility) {
+      case 'collapse':
+        return OrbComposerVisibility.collapse;
+      case 'hide':
+        return OrbComposerVisibility.hide;
+      case 'show':
+        return OrbComposerVisibility.show;
+      default:
+        return null;
+    }
+  }
+}
+
+class OrbComposerEventSpec {
+  final OrbComposerFocus? focus;
+  final String? placeholder;
+  final String? collapsePlaceholder;
+  final OrbComposerVisibility? visibility;
+
+  const OrbComposerEventSpec({
+    this.focus,
+    this.placeholder,
+    this.collapsePlaceholder,
+    this.visibility,
+  });
+
+  static OrbComposerEventSpec? fromMap(Map<dynamic, dynamic>? map) {
+    if (map == null) {
+      return null;
+    }
+    return OrbComposerEventSpec(
+      focus: OrbComposerFocusExtension.fromString(map['focus']),
+      placeholder: map['placeholder'],
+      collapsePlaceholder: map['collapsePlaceholder'],
+      visibility: OrbComposerVisibilityExtension.fromString(map['visibility']),
+    );
+  }
+}
+
+class OrbHeaderTitleEventSpec {
+  final OrbIconSpec? icon;
+  final String? text;
+
+  const OrbHeaderTitleEventSpec({
+    this.icon,
+    this.text,
+  });
+
+  static OrbHeaderTitleEventSpec? fromMap(Map<dynamic, dynamic>? map) {
+    if (map == null) {
+      return null;
+    }
+    return OrbHeaderTitleEventSpec(
+      icon: OrbIconSpec.fromMap(map['icon']),
+      text: map['text'],
+    );
+  }
+}
+
+class OrbHeaderProgressEventSpec {
+  final num? value;
+  final bool? showPercent;
+
+  const OrbHeaderProgressEventSpec({
+    this.value,
+    this.showPercent = false,
+  });
+
+  static OrbHeaderProgressEventSpec? fromMap(Map<dynamic, dynamic>? map) {
+    if (map == null) {
+      return null;
+    }
+    return OrbHeaderProgressEventSpec(
+      value: map['value'],
+      showPercent: map['show_percent'],
+    );
+  }
+}
+
+class OrbHeaderEventSpec {
+  final List<dynamic>? buttons;
+  final OrbHeaderTitleEventSpec? title;
+  final OrbHeaderProgressEventSpec? progress;
+  final List<dynamic>? milestones;
+  final List<dynamic>? extraButtons;
+
+  const OrbHeaderEventSpec({
+    this.buttons,
+    this.title,
+    this.progress,
+    this.milestones,
+    this.extraButtons,
+  });
+
+  static OrbHeaderEventSpec? fromMap(Map<dynamic, dynamic>? map) {
+    if (map == null) {
+      return null;
+    }
+    return OrbHeaderEventSpec(
+      buttons: map['buttons'],
+      title: OrbHeaderTitleEventSpec.fromMap(map['title']),
+      progress: OrbHeaderProgressEventSpec.fromMap(map['progress']),
+      milestones: map['milestones'],
+      extraButtons: map['extra_buttons'],
+    );
+  }
+}
+
+extension OrbDeviceState on AppLifecycleState? {
   String? get state {
     switch (this) {
       case AppLifecycleState.resumed:
-        return "resumed";
+        return 'resumed';
       case AppLifecycleState.inactive:
-        return "inactive";
+        return 'inactive';
       case AppLifecycleState.paused:
-        return "paused";
+        return 'paused';
       case AppLifecycleState.detached:
-        return "detached";
+        return 'detached';
       default:
         return null;
     }

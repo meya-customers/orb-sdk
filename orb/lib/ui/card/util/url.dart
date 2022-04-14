@@ -11,9 +11,12 @@ class OrbUrl {
     if (await canLaunch(url)) {
       await launch(url);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
           content: Text("Could not open '$url'"),
-          duration: Duration(milliseconds: 2000)));
+          duration: const Duration(milliseconds: 2000),
+        ),
+      );
     }
   }
 }

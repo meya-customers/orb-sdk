@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import 'package:path/path.dart' as p;
 
+import 'package:orb/design.dart';
 import 'package:orb/event.dart';
 import 'package:orb/ui/card/util/url.dart';
 import 'package:orb/ui/card/widget_mode.dart';
-import 'package:orb/ui/design.dart';
 import 'package:orb/ui/icon.dart';
 import 'package:orb/ui/presence/user_avatar.dart';
 
@@ -16,19 +16,21 @@ abstract class OrbFile extends StatelessWidget {
   final bool isSelfEvent;
   final OrbUserAvatar? userAvatar;
 
-  OrbFile._({
+  const OrbFile._({
     required this.event,
     required this.filename,
     required this.url,
     required this.isSelfEvent,
     required this.userAvatar,
-  });
+    Key? key,
+  }) : super(key: key);
 
   factory OrbFile({
     required OrbEvent event,
     required bool isSelfEvent,
     required OrbUserAvatar? userAvatar,
     required OrbWidgetMode mode,
+    Key? key,
   }) {
     final filename = event.data['filename'];
     final url = event.data['url'];
@@ -40,6 +42,7 @@ abstract class OrbFile extends StatelessWidget {
         url: url,
         isSelfEvent: isSelfEvent,
         userAvatar: userAvatar,
+        key: key,
       );
     } else {
       return OrbFileOther._(
@@ -49,26 +52,22 @@ abstract class OrbFile extends StatelessWidget {
         isSelfEvent: isSelfEvent,
         userAvatar: userAvatar,
         mode: mode,
+        key: key,
       );
     }
   }
 
   static bool isVisible(OrbEvent event) {
-    return (event.data['url'] ?? '') != "";
+    return (event.data['url'] ?? '') != '';
   }
 
   Widget buildContainer(BuildContext context) {
     return ConstrainedBox(
-      constraints: BoxConstraints(
+      constraints: const BoxConstraints(
         maxWidth: 300,
       ),
       child: Container(
         width: MediaQuery.of(context).size.width * 0.70,
-        margin: EdgeInsets.only(
-          top: (!event.isFirstInGroup
-              ? OrbTheme.of(context).lengths.large
-              : OrbTheme.of(context).lengths.small),
-        ),
         padding: EdgeInsets.all(OrbTheme.of(context).lengths.medium),
         decoration: buildBoxDecoration(context),
         child: buildFile(context),
@@ -111,17 +110,17 @@ abstract class OrbFile extends StatelessWidget {
   }
 
   OrbIcon buildIcon(BuildContext context) {
-    if (event.data.containsKey("icon")) {
+    final iconSpec = OrbIconSpec.fromMap(event.data['icon']);
+    if (iconSpec != null) {
       return OrbIcon(
-        OrbIconSpec(
-          url: event.data["icon"]["url"],
-          color: event.data["icon"]["color"],
-        ),
+        iconSpec,
+        size: OrbTheme.of(context).size.icon.medium,
         color: OrbTheme.of(context).palette.brand,
       );
     } else {
       return OrbIcon(
         OrbIcons.file,
+        size: OrbTheme.of(context).size.icon.medium,
         color: OrbTheme.of(context).palette.brand,
       );
     }
@@ -129,18 +128,20 @@ abstract class OrbFile extends StatelessWidget {
 }
 
 class OrbFileSelf extends OrbFile {
-  OrbFileSelf._({
+  const OrbFileSelf._({
     required OrbEvent event,
     required String filename,
     required String url,
     required bool isSelfEvent,
     required OrbUserAvatar? userAvatar,
+    Key? key,
   }) : super._(
           event: event,
           filename: filename,
           url: url,
           isSelfEvent: isSelfEvent,
           userAvatar: userAvatar,
+          key: key,
         );
 
   @override
@@ -156,19 +157,21 @@ class OrbFileSelf extends OrbFile {
 class OrbFileOther extends OrbFile {
   final OrbWidgetMode mode;
 
-  OrbFileOther._({
+  const OrbFileOther._({
     required OrbEvent event,
     required String filename,
     required String url,
     required bool isSelfEvent,
     required OrbUserAvatar? userAvatar,
     required this.mode,
+    Key? key,
   }) : super._(
           event: event,
           filename: filename,
           url: url,
           isSelfEvent: isSelfEvent,
           userAvatar: userAvatar,
+          key: key,
         );
 
   @override
