@@ -4,9 +4,9 @@ import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:markdown/markdown.dart' as md;
 
+import 'package:orb/design.dart';
 import 'package:orb/event.dart';
 import 'package:orb/ui/card/util/url.dart';
-import 'package:orb/ui/design.dart';
 import 'package:orb/ui/presence/user_avatar.dart';
 
 abstract class OrbText extends StatelessWidget {
@@ -16,13 +16,14 @@ abstract class OrbText extends StatelessWidget {
   final OrbUserAvatar? userAvatar;
   final List<dynamic>? markdownDefault;
 
-  OrbText._({
+  const OrbText._({
     required this.event,
     required this.text,
     required this.isSelfEvent,
     required this.userAvatar,
     this.markdownDefault,
-  });
+    Key? key,
+  }) : super(key: key);
 
   factory OrbText({
     required OrbEvent event,
@@ -30,6 +31,7 @@ abstract class OrbText extends StatelessWidget {
     required bool isSelfEvent,
     required OrbUserAvatar? userAvatar,
     List<dynamic>? markdownDefault,
+    Key? key,
   }) {
     if (isSelfEvent) {
       return OrbTextSelf(
@@ -38,6 +40,7 @@ abstract class OrbText extends StatelessWidget {
         isSelfEvent: isSelfEvent,
         userAvatar: userAvatar,
         markdownDefault: markdownDefault,
+        key: key,
       );
     } else {
       return OrbTextOther(
@@ -46,17 +49,13 @@ abstract class OrbText extends StatelessWidget {
         isSelfEvent: isSelfEvent,
         userAvatar: userAvatar,
         markdownDefault: markdownDefault,
+        key: key,
       );
     }
   }
 
   Widget buildContainer(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(
-        top: (!event.isFirstInGroup
-            ? OrbTheme.of(context).lengths.large
-            : OrbTheme.of(context).lengths.small),
-      ),
       padding: buildPadding(context),
       decoration: buildBoxDecoration(context),
       child: buildText(context),
@@ -74,9 +73,8 @@ abstract class OrbText extends StatelessWidget {
   }
 
   Widget buildText(BuildContext context) {
-    final List<dynamic>? markdown =
-        event.data['markdown'] ?? this.markdownDefault;
-    final OrbThemeData orbTheme = OrbTheme.of(context);
+    final List<dynamic>? markdown = event.data['markdown'] ?? markdownDefault;
+    final OrbTheme orbTheme = OrbTheme.of(context);
     final TextStyle normal = orbTheme.text.font.normal
         .merge(orbTheme.text.style.normal)
         .merge(orbTheme.text.size.medium)
@@ -98,7 +96,7 @@ abstract class OrbText extends StatelessWidget {
         data: text,
         selectable: true,
         styleSheet: OrbTheme.of(context).markdownStyleSheet,
-        onTapLink: (String text, String? url, String title) async {
+        onTapLink: (text, url, title) async {
           await OrbUrl(url!).tryLaunch(context);
         },
         inlineSyntaxes: [if (markdown.contains('breaks')) OrbLineBreakSyntax()],
@@ -111,18 +109,20 @@ abstract class OrbText extends StatelessWidget {
 
 class OrbTextSelf extends OrbText {
   @protected
-  OrbTextSelf({
+  const OrbTextSelf({
     required OrbEvent event,
     required String text,
     required bool isSelfEvent,
     required OrbUserAvatar? userAvatar,
     List<dynamic>? markdownDefault,
+    Key? key,
   }) : super._(
           event: event,
           text: text,
           isSelfEvent: isSelfEvent,
           userAvatar: userAvatar,
           markdownDefault: markdownDefault,
+          key: key,
         );
 
   @override
@@ -157,18 +157,20 @@ class OrbTextSelf extends OrbText {
 
 class OrbTextOther extends OrbText {
   @protected
-  OrbTextOther({
+  const OrbTextOther({
     required OrbEvent event,
     required String text,
     required bool isSelfEvent,
     required OrbUserAvatar? userAvatar,
     List<dynamic>? markdownDefault,
+    Key? key,
   }) : super._(
           event: event,
           text: text,
           isSelfEvent: isSelfEvent,
           userAvatar: userAvatar,
           markdownDefault: markdownDefault,
+          key: key,
         );
 
   @override
@@ -207,12 +209,14 @@ class OrbTextInfo extends OrbText {
   OrbTextInfo({
     required OrbEvent event,
     required List<dynamic>? markdown,
+    Key? key,
   }) : super._(
           event: event,
-          text: event.data["info"],
+          text: event.data['info'],
           isSelfEvent: false,
           userAvatar: null,
           markdownDefault: markdown,
+          key: key,
         );
 
   @override
@@ -226,14 +230,16 @@ class OrbTextInfo extends OrbText {
     );
   }
 
+  @override
   EdgeInsetsGeometry buildPadding(BuildContext context) {
     return EdgeInsets.symmetric(
-        horizontal: OrbTheme.of(context).lengths.medium);
+      horizontal: OrbTheme.of(context).lengths.medium,
+    );
   }
 
   @override
   BoxDecoration buildBoxDecoration(BuildContext context) {
-    return BoxDecoration();
+    return const BoxDecoration();
   }
 }
 

@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
 
-import 'package:orb/ui/design.dart';
+import 'package:orb/design.dart';
 
-class Label extends StatelessWidget {
+class OrbLabel extends StatelessWidget {
   final String label;
   final bool required;
   final bool disabled;
   final bool focus;
   final bool invalid;
 
-  Label({
+  const OrbLabel({
     required this.label,
     required this.required,
     required this.disabled,
     required this.focus,
     required this.invalid,
-  });
+    Key? key,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

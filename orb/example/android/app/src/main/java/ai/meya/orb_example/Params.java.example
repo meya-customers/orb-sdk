@@ -3,4 +3,5 @@ package ai.meya.orb_example;
 public class Params {
     public static final String GRID_URL = "https://grid.meya.ai";
     public static final String APP_ID = "app-73c6d31d4f544a72941e21fb518b5737";
+    public static final String INTEGRATION_ID = "integration.orb.mobile";
 }

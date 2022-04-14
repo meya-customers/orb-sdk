@@ -7,6 +7,7 @@ import 'package:orb/ui/card/choice_input.dart';
 import 'package:orb/ui/card/file.dart';
 import 'package:orb/ui/card/image.dart';
 import 'package:orb/ui/card/rating.dart';
+import 'package:orb/ui/card/status.dart';
 import 'package:orb/ui/card/text_input.dart';
 import 'package:orb/ui/page.dart';
 
@@ -55,11 +56,12 @@ class OrbEventStream {
     final getEventText = _createGetEventText(events);
     final isHiddenEvent = _createIsHiddenEvent();
     final fieldEvents = _createFieldEvents(events);
-    final isVisibleEvent = _createIsVisibleEvent(getEventText, fieldEvents);
     final isInvisibleEvent = _createIsInvisibleEvent();
     final isActiveEvent = _createIsActiveEvent(events, isInvisibleEvent);
+    final isVisibleEvent =
+        _createIsVisibleEvent(getEventText, fieldEvents, isActiveEvent);
     final isAttributionEvent = _createIsAttributionEvent();
-    final quickRepliesEvent = _createQuickRepliesEvent(events, isHiddenEvent);
+    final quickRepliesEvent = _createQuickRepliesEvent(events);
     final typingOnEvent =
         _createTypingOnEvent(events, isInvisibleEvent, isSelfEvent);
     final pageEvent = _createPageEvent(events, isHiddenEvent, isInvisibleEvent);
@@ -87,7 +89,7 @@ class OrbEventStream {
   }
 
   static List<OrbEvent> _sortAndRemoveDuplicates(List<OrbEvent> events) {
-    var sortedEvents = events.toList();
+    final sortedEvents = events.toList();
     sortedEvents.sort((a, b) => b.compareTo(a));
     final ids = sortedEvents.map((e) => e.id).toSet();
     sortedEvents.retainWhere((e) => ids.remove(e.id));
@@ -96,7 +98,7 @@ class OrbEventStream {
 
   void preProcessEvents() {
     String? otherUserId;
-    OrbEvent? otherUserEvent = null;
+    OrbEvent? otherUserEvent;
     for (final event in events) {
       final isVisible = isVisibleEvent(event);
       final isSelfEvent = this.isSelfEvent(event);
@@ -129,8 +131,7 @@ class OrbEventStream {
       events.map((e) => e.toEventMap()).toList();
 
   static bool Function(OrbEvent event) _createIsSelfEvent(String? gridUserId) {
-    return (OrbEvent event) =>
-        gridUserId != '' && event.data['user_id'] == gridUserId;
+    return (event) => gridUserId != '' && event.data['user_id'] == gridUserId;
   }
 
   static bool Function(OrbEvent event) _createIsHiddenEvent() {
@@ -144,34 +145,36 @@ class OrbEventStream {
   }
 
   static bool Function(OrbEvent event) _createIsVisibleEvent(
-      String? Function(OrbEvent event) getEventText,
-      Map<String, OrbEvent> fieldEvents) {
+    String? Function(OrbEvent event) getEventText,
+    Map<String, OrbEvent> fieldEvents,
+    bool Function(OrbEvent event) isActiveEvent,
+  ) {
     return (event) {
       switch (event.type) {
-        case "meya.button.event.ask":
+        case 'meya.button.event.ask':
           return OrbAskButtons.isVisible(event);
-        case "meya.file.event":
+        case 'meya.file.event':
           return OrbFile.isVisible(event);
-        case "meya.form.event.ask":
+        case 'meya.form.event.ask':
           return OrbAskForm.isVisible(event);
-        case "meya.image.event":
+        case 'meya.image.event':
           return OrbImage.isVisible(event);
-        case "meya.orb.event.hero":
+        case 'meya.orb.event.hero':
           return true;
-        case "meya.text.event.info":
+        case 'meya.text.event.info':
           return true;
-        case "meya.text.event.input":
+        case 'meya.text.event.input':
           return OrbTextInput.isVisible(event, fieldEvents);
-        case "meya.text.event.status":
-          return true;
-        case "meya.tile.event.ask":
+        case 'meya.text.event.status':
+          return OrbStatus.isVisible(event, isActiveEvent);
+        case 'meya.tile.event.ask':
           return OrbAskTiles.isVisible(event);
-        case "meya.tile.event.choice":
+        case 'meya.tile.event.choice':
           return OrbChoiceInput.isVisible(event, fieldEvents);
-        case "meya.tile.event.rating":
+        case 'meya.tile.event.rating':
           return OrbRating.isVisible(event);
         default:
-          return (getEventText(event) ?? "") != "";
+          return (getEventText(event) ?? '') != '';
       }
     };
   }
@@ -204,22 +207,27 @@ class OrbEventStream {
         break;
       }
     }
-    return (OrbEvent event) => event.id == activeId;
+    return (event) => event.id == activeId;
   }
 
   static String? Function(OrbEvent) _createGetEventText(List<OrbEvent> events) {
     final quickReplyButtons = {};
+    var firstQuickReplies = true;
     for (final event in events) {
       final quickReplies = event.data['quick_replies'];
       if (quickReplies != null) {
-        for (final button in quickReplies) {
-          if (button.containsKey('button_id') != null) {
-            quickReplyButtons[button['button_id']] = button['text'];
+        if (firstQuickReplies) {
+          firstQuickReplies = false;
+        } else {
+          for (final Map<dynamic, dynamic> button in quickReplies) {
+            if (button.containsKey('button_id')) {
+              quickReplyButtons[button['button_id']] = button['text'];
+            }
           }
         }
       }
     }
-    return (OrbEvent event) {
+    return (event) {
       if ([
         'meya.button.event.click',
         'meya.widget.event.field.button_click',
@@ -233,21 +241,14 @@ class OrbEventStream {
   }
 
   static bool Function(OrbEvent) _createIsAttributionEvent() {
-    return (OrbEvent event) => ![
-          'meya.text.event.info',
-          'meya.text.event.status'
-        ].contains(event.type);
+    return (event) => !['meya.text.event.info', 'meya.text.event.status']
+        .contains(event.type);
   }
 
-  static OrbEvent? _createQuickRepliesEvent(
-    List<OrbEvent> events,
-    bool Function(OrbEvent event) isHiddenEvent,
-  ) {
+  static OrbEvent? _createQuickRepliesEvent(List<OrbEvent> events) {
     for (final event in events) {
       final List? quickReplies = event.data['quick_replies'];
-      if (isHiddenEvent(event)) {
-        break;
-      } else if (quickReplies != null) {
+      if (quickReplies != null) {
         return event;
       }
     }
@@ -255,9 +256,10 @@ class OrbEventStream {
   }
 
   static OrbEvent? _createTypingOnEvent(
-      List<OrbEvent> events,
-      bool Function(OrbEvent event) isInvisibleEvent,
-      bool Function(OrbEvent event) isSelfEvent) {
+    List<OrbEvent> events,
+    bool Function(OrbEvent event) isInvisibleEvent,
+    bool Function(OrbEvent event) isSelfEvent,
+  ) {
     for (final event in events) {
       final isInvisible = isInvisibleEvent(event);
       final isSelf = isSelfEvent(event);
@@ -327,9 +329,9 @@ class OrbEventStream {
   static Map<String, OrbEvent> _createFieldEvents(List<OrbEvent> events) {
     final Map<String, OrbEvent> fieldEvents = {};
     for (final event in events) {
-      if (["meya.text.event.input", "meya.tile.event.choice"]
+      if (['meya.text.event.input', 'meya.tile.event.choice']
           .contains(event.type)) {
-        final String fieldId = event.data["field_id"];
+        final String fieldId = event.data['field_id'];
         if (fieldEvents[fieldId] == null) {
           fieldEvents[fieldId] = event;
         }

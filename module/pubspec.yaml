@@ -2,7 +2,7 @@ name: orb_module
 description: |
   A Flutter module to integrate the Orb Mobile SDK into an existing Android or
   iOS app.
-version: 2.7.6
+version: 2.7.7
 
 # Don't publish to pub.dev using `pub publish`.
 publish_to: none

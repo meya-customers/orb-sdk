@@ -1,10 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
-import 'dart:math';
+import 'dart:math' as math;
 import 'dart:ui';
-
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -35,7 +34,7 @@ class ConnectionOptions {
   final String? referrer;
   final String? deviceId;
   final String? deviceToken;
-  void Function(Map<dynamic, dynamic>?, Function)? onFirstConnect;
+  void Function(Map<dynamic, dynamic>?, void Function())? onFirstConnect;
   final bool? enableCloseButton;
 
   ConnectionOptions({
@@ -57,190 +56,219 @@ class ConnectionOptions {
   });
 }
 
-class OrbConnection extends ChangeNotifier {
-  OrbConfig orbConfig;
-  String gridUrl;
-  String blobUrl;
-  String appId;
-  String integrationId;
-  Map<dynamic, dynamic>? pageContext;
-  String? gridUserId;
-  String? userId;
-  String? threadId;
-  String? sessionToken;
-  String? magicLinkId;
-  String? url;
-  String? referrer;
-  String? deviceId;
-  String? deviceToken;
-  void Function(Map<dynamic, dynamic>?, Function)? onFirstConnect;
-  bool? enableCloseButton;
+class OrbConnection {
+  final String _url;
+  final String _blobUrl;
+  final Map<dynamic, dynamic>? _pageContext;
+  final String? _initialThreadId;
+  final String? _pageUrl;
+  final String? _referrer;
+  final String? _deviceId;
+  final String? _deviceToken;
+  final void Function(Map<dynamic, dynamic>?, void Function())? _onFirstConnect;
+  final bool? _enableCloseButton;
+  final EventEmitter _eventEmitter = EventEmitter();
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
-  bool firstConnect = true;
-  bool reconnect = false;
-  int retries = 0;
-
+  String? _gridUserId;
+  String? _userId;
+  String? _threadId;
+  String? _sessionToken;
+  String? _magicLinkId;
+  bool _firstConnect = true;
+  Map<dynamic, dynamic>? _configData;
+  bool _reconnectOnSocketClose = false;
+  int _retries = 0;
   Timer? _heartbeatTimer;
   Timer? _timer;
   bool _connected = false;
   WebSocketChannel? _channel;
-  EventEmitter _eventEmitter = EventEmitter();
   OrbEventStream _eventStream = OrbEventStream();
-  FlutterSecureStorage _storage = FlutterSecureStorage();
+  OrbMediaUploadConfigResult _mediaUpload;
   AppLifecycleState _deviceState;
 
   OrbConnection({
-    required this.orbConfig,
     required ConnectionOptions options,
+    required OrbMediaUploadConfigResult mediaUpload,
     AppLifecycleState? deviceState,
-  })  : gridUrl = options.gridUrl,
-        blobUrl = '${options.gridUrl}/gateway/v2/blob/${options.appId}/blob',
-        appId = options.appId,
-        integrationId = options.integrationId,
-        pageContext = options.pageContext,
-        gridUserId = options.gridUserId,
-        userId = options.userId,
-        threadId = options.threadId,
-        sessionToken = options.sessionToken,
-        magicLinkId = options.magicLinkId,
-        url = options.url,
-        referrer = options.referrer,
-        deviceId = options.deviceId,
-        deviceToken = options.deviceToken,
-        onFirstConnect = options.onFirstConnect,
-        enableCloseButton = options.enableCloseButton,
+  })  : _mediaUpload = mediaUpload,
+        _url =
+            '${options.gridUrl}/gateway/v2/orb_mobile/${options.appId}/${options.integrationId}',
+        _blobUrl = '${options.gridUrl}/gateway/v2/blob/${options.appId}/blob',
+        _pageContext = options.pageContext,
+        _gridUserId = options.gridUserId,
+        _userId = options.userId,
+        _threadId = options.threadId,
+        _initialThreadId = options.threadId,
+        _sessionToken = options.sessionToken,
+        _magicLinkId = options.magicLinkId,
+        _pageUrl = options.url,
+        _referrer = options.referrer,
+        _deviceId = options.deviceId,
+        _deviceToken = options.deviceToken,
+        _onFirstConnect = options.onFirstConnect,
+        _enableCloseButton = options.enableCloseButton,
         _deviceState = deviceState ?? AppLifecycleState.resumed;
 
-  MediaUploadConfigResult get mediaUpload =>
-      MediaUploadConfigResult.resolve(orbConfig.mediaUpload);
   bool get connected => _connected;
+
+  bool get enableCloseButton => _enableCloseButton != false;
 
   AppLifecycleState get deviceState => _deviceState;
 
   set deviceState(AppLifecycleState state) {
     _deviceState = state;
     if (connected) {
-      publishEvent(OrbEvent.createDeviceStateEvent(
-        deviceId: deviceId,
-        deviceState: deviceState,
-      ));
+      publishEvent(
+        OrbEvent.createDeviceStateEvent(
+          deviceId: _deviceId,
+          deviceState: deviceState,
+        ),
+      );
     }
   }
 
-  void addOrbListener(String type, Function(Map<String, dynamic>) listener) =>
+  void addOrbListener(String type, Function listener) =>
       _eventEmitter.on(type, listener);
 
-  void removeOrbListener(
-          String type, Function(Map<String, dynamic>) listener) =>
+  void removeOrbListener(String type, Function listener) =>
       _eventEmitter.off(type, listener);
 
-  Future<void> connect() async {
-    userId = userId ?? await _storage.read(key: "orbUserId");
-    threadId = threadId ??
-        await _storage.read(key: "orbThreadId") ??
-        OrbUtil.generateOrbIntegrationId();
-    sessionToken = await _storage.read(key: "orbSessionToken");
+  Future<void> getConfig() async {
+    final Map<String, dynamic> queryParams = {};
+    const cacheSeconds = 60;
+    queryParams['timestamp'] =
+        ((DateTime.now().millisecondsSinceEpoch / 1000 / cacheSeconds).floor() *
+                cacheSeconds)
+            .toString();
+    final configUrl = Uri.parse('$_url/config').replace(
+      queryParameters: queryParams,
+    );
+    final response = await http.get(configUrl);
+    if (response.statusCode == 200) {
+      _receiveAllConfig(configData: jsonDecode(response.body), partial: false);
+    } else {
+      throw Exception('Invalid config status ${response.statusCode}');
+    }
+  }
 
-    Uri url = Uri.parse('$gridUrl/gateway/v2/orb/$appId/$integrationId');
-    Map<String, dynamic> queryParams = {};
-    if (userId != null) {
-      queryParams['user_id'] = userId!;
+  Future<void> connect() async {
+    _userId = _userId ?? await _storage.read(key: 'orbUserId');
+    _threadId = _threadId ??
+        await _storage.read(key: 'orbThreadId') ??
+        OrbUtil.generateOrbIntegrationId();
+    _sessionToken = await _storage.read(key: 'orbSessionToken');
+
+    final Map<String, dynamic> queryParams = {};
+    if (_userId != null) {
+      queryParams['user_id'] = _userId!;
     }
-    queryParams['thread_id'] = threadId;
-    if (sessionToken != null) {
-      queryParams['session_token'] = sessionToken!;
+    queryParams['thread_id'] = _threadId;
+    if (_sessionToken != null) {
+      queryParams['session_token'] = _sessionToken!;
     }
-    if (magicLinkId != null && firstConnect) {
-      queryParams['magic_link_id'] = magicLinkId!;
+    if (_magicLinkId != null && _firstConnect) {
+      queryParams['magic_link_id'] = _magicLinkId!;
     }
     queryParams['version'] = await version();
-    url = url.replace(
-      scheme: "wss",
-      host: url.host,
-      port: url.port,
-      path: url.path,
+    final socketUrl = Uri.parse(_url).replace(
+      scheme: 'wss',
       queryParameters: queryParams,
     );
 
-    _channel = IOWebSocketChannel.connect(url.toString());
+    _channel = IOWebSocketChannel.connect(socketUrl.toString());
     _connected = false;
-    reconnect = true;
+    _reconnectOnSocketClose = true;
 
     final timeoutInterval = _getTimeoutInterval();
     _timer = Timer(timeoutInterval, () {
-      print('TIMEOUT $timeoutInterval');
+      log('TIMEOUT $timeoutInterval');
       _channel!.sink.close();
     });
 
-    print("Listening $_channel");
+    log('Listening $_channel');
     _channel!.stream.listen(
       (streamEvent) {
-        final payload = deserialize(streamEvent);
-        if (payload["type"] == "meya.orb.entry.ws.connected_request") {
+        final Map<dynamic, dynamic> wsEntry = deserialize(streamEvent);
+        final Map<dynamic, dynamic> wsEntryData = wsEntry['data'];
+        if (wsEntry['type'] == 'meya.orb.entry.ws.connected_request') {
           _timer?.cancel();
-          final gridVersion = payload['data']['grid_version'];
-          print("CONNECTED grid-v$gridVersion");
+          final gridVersion = wsEntryData['grid_version'];
+          log('CONNECTED grid-v$gridVersion');
           _eventEmitter.emit('connected', {});
 
-          gridUserId = payload['data']['grid_user_id'];
-          userId = payload['data']['user_id'];
-          sessionToken = payload['data']['session_token'];
+          _gridUserId = wsEntryData['grid_user_id'];
+          _userId = wsEntryData['user_id'];
+          _sessionToken = wsEntryData['session_token'];
 
-          _storage.write(key: "orbUserId", value: userId);
-          _storage.write(key: "orbThreadId", value: threadId);
-          _storage.write(key: "orbSessionToken", value: sessionToken);
+          _storage
+            ..write(key: 'orbUserId', value: _userId)
+            ..write(key: 'orbThreadId', value: _threadId)
+            ..write(key: 'orbSessionToken', value: _sessionToken);
 
           final List<OrbEvent> historyEvents =
-              (payload['data']['history_events'] ?? [])
+              (wsEntryData['history_events'] as List<dynamic>? ?? [])
                   .map<OrbEvent>((eventMap) => OrbEvent.fromEventMap(eventMap))
                   .toList();
-          final historyUserData = (payload['data']['history_user_data'] ?? {})
+          final historyUserData = (wsEntryData['history_user_data']
+                      as Map<dynamic, dynamic>? ??
+                  {})
               .map((key, value) => MapEntry(key, OrbUserData.fromMap(value)))
               .cast<String, OrbUserData>();
 
           _connected = true;
 
-          if (deviceToken != null) {
-            publishEvent(OrbEvent.createDeviceConnectEvent(
-              deviceId: deviceId,
-              deviceToken: deviceToken,
-              deviceState: deviceState,
-            ));
-          }
-
-          final heartbeatIntervalSeconds =
-              payload['data']['heartbeat_interval_seconds'];
-          _startHeartbeat(heartbeatIntervalSeconds);
-
-          final firstConnect = this.firstConnect;
-          if (firstConnect) {
-            this.firstConnect = false;
-            final onFirstConnect =
-                this.onFirstConnect ?? (data, next) => next();
-            onFirstConnect(
-              payload['data'],
-              () => _onFirstConnect(payload['data']),
+          if (_deviceToken != null) {
+            publishEvent(
+              OrbEvent.createDeviceConnectEvent(
+                deviceId: _deviceId,
+                deviceToken: _deviceToken,
+                deviceState: deviceState,
+              ),
             );
           }
 
-          _receiveAll(
+          final heartbeatIntervalSeconds =
+              wsEntryData['heartbeat_interval_seconds'];
+          _startHeartbeat(heartbeatIntervalSeconds);
+
+          final firstConnect = _firstConnect;
+          if (firstConnect) {
+            _firstConnect = false;
+            final onFirstConnect = _onFirstConnect ?? (data, next) => next();
+            onFirstConnect(
+              wsEntryData,
+              () => _onBaseFirstConnect(wsEntryData),
+            );
+          }
+
+          _receiveAllConfig(
+            configData: wsEntryData['config'] ?? {},
+            partial: false,
+          );
+          _receiveAllEvents(
             receiveBuffer: historyEvents,
             userData: historyUserData,
             emit: () => _eventEmitter.emit(
               firstConnect ? 'firstConnect' : 'reconnect',
-              {'eventStream': _eventStream},
+              {#eventStream: _eventStream},
             ),
           );
-
-          notifyListeners();
-        } else if (payload["type"] == "meya.orb.entry.ws.publish_request") {
-          final eventMap = payload["data"]["event"];
+        } else if (wsEntry['type'] == 'meya.orb.entry.ws.config_request') {
+          _receiveAllConfig(
+            configData: {wsEntryData['key']: wsEntryData['value']},
+            partial: true,
+          );
+        } else if (wsEntry['type'] == 'meya.orb.entry.ws.publish_request') {
+          final eventMap = wsEntryData['event'];
           final event = OrbEvent.fromEventMap(eventMap);
-          final userData = (payload["data"]["user_data"] ?? {})
+          final userData = (wsEntryData['user_data']
+                      as Map<dynamic, dynamic>? ??
+                  {})
               .map((key, value) => MapEntry(key, OrbUserData.fromMap(value)))
               .cast<String, OrbUserData>();
 
-          _receiveAll(
+          _receiveAllEvents(
             receiveBuffer: [event],
             userData: <String, OrbUserData>{
               ..._eventStream.userData,
@@ -248,22 +276,20 @@ class OrbConnection extends ChangeNotifier {
             },
             emit: () => _eventEmitter.emit(
               'event',
-              {'event': event, 'eventStream': _eventStream},
+              {#event: event, #eventStream: _eventStream},
             ),
           );
-          notifyListeners();
         }
       },
       onDone: () {
-        print("DONE");
+        log('DONE');
         _timer?.cancel();
         _heartbeatTimer?.cancel();
         _connected = false;
         _reconnect();
-        notifyListeners();
       },
       onError: (error, stackTrace) {
-        print('ERROR $error');
+        log('ERROR $error');
         _timer?.cancel();
         _heartbeatTimer?.cancel();
       },
@@ -272,17 +298,19 @@ class OrbConnection extends ChangeNotifier {
 
   void disconnect({bool logOut = false}) {
     if (logOut) {
-      gridUserId = null;
-      userId = null;
-      sessionToken = null;
-      magicLinkId = null;
+      _gridUserId = null;
+      _userId = null;
+      _threadId = _initialThreadId;
+      _sessionToken = null;
+      _magicLinkId = null;
       _storage.deleteAll();
-      firstConnect = true;
+      _firstConnect = true;
+      _configData = null;
       _eventStream = OrbEventStream();
-      _eventEmitter.emit('eventStream', {'eventStream': _eventStream});
+      _eventEmitter.emit('eventStream', {#eventStream: _eventStream});
     }
-    reconnect = false;
-    retries = 0;
+    _reconnectOnSocketClose = false;
+    _retries = 0;
     _timer?.cancel();
     _heartbeatTimer?.cancel();
     _channel?.sink.close();
@@ -299,21 +327,34 @@ class OrbConnection extends ChangeNotifier {
       'data': {
         'request_id': OrbUtil.uuid4Hex(),
         'event': eventMap,
-        'thread_id': this.threadId,
+        'thread_id': _threadId,
       }
     };
     _channel?.sink.add(serialize(payloadMap));
+  }
+
+  Map<dynamic, dynamic>? getConfigData() {
+    return _configData;
   }
 
   OrbEventStream getEventStream() {
     return _eventStream;
   }
 
-  void _onFirstConnect(Map<dynamic, dynamic> connectData) {
+  void setMediaUpload(OrbMediaUploadConfigResult mediaUpload) {
+    _mediaUpload = mediaUpload;
+  }
+
+  void _onBaseFirstConnect(Map<dynamic, dynamic> connectData) {
     publishEvent(
-        OrbEvent.createPageOpenEvent(url, referrer, null, pageContext));
+      OrbEvent.createPageOpenEvent(
+        _pageUrl,
+        _referrer,
+        pageContext: _pageContext,
+      ),
+    );
     if (connectData.containsKey('magic_link_event')) {
-      this.publishEvent(OrbEvent.fromEventMap(connectData['magic_link_event']));
+      publishEvent(OrbEvent.fromEventMap(connectData['magic_link_event']));
     }
   }
 
@@ -323,11 +364,15 @@ class OrbConnection extends ChangeNotifier {
       _heartbeatTimer = Timer.periodic(
         Duration(seconds: heartbeatIntervalSeconds),
         (timer) {
-          if (deviceState != AppLifecycleState.resumed) return;
-          print('HEARTBEAT $deviceId');
-          publishEvent(OrbEvent.createDeviceHeartbeatEvent(
-            deviceId: deviceId,
-          ));
+          if (deviceState != AppLifecycleState.resumed) {
+            return;
+          }
+          log('HEARTBEAT $_deviceId');
+          publishEvent(
+            OrbEvent.createDeviceHeartbeatEvent(
+              deviceId: _deviceId,
+            ),
+          );
         },
       );
     }
@@ -335,44 +380,62 @@ class OrbConnection extends ChangeNotifier {
 
   void _reconnect() async {
     final retryInterval = _getRetryTimeoutInterval();
-    print('RETRYING $retries $retryInterval');
+    log('RETRYING $_retries $retryInterval');
     await Future.delayed(retryInterval);
 
-    if (!reconnect) {
-      print('Retry cancelled.');
+    if (!_reconnectOnSocketClose) {
+      log('Retry cancelled.');
       return;
     }
 
-    retries++;
+    _retries++;
     connect();
   }
 
-  Duration _getTimeoutInterval() => Duration(milliseconds: 3000);
+  Duration _getTimeoutInterval() => const Duration(milliseconds: 3000);
 
   Duration _getRetryTimeoutInterval() {
-    final base = 10;
-    final variance = Random().nextDouble() * 0.2 + 0.9;
-    final backoff = pow(2, retries);
+    const base = 10;
+    final variance = math.Random().nextDouble() * 0.2 + 0.9;
+    final backoff = math.pow(2, _retries);
     return Duration(
       milliseconds: (base * variance * backoff).toInt(),
     );
   }
 
-  void _receiveAll({
+  void _receiveAllConfig({
+    required Map<dynamic, dynamic> configData,
+    required bool partial,
+  }) {
+    if (!partial) {
+      _configData = configData;
+    } else if (_configData != null) {
+      _configData = {
+        ..._configData!,
+        ...configData,
+      };
+    } else {
+      return;
+    }
+    _eventEmitter.emit('config', {#configData: _configData!});
+  }
+
+  void _receiveAllEvents({
     required List<OrbEvent> receiveBuffer,
     required Map<String, OrbUserData> userData,
-    required Function emit,
+    required void Function() emit,
   }) {
-    final newEventStream = OrbEventStream(gridUserId: gridUserId, events: [
-      ...receiveBuffer,
-      ..._eventStream.events
-    ], userData: <String, OrbUserData>{
-      ..._eventStream.userData,
-      ...userData,
-    });
+    final newEventStream = OrbEventStream(
+      gridUserId: _gridUserId,
+      events: [...receiveBuffer, ..._eventStream.events],
+      userData: <String, OrbUserData>{
+        ..._eventStream.userData,
+        ...userData,
+      },
+    );
     if (newEventStream.events.length != _eventStream.events.length) {
       _eventStream = newEventStream;
-      _eventEmitter.emit('eventStream', {'eventStream': _eventStream});
+      _eventEmitter.emit('eventStream', {#eventStream: _eventStream});
       emit();
     }
   }
@@ -382,9 +445,9 @@ class OrbConnection extends ChangeNotifier {
     final body = await blob.readAsBytes();
 
     final response = await http.post(
-      Uri.parse(blobUrl),
+      Uri.parse(_blobUrl),
       headers: {
-        "Content-Type": mimeType!,
+        'Content-Type': mimeType!,
       },
       body: body,
     );
@@ -392,20 +455,20 @@ class OrbConnection extends ChangeNotifier {
       throw Exception('Upload error');
     }
     final blobId = response.body;
-    return Uri.parse('$blobUrl/$blobId');
+    return Uri.parse('$_blobUrl/$blobId');
   }
 
   Future<void> postBlobAndPublishEvent(File blob) async {
     final mimeType = lookupMimeType(blob.path);
     OrbEvent event;
     if (mimeType != null && mimeType.startsWith('image/')) {
-      if (!mediaUpload.image) {
+      if (!_mediaUpload.image) {
         return;
       }
       final url = await postBlob(blob);
       event = OrbEvent.createImageEvent(url.toString(), p.basename(blob.path));
     } else {
-      if (!mediaUpload.file) {
+      if (!_mediaUpload.file) {
         return;
       }
       final url = await postBlob(blob);

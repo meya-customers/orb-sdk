@@ -1,32 +1,36 @@
 import 'package:flutter/material.dart';
 
+import 'package:orb/design.dart';
 import 'package:orb/event_stream.dart';
-import 'package:orb/ui/design.dart';
 import 'package:orb/ui/presence/user_avatar.dart';
 
 abstract class OrbUserName extends StatelessWidget {
   final OrbEventStream eventStream;
   final String? userId;
 
-  OrbUserName._({
+  const OrbUserName._({
     required this.eventStream,
     required this.userId,
-  });
+    Key? key,
+  }) : super(key: key);
 
   factory OrbUserName({
     required OrbEventStream eventStream,
     required userId,
     required bool isSelfEvent,
+    Key? key,
   }) {
     if (isSelfEvent) {
       return OrbUserNameSelf._(
         eventStream: eventStream,
         userId: userId,
+        key: key,
       );
     } else {
       return OrbUserNameOther._(
         eventStream: eventStream,
         userId: userId,
+        key: key,
       );
     }
   }
@@ -37,7 +41,7 @@ abstract class OrbUserName extends StatelessWidget {
 
     return Container(
       margin: EdgeInsets.only(
-        top: OrbTheme.of(context).lengths.large,
+        bottom: OrbTheme.of(context).lengths.small,
         left: OrbTheme.of(context).lengths.small,
       ),
       child: Text(
@@ -62,27 +66,31 @@ abstract class OrbUserName extends StatelessWidget {
 }
 
 class OrbUserNameSelf extends OrbUserName {
-  OrbUserNameSelf._({
+  const OrbUserNameSelf._({
     required OrbEventStream eventStream,
     required userId,
+    Key? key,
   }) : super._(
           eventStream: eventStream,
           userId: userId,
+          key: key,
         );
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox.shrink();
+    return const SizedBox.shrink();
   }
 }
 
 class OrbUserNameOther extends OrbUserName {
-  OrbUserNameOther._({
+  const OrbUserNameOther._({
     required OrbEventStream eventStream,
     required userId,
+    Key? key,
   }) : super._(
           eventStream: eventStream,
           userId: userId,
+          key: key,
         );
 
   @override

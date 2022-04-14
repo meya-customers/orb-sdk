@@ -2,12 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'package:separated_column/separated_column.dart';
+
 import 'package:orb/connection.dart';
+import 'package:orb/design.dart';
 import 'package:orb/event.dart';
 import 'package:orb/event_stream.dart';
 import 'package:orb/ui/card/ask_buttons.dart';
 import 'package:orb/ui/card/ask_form.dart';
 import 'package:orb/ui/card/ask_tiles.dart';
+import 'package:orb/ui/card/choice_input.dart';
 import 'package:orb/ui/card/file.dart';
 import 'package:orb/ui/card/image.dart';
 import 'package:orb/ui/card/quick_replies.dart';
@@ -17,20 +21,20 @@ import 'package:orb/ui/card/text.dart';
 import 'package:orb/ui/card/text_input.dart';
 import 'package:orb/ui/card/typing_indicator.dart';
 import 'package:orb/ui/card/widget_mode.dart';
-import 'package:orb/ui/design.dart';
 import 'package:orb/ui/presence/user_avatar.dart';
 import 'package:orb/ui/presence/user_name.dart';
-import 'card/choice_input.dart';
 
 class OrbHistory extends StatefulWidget {
   final OrbEventStream eventStream;
   final OrbConnection connection;
   final ScrollController listScrollController = ScrollController();
+  final bool headerIsTransparent;
 
   OrbHistory({
-    Key? key,
     required this.eventStream,
     required this.connection,
+    required this.headerIsTransparent,
+    Key? key,
   }) : super(key: key);
 
   @override
@@ -45,16 +49,38 @@ class _OrbHistoryState extends State<OrbHistory> {
   @override
   Widget build(BuildContext context) {
     // TODO Keep children alive during scrolling and event stream updates
-    return ListView.builder(
-      padding: EdgeInsets.symmetric(
-        vertical: OrbTheme.of(context).lengths.medium,
-        horizontal: OrbTheme.of(context).lengths.mediumSmall,
+    return ListView.separated(
+      padding: EdgeInsets.only(
+        top: (widget.headerIsTransparent
+                ? MediaQuery.of(context).padding.top
+                : 0) +
+            OrbTheme.of(context).lengths.large,
+        right: OrbTheme.of(context).lengths.mediumSmall,
+        bottom: OrbTheme.of(context).lengths.large,
+        left: OrbTheme.of(context).lengths.mediumSmall,
       ),
+      separatorBuilder: (context, index) => buildSeparator(context, index),
       itemBuilder: (context, index) => buildItem(index),
       itemCount: widget.eventStream.events.length + 1,
       reverse: true,
       controller: widget.listScrollController,
     );
+  }
+
+  Widget buildSeparator(
+    BuildContext context,
+    int index,
+  ) {
+    if (index == 0) {
+      return const SizedBox.shrink();
+    }
+    final event = widget.eventStream.events[index - 1];
+    final isVisible = widget.eventStream.isVisibleEvent(event);
+    if (!isVisible) {
+      return const SizedBox.shrink();
+    } else {
+      return SizedBox(height: OrbTheme.of(context).lengths.large);
+    }
   }
 
   Widget buildItem(int index) {
@@ -64,13 +90,20 @@ class _OrbHistoryState extends State<OrbHistory> {
     final event = widget.eventStream.events[index - 1];
     final isVisible = widget.eventStream.isVisibleEvent(event);
     if (!isVisible) {
-      return SizedBox.shrink();
+      return const SizedBox.shrink();
     } else {
-      return Column(children: [
-        if (event.isFirstInGroup) buildUserName(event),
-        ...[...buildWidgetMode(event, widget.eventStream, widget.connection)]
-            .reversed
-      ]);
+      return SeparatedColumn(
+        children: [
+          if (event.isFirstInGroup) buildUserName(event),
+          ...[...buildWidgetMode(event, widget.eventStream, widget.connection)]
+              .reversed
+        ],
+        separatorBuilder: (context, index) => index == 0 && event.isFirstInGroup
+            ? const SizedBox.shrink()
+            : SizedBox(
+                height: OrbTheme.of(context).lengths.large,
+              ),
+      );
     }
   }
 
@@ -83,8 +116,9 @@ class _OrbHistoryState extends State<OrbHistory> {
             key: Key(
               'quick_replies_${widget.eventStream.quickRepliesEvent!.id}',
             ),
-            connection: widget.connection,
             event: widget.eventStream.quickRepliesEvent!,
+            eventStream: widget.eventStream,
+            connection: widget.connection,
           ),
         if (widget.eventStream.typingOnEvent != null &&
             widget.eventStream.typingOnEvent!.id != hideTypingEventId)
@@ -103,10 +137,12 @@ class _OrbHistoryState extends State<OrbHistory> {
     final typingOnEventId = widget.eventStream.typingOnEvent?.id;
 
     for (final event in widget.eventStream.events) {
-      if (processedTypingEvents.containsKey(event.id)) return;
+      if (processedTypingEvents.containsKey(event.id)) {
+        return;
+      }
 
       final isSelf = widget.eventStream.isSelfEvent(event);
-      if (event.type == "meya.presence.event.typing.on" && !isSelf) {
+      if (event.type == 'meya.presence.event.typing.on' && !isSelf) {
         expireTypingEventTimer?.cancel();
         expireTypingEventTimer = Timer(
           getTypingOnInterval(),
@@ -116,7 +152,7 @@ class _OrbHistoryState extends State<OrbHistory> {
         );
       }
 
-      if (event.type == "meya.presence.event.typing.off" && !isSelf) {
+      if (event.type == 'meya.presence.event.typing.off' && !isSelf) {
         expireTypingEventTimer?.cancel();
         expireTypingEventTimer = Timer(
           getTypingOffInterval(),
@@ -125,13 +161,13 @@ class _OrbHistoryState extends State<OrbHistory> {
           }),
         );
       }
-      processedTypingEvents[event.id ?? "-"] = true;
+      processedTypingEvents[event.id ?? '-'] = true;
     }
   }
 
-  Duration getTypingOnInterval() => Duration(seconds: 10);
+  Duration getTypingOnInterval() => const Duration(seconds: 10);
 
-  Duration getTypingOffInterval() => Duration(milliseconds: 100);
+  Duration getTypingOffInterval() => const Duration(milliseconds: 100);
 
   Widget buildUserName(OrbEvent event) {
     final userId = event.data['user_id'];
@@ -145,7 +181,7 @@ class _OrbHistoryState extends State<OrbHistory> {
   void scroll() {
     widget.listScrollController.animateTo(
       0.0,
-      duration: Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 300),
       curve: Curves.easeOut,
     );
   }
@@ -162,26 +198,29 @@ Iterable<Widget> buildWidgetMode(
 
   var onlyText = false;
   final text = eventStream.getEventText(event) ?? '';
-  var userAvatar = (event.showAvatar
+  final userAvatar = event.showAvatar
       ? OrbUserAvatar.fromEvent(
           eventStream: eventStream,
           event: event,
         )
-      : null);
+      : null;
 
   switch (event.type) {
     case 'meya.button.event.ask':
       yield OrbAskButtons(
-          event: event,
-          connection: connection,
-          userAvatar: userAvatar,
-          mode: OrbWidgetMode.standalone,
-          controller: null,
-          disabled: null);
+        event: event,
+        eventStream: eventStream,
+        connection: connection,
+        userAvatar: userAvatar,
+        mode: OrbWidgetMode.standalone,
+        controller: null,
+        disabled: null,
+      );
       break;
     case 'meya.form.event.ask':
       yield OrbAskForm(
         event: event,
+        eventStream: eventStream,
         connection: connection,
         userAvatar: userAvatar,
       );
@@ -189,13 +228,15 @@ Iterable<Widget> buildWidgetMode(
     case 'meya.tile.event.ask':
       yield OrbAskTiles(
         event: event,
+        eventStream: eventStream,
         connection: connection,
         userAvatar: userAvatar,
       );
       break;
-    case "meya.tile.event.choice":
+    case 'meya.tile.event.choice':
       yield OrbChoiceInput(
         event: event,
+        eventStream: eventStream,
         connection: connection,
         userAvatar: userAvatar,
         mode: OrbWidgetMode.standalone,
@@ -222,16 +263,18 @@ Iterable<Widget> buildWidgetMode(
     case 'meya.tile.event.rating':
       yield OrbRating(
         event: event,
+        eventStream: eventStream,
         connection: connection,
         userAvatar: userAvatar,
       );
       break;
     case 'meya.text.event.info':
-      yield OrbTextInfo(event: event, markdown: event.data["markdown"]);
+      yield OrbTextInfo(event: event, markdown: event.data['markdown']);
       break;
     case 'meya.text.event.input':
       yield OrbTextInput(
         event: event,
+        eventStream: eventStream,
         connection: connection,
         userAvatar: userAvatar,
         mode: OrbWidgetMode.standalone,

@@ -2,17 +2,21 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import 'package:orb/design.dart';
 import 'package:orb/event.dart';
 import 'package:orb/event_stream.dart';
 import 'package:orb/ui/avatar.dart';
-import 'package:orb/ui/design.dart';
 import 'package:orb/ui/presence/user_name.dart';
 
 class OrbUserAvatar extends StatelessWidget {
   final OrbEventStream eventStream;
   final String? userId;
 
-  OrbUserAvatar({required this.eventStream, required this.userId});
+  const OrbUserAvatar({
+    required this.eventStream,
+    required this.userId,
+    Key? key,
+  }) : super(key: key);
 
   factory OrbUserAvatar.fromEvent({
     required OrbEventStream eventStream,
@@ -32,7 +36,7 @@ class OrbUserAvatar extends StatelessWidget {
     final avatarCrop = avatar?.crop;
 
     if (avatarImage != null) {
-      return Container(
+      return SizedBox(
         width: OrbTheme.of(context).avatar.width,
         height: OrbTheme.of(context).avatar.height,
         child: _croppedImage(context, avatarImage, avatarCrop),
@@ -91,7 +95,7 @@ class OrbUserAvatar extends StatelessWidget {
   }
 
   static Widget placeholder(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: OrbTheme.of(context).avatar.width,
       height: 0,
     );
@@ -106,7 +110,7 @@ class OrbUserAvatar extends StatelessWidget {
   }) {
     return Container(
       margin: OrbUserAvatar.defaultMargin(context),
-      child: (avatar ?? OrbUserAvatar.placeholder(context)),
+      child: avatar ?? OrbUserAvatar.placeholder(context),
     );
   }
 }
@@ -116,9 +120,9 @@ class BotSemicircle extends StatelessWidget {
   final Color color;
 
   const BotSemicircle({
-    Key? key,
     required this.radius,
     required this.color,
+    Key? key,
   }) : super(key: key);
 
   @override
@@ -137,7 +141,7 @@ class SemicirclePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    Paint paint = Paint()..color = color;
+    final paint = Paint()..color = color;
     canvas.drawArc(
       Rect.fromCenter(
         center: Offset(size.width / 2, 0),

@@ -1,4 +1,5 @@
 struct Params {
    static let gridUrl = "https://grid.meya.ai"
    static let appId = "app-73c6d31d4f544a72941e21fb518b5737"
+   static let integrationId = "integration.orb.mobile"
 }

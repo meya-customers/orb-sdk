@@ -5,9 +5,9 @@ import java.util.Map;
 
 public class OrbTheme {
     public String brandColor;
-    public double backgroundTranslucency = 0.44;
+    public Double backgroundTranslucency;
 
-    public OrbTheme(String brandColor, double backgroundTranslucency) {
+    public OrbTheme(String brandColor, Double backgroundTranslucency) {
         this.brandColor = brandColor;
         this.backgroundTranslucency = backgroundTranslucency;
     }

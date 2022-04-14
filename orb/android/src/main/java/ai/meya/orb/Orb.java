@@ -128,53 +128,69 @@ public class Orb {
 
     public void setOnConnectedListener(Orb.ConnectedListener listener) {
         OrbPlugin plugin = getPlugin(engine);
-        if (plugin == null) return;
+        if (plugin == null) {
+            return;
+        }
         plugin.connectedListener = listener;
     }
 
     public void setOnDisconnectedListener(Orb.DisconnectedListener listener) {
         OrbPlugin plugin = getPlugin(engine);
-        if (plugin == null) return;
+        if (plugin == null) {
+            return;
+        }
         plugin.disconnectedListener = listener;
     }
 
     public void setOnFirstConnectListener(Orb.FirstConnectListener listener) {
         OrbPlugin plugin = getPlugin(engine);
-        if (plugin == null) return;
+        if (plugin == null) {
+            return;
+        }
         plugin.subscribe("firstConnect");
         plugin.firstConnectListener = listener;
     }
 
     public void setOnReconnectListener(Orb.ReconnectListener listener) {
         OrbPlugin plugin = getPlugin(engine);
-        if (plugin == null) return;
+        if (plugin == null) {
+            return;
+        }
         plugin.subscribe("reconnect");
         plugin.reconnectListener = listener;
     }
 
     public void setOnEventListener(Orb.EventListener listener) {
         OrbPlugin plugin = getPlugin(engine);
-        if (plugin == null) return;
+        if (plugin == null) {
+            return;
+        }
         plugin.subscribe("event");
         plugin.eventListener = listener;
     }
 
     public void setOnEventStreamListener(Orb.EventStreamListener listener) {
         OrbPlugin plugin = getPlugin(engine);
-        if (plugin == null) return;
+        if (plugin == null) {
+            return;
+        }
         plugin.subscribe("eventStream");
         plugin.eventStreamListener = listener;
     }
 
     public void setOnCloseUiListener(Orb.CloseUiListener listener) {
         OrbPlugin plugin = getPlugin(engine);
-        if (plugin == null) return;
+        if (plugin == null) {
+            return;
+        }
         plugin.closeUiListener = listener;
     }
 
     @Nullable
     public static OrbPlugin getPlugin(FlutterEngine engine) {
-        if (!checkEngine(engine)) return null;
+        if (!checkEngine(engine)) {
+            return null;
+        }
 
         PluginRegistry registry = engine.getPlugins();
         OrbPlugin plugin = (OrbPlugin) registry.get(OrbPlugin.class);

@@ -253,7 +253,7 @@ packages:
       path: "../orb"
       relative: true
     source: path
-    version: "2.7.6"
+    version: "2.7.7"
   package_info_plus:
     dependency: transitive
     description:

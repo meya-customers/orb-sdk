@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'package:orb/design.dart';
 import 'package:orb/event.dart';
 import 'package:orb/ui/card/widget_mode.dart';
-import 'package:orb/ui/design.dart';
 import 'package:orb/ui/presence/user_avatar.dart';
 
 abstract class OrbImage extends StatelessWidget {
@@ -12,19 +12,21 @@ abstract class OrbImage extends StatelessWidget {
   final bool isSelfEvent;
   final OrbUserAvatar? userAvatar;
 
-  OrbImage._({
+  const OrbImage._({
     required this.event,
     required this.url,
     required this.alt,
     required this.isSelfEvent,
     required this.userAvatar,
-  });
+    Key? key,
+  }) : super(key: key);
 
   factory OrbImage({
     required OrbEvent event,
     required bool isSelfEvent,
     required OrbUserAvatar? userAvatar,
     required OrbWidgetMode mode,
+    Key? key,
   }) {
     final url = event.data['url'];
     final alt = event.data['alt'];
@@ -35,30 +37,27 @@ abstract class OrbImage extends StatelessWidget {
         alt: alt,
         isSelfEvent: isSelfEvent,
         userAvatar: userAvatar,
+        key: key,
       );
     } else {
       return OrbImageOther._(
-          event: event,
-          url: url,
-          alt: alt,
-          isSelfEvent: isSelfEvent,
-          userAvatar: userAvatar,
-          mode: mode);
+        event: event,
+        url: url,
+        alt: alt,
+        isSelfEvent: isSelfEvent,
+        userAvatar: userAvatar,
+        mode: mode,
+        key: key,
+      );
     }
   }
 
   static bool isVisible(OrbEvent event) {
-    return (event.data['url'] ?? '') != "";
+    return (event.data['url'] ?? '') != '';
   }
 
   Widget buildContainer(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(
-        top: (!event.isFirstInGroup
-            ? OrbTheme.of(context).lengths.large
-            : OrbTheme.of(context).lengths.small),
-      ),
-      padding: EdgeInsets.all(0.0),
       decoration: buildBoxDecoration(context),
       child: buildImage(context),
     );
@@ -97,18 +96,20 @@ abstract class OrbImage extends StatelessWidget {
 }
 
 class OrbImageSelf extends OrbImage {
-  OrbImageSelf._({
+  const OrbImageSelf._({
     required OrbEvent event,
     required String url,
     required String? alt,
     required bool isSelfEvent,
     required OrbUserAvatar? userAvatar,
+    Key? key,
   }) : super._(
           event: event,
           url: url,
           alt: alt,
           isSelfEvent: isSelfEvent,
           userAvatar: userAvatar,
+          key: key,
         );
 
   @override
@@ -124,19 +125,21 @@ class OrbImageSelf extends OrbImage {
 class OrbImageOther extends OrbImage {
   final OrbWidgetMode mode;
 
-  OrbImageOther._({
+  const OrbImageOther._({
     required OrbEvent event,
     required String url,
     required String? alt,
     required bool isSelfEvent,
     required OrbUserAvatar? userAvatar,
     required this.mode,
+    Key? key,
   }) : super._(
           event: event,
           url: url,
           alt: alt,
           isSelfEvent: isSelfEvent,
           userAvatar: userAvatar,
+          key: key,
         );
 
   @override
@@ -146,8 +149,8 @@ class OrbImageOther extends OrbImage {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Container(
-                margin: EdgeInsets.symmetric(vertical: 0, horizontal: 5),
-                child: (userAvatar ?? OrbUserAvatar.placeholder(context)),
+                margin: const EdgeInsets.symmetric(vertical: 0, horizontal: 5),
+                child: userAvatar ?? OrbUserAvatar.placeholder(context),
               ),
               buildContainer(context),
             ],
