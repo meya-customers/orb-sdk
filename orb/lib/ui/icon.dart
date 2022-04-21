@@ -164,7 +164,7 @@ class OrbIconSpec {
     }
     return OrbIconSpec(
       url: icon['url'],
-      color: (icon['color'] as String).toColor(),
+      color: (icon['color'] as String?)?.toColor(),
     );
   }
 

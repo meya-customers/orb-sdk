@@ -31,7 +31,7 @@ android {
     defaultConfig {
         applicationId "ai.meya.orb_example"
         minSdkVersion 18
-        targetSdkVersion 30
+        targetSdkVersion 31
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }

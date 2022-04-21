@@ -244,6 +244,7 @@ class _OrbPageState extends State<OrbPage> {
     final buttonContext = button['context'];
     final String? url = button['url'];
     final menu = button['menu'];
+    final buttonDisabled = button['disabled'] == true;
     return OrbButton(
       text: text,
       iconSpec: OrbIconSpec.fromMap(icon),
@@ -277,7 +278,7 @@ class _OrbPageState extends State<OrbPage> {
           });
         }
       },
-      disabled: url != null ? false : disabled,
+      disabled: url != null ? false : (buttonDisabled || disabled),
       selected: selectedIndex == index,
       isAction: buttonId != null,
       isLink: url != null,
