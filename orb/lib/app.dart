@@ -195,6 +195,7 @@ class OrbMaterialApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       theme: OrbTheme.of(context).toMaterialThemeData(),
       home: connection != null &&
               eventStream != null &&
