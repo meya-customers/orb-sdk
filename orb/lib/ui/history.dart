@@ -165,7 +165,8 @@ class _OrbHistoryState extends State<OrbHistory> {
     }
   }
 
-  Duration getTypingOnInterval() => const Duration(seconds: 10);
+  Duration getTypingOnInterval() =>
+      const Duration(seconds: 30); // 30 seconds (same as component timeout)
 
   Duration getTypingOffInterval() => const Duration(milliseconds: 100);
 
